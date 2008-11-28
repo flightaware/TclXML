@@ -1,0 +1,1102 @@
+# Commands covered:  ::dom::node
+#
+# This file contains a collection of tests for one or more of the
+# TclDOM commands.  Sourcing this file into Tcl runs the tests and
+# generates output for errors.  No output means no errors were found.
+#
+# Copyright (c) 2008 Explain
+# Copyright (c) 1998-2004 Zveno Pty Ltd.
+#
+# $Id: node.test,v 1.12 2004/02/25 20:10:30 balls Exp $
+
+package require tcltest
+source [file join [tcltest::workingDirectory] tcldomutils.tcl]
+
+testPackage dom
+
+namespace eval ::dom::nodeTest {
+    namespace import -force ::tcltest::*
+
+    variable SETUP {
+	set doc [::dom::create]
+	set top [::dom::document createElement $doc Test]
+	set child1 [$top appendChild [::dom::document createElement $top Child1]]
+	set child2 [$top appendChild [::dom::document createTextNode $top Child2]]
+	set child3 [$top appendChild [::dom::document createElement $top Child3]]
+    }
+
+    variable CLEANUP {
+	dom::destroy $doc
+    }
+
+    testConstraint strictDOM [expr $::dom::strictDOM || [testConstraint dom_libxml2]]
+
+    # NB. All factory methods are tested in document.test
+
+    test node-1.1 {cget -nodeName} -setup $SETUP -body {
+	::dom::node cget $top -nodeName
+    } -cleanup $CLEANUP -result Test
+    test node-1.1.1 {cget -nodeName} -setup $SETUP -body {
+	$top cget -nodeName
+    } -cleanup $CLEANUP -result Test
+
+    test node-1.2 {configure -nodeName} -setup $SETUP -body {
+	::dom::node configure $top -nodeName
+    } -cleanup $CLEANUP -result Test
+    test node-1.2.1 {configure -nodeName} -setup $SETUP -body {
+	$top configure -nodeName
+    } -cleanup $CLEANUP -result Test
+
+    test node-1.3 {configure -nodeName readonly} -constraints strictDOM -setup $SETUP -match regexp -body {
+	expectError {
+	    ::dom::node configure $top -nodeName XXX
+	}
+    } -cleanup $CLEANUP -result {(no modification allowed error: an attempt was made to modify an object\
+	where modifications are not allowed)|(attribute "-nodeName" is read-only)}
+    test node-1.3 {configure -nodeName readonly} -constraints {!strictDOM} -setup $SETUP -body {
+	::dom::node configure $top -nodeName XXX
+	ok
+    } -cleanup $CLEANUP -result {}
+
+    test node-1.4 {configure: too many parameters} -setup $SETUP -match regexp -body {
+	expectError {
+	    ::dom::node configure $top -nodeValue XXX ZZZ
+	}
+    } -cleanup $CLEANUP -result {(wrong # args: should be "::dom::node configure node option")|()}
+    test node-1.4.1 {configure: too many parameters} -setup $SETUP -match regexp -body {
+	expectError {
+	    $top configure -nodeValue XXX ZZZ
+	}
+    } -cleanup $CLEANUP -result {(wrong # args: should be "::dom::node configure node option")|()}
+
+    test node-2.1 {argument parsing} -setup $SETUP -match glob -body {
+	expectError {
+	    dom::node
+	}
+    } -cleanup $CLEANUP -result {wrong # args*}
+    test node-2.2 {argument parsing} -setup $SETUP -match regexp -body {
+	expectError {
+	    dom::node foo
+	}
+    } -cleanup $CLEANUP -result {(bad method "foo": must be cget, configure, insertBefore, replaceChild, removeChild, appendChild, hasChildNodes, cloneNode, children, parent, path, createNode, selectNode, stringValue, addEventListener, removeEventListener, dispatchEvent, or isSameNode)|(^wrong # args.*)}
+    test node-2.3 {argument parsing} -constraints {dom_tcl} -setup $SETUP -match glob -body {
+	expectError {
+	    dom::node cget blah
+	}
+    } -cleanup $CLEANUP -result {wrong # args:*}
+    test node-2.3 {argument parsing} -constraints {dom_libxml2} -setup $SETUP -match glob -body {
+	expectError {
+	    dom::node cget blah
+	}
+    } -cleanup $CLEANUP -result {"blah" is neither a DOM document nor a DOM node}
+
+    test node-2.4 {cget -nodeType} -setup $SETUP -body {
+	::dom::node cget $top -nodeType
+    } -cleanup $CLEANUP -result element
+    test node-2.4.1 {cget -nodeType} -setup $SETUP -body {
+	$top cget -nodeType
+    } -cleanup $CLEANUP -result element
+
+    test node-2.5 {configure -nodeType} -setup $SETUP -body {
+	$top configure -nodeType
+    } -cleanup $CLEANUP -result element
+
+    test node-2.6 {configure -nodeType readonly} -match regexp -constraints {strictDOM} -setup $SETUP -match regexp -body {
+	expectError {
+	    ::dom::node configure $top -nodeType XXX
+	}
+    } -cleanup $CLEANUP -result {(no modification allowed error: an attempt was made to modify an object\
+	where modifications are not allowed)|(attribute "-nodeType" is read-only)}
+    test node-2.6 {configure -nodeType readonly} -constraints {!strictDOM} -setup $SETUP -body {
+	::dom::node configure $top -nodeName XXX
+	ok
+    } -cleanup $CLEANUP -result {}
+
+    test node-3.1 {cget -parentNode top} -setup $SETUP -body {
+	compareNodes [::dom::node cget $top -parentNode] $doc
+    } -cleanup $CLEANUP -result 1
+    test node-3.1.1 {cget -parentNode top} -setup $SETUP -body {
+	compareNodes [$top cget -parentNode] $doc
+    } -cleanup $CLEANUP -result 1
+    test node-3.2 {cget -parentNode document} -setup $SETUP -body {
+	::dom::node cget $doc -parentNode
+    } -cleanup $CLEANUP -result {}
+    test node-3.3 {cget -parentNode leaf} -setup $SETUP -body {
+	compareNodes [::dom::node cget $child1 -parentNode] $top
+    } -cleanup $CLEANUP -result 1
+    test node-3.3.1 {cget -parentNode leaf} -setup $SETUP -body {
+	compareNodes [$child1 cget -parentNode] $top
+    } -cleanup $CLEANUP -result 1
+
+    test node-3.4 {configure -parentNode top} -setup $SETUP -body {
+	compareNodes [::dom::node configure $top -parentNode] $doc
+    } -cleanup $CLEANUP -result 1
+    test node-3.4.1 {configure -parentNode top} -setup $SETUP -body {
+	compareNodes [$top configure -parentNode] $doc
+    } -cleanup $CLEANUP -result 1
+
+    test node-3.5 {cget -parentNode document} -setup $SETUP -body {
+	::dom::node configure $doc -parentNode
+    } -cleanup $CLEANUP -result {}
+
+    test node-3.6 {configure -parentNode leaf} -setup $SETUP -body {
+	compareNodes [::dom::node configure $child1 -parentNode] $top
+    } -cleanup $CLEANUP -result 1
+    test node-3.6.1 {configure -parentNode leaf} -setup $SETUP -body {
+	compareNodes [$child1 configure -parentNode] $top
+    } -cleanup $CLEANUP -result 1
+
+    test node-3.7 {configure -parentNode readonly} -constraints {dom_c} -setup $SETUP -body {
+	expectError {
+	    ::dom::node configure $top -parentNode XXX
+	}
+    } -cleanup $CLEANUP -result {no modification allowed error: an attempt was made to modify an object\
+	where modifications are not allowed}
+    test node-3.7 {configure -parentNode readonly} -constraints {dom_tcl||dom_libxml2} -setup $SETUP -body {
+	expectError {
+	    ::dom::node configure $top -parentNode XXX
+	}
+    } -cleanup $CLEANUP -result {attribute "-parentNode" is read-only}
+    test node-3.7.1 {configure -parentNode readonly} -constraints {dom_tcl||dom_libxml2} -setup $SETUP -body {
+	expectError {
+	    $top configure -parentNode XXX
+	}
+    } -cleanup $CLEANUP -result {attribute "-parentNode" is read-only}
+
+    test node-4.1 {cget -childNodes} -setup {
+	eval $SETUP
+    } -body {
+	upvar 0 [::dom::node cget $doc -childNodes] childlist
+	compareNodeList [set childlist] [list $top]
+    } -cleanup {
+	unset childlist
+	eval $CLEANUP
+    } -result 1
+
+    test node-4.2 {cget -childNodes top} -setup $SETUP -body {
+	upvar 0 [::dom::node cget $top -childNodes] childlist
+	compareNodeList $childlist [list $child1 $child2 $child3]
+    } -cleanup $CLEANUP -result 1
+    test node-4.2.1 {cget -childNodes top} -setup $SETUP -body {
+	upvar 0 [$top cget -childNodes] childlist
+	compareNodeList $childlist [list $child1 $child2 $child3]
+    } -cleanup $CLEANUP -result 1
+
+    test node-4.3 {cget -childNodes leaf} -setup $SETUP -body {
+	upvar 0 [::dom::node cget $child1 -childNodes] childlist
+	llength $childlist
+    } -cleanup $CLEANUP -result 0
+    test node-4.3.1 {cget -childNodes leaf} -setup $SETUP -body {
+	upvar 0 [$child1 cget -childNodes] childlist
+	llength $childlist
+    } -cleanup $CLEANUP -result 0
+
+    test node-4.4 {cget -childNodes textNode} -setup $SETUP -body {
+	upvar 0 [::dom::node cget $child2 -childNodes] childlist
+	llength $childlist
+    } -cleanup $CLEANUP -result 0
+    test node-4.4.1 {cget -childNodes textNode} -setup $SETUP -body {
+	upvar 0 [$child2 cget -childNodes] childlist
+	llength $childlist
+    } -cleanup $CLEANUP -result 0
+
+    test node-4.5 {configure -childNodes} -setup $SETUP -body {
+	upvar 0 [::dom::node configure $doc -childNodes] childlist
+	compareNodeList $childlist [list $top]
+    } -cleanup $CLEANUP -result 1
+
+    test node-4.6 {configure -childNodes top} -setup $SETUP -body {
+	upvar 0 [::dom::node cget $top -childNodes] childlist
+	compareNodeList $childlist [list $child1 $child2 $child3]
+    } -cleanup $CLEANUP -result 1
+    test node-4.6.1 {configure -childNodes top} -setup $SETUP -body {
+	upvar 0 [$top cget -childNodes] childlist
+	compareNodeList $childlist [list $child1 $child2 $child3]
+    } -cleanup $CLEANUP -result 1
+
+    test node-4.6.2 {node children} -setup $SETUP -body {
+	set children [::dom::node children $top]
+	compareNodeList $children [list $child1 $child2 $child3]
+    } -cleanup $CLEANUP -result 1
+    test node-4.6.3 {node children} -setup $SETUP -body {
+	set children [$top children]
+	compareNodeList $children [list $child1 $child2 $child3]
+    } -cleanup $CLEANUP -result 1
+
+    test node-4.7 {cget -childNodes leaf} -setup $SETUP -body {
+	set [::dom::node configure $child1 -childNodes]
+    } -cleanup $CLEANUP -result {}
+    test node-4.7.1 {cget -childNodes leaf} -setup $SETUP -body {
+	set [$child1 configure -childNodes]
+    } -cleanup $CLEANUP -result {}
+    test node-4.8 {cget -childNodes textNode} -setup $SETUP -body {
+	set [::dom::node configure $child2 -childNodes]
+    } -cleanup $CLEANUP -result {}
+    test node-4.8.1 {cget -childNodes textNode} -setup $SETUP -body {
+	set [$child2 configure -childNodes]
+    } -cleanup $CLEANUP -result {}
+
+    test node-4.9 {configure -childNodes readonly} -constraints {dom_c} -setup $SETUP -body {
+	expectError {
+	    ::dom::node configure $top -childNodes XXX
+	}
+    } -cleanup $CLEANUP -result {no modification allowed error: an attempt was made to modify an object\
+	where modifications are not allowed}
+    test node-4.9 {configure -childNodes readonly} -constraints {dom_tcl || dom_libxml2} -setup $SETUP -body {
+	expectError {
+	    ::dom::node configure $top -childNodes XXX
+	}
+    } -cleanup $CLEANUP -result {attribute "-childNodes" is read-only}
+    test node-4.9.1 {configure -childNodes readonly} -constraints {dom_tcl || dom_libxml2} -setup $SETUP -body {
+	expectError {
+	    $top configure -childNodes XXX
+	}
+    } -cleanup $CLEANUP -result {attribute "-childNodes" is read-only}
+
+    test node-4.10 {cget -childNodes textNode} -setup $SETUP -body {
+	# bug 3528
+	proc testChildNode {child} {
+		set cl [::dom::node cget $child -childNodes]
+		set $cl
+	}
+	testChildNode $child2
+    } -cleanup $CLEANUP -result {}
+    test node-4.10.1 {cget -childNodes textNode} -setup $SETUP -body {
+	proc testChildNode {child} {
+		set cl [$child cget -childNodes]
+		set $cl
+	}
+	testChildNode $child2
+    } -cleanup $CLEANUP -result {}
+
+    test node-4.11 {cget -childNodes textNode} -setup $SETUP -body {
+	# bug 3529
+	set cl [::dom::node cget $child2 -childNodes]
+	set what [namespace which -variable $cl]
+	set result [string range $what 0 6]
+    } -cleanup $CLEANUP -result {::dom::}
+
+    test node-5.1 {cget -firstChild} -setup $SETUP -body {
+	compareNodes [::dom::node cget $top -firstChild] $child1
+    } -cleanup $CLEANUP -result 1
+    test node-5.1.1 {cget -firstChild} -setup $SETUP -body {
+	compareNodes [$top cget -firstChild] $child1
+    } -cleanup $CLEANUP -result 1
+    test node-5.2 {cget -firstChild document} -setup $SETUP -body {
+	compareNodes [::dom::node cget $doc -firstChild] $top
+    } -cleanup $CLEANUP -result 1
+
+    test node-5.3 {configure -firstChild} -setup $SETUP -body {
+	compareNodes [::dom::node configure $top -firstChild] $child1
+    } -cleanup $CLEANUP -result 1
+    test node-5.3.1 {configure -firstChild} -setup $SETUP -body {
+	compareNodes [$top configure -firstChild] $child1
+    } -cleanup $CLEANUP -result 1
+
+    test node-5.4 {configure -firstChild document} -setup $SETUP -body {
+	compareNodes [::dom::node configure $doc -firstChild] $top
+    } -cleanup $CLEANUP -result 1
+
+    test node-5.5 {configure -firstChild readonly} -constraints {dom_c} -setup $SETUP -body {
+	expectError {
+	    ::dom::node configure $top -firstChild XXX
+	}
+    } -cleanup $CLEANUP -result {no modification allowed error: an attempt was made to modify an object\
+	where modifications are not allowed}
+    test node-5.5 {configure -firstChild readonly} -constraints {dom_tcl} -setup $SETUP -body {
+	expectError {
+	    ::dom::node configure $top -firstChild XXX
+	}
+    } -cleanup $CLEANUP -result {attribute "-firstChild" is read-only}
+    test node-5.5.1 {configure -firstChild readonly} -constraints {dom_tcl} -setup $SETUP -body {
+	expectError {
+	    $top configure -firstChild XXX
+	}
+    } -cleanup $CLEANUP -result {attribute "-firstChild" is read-only}
+
+    test node-6.1 {cget -lastChild} -setup $SETUP -body {
+	compareNodes [::dom::node cget $top -lastChild] $child3
+    } -cleanup $CLEANUP -result 1
+    test node-6.1 {cget -lastChild} -setup $SETUP -body {
+	compareNodes [$top cget -lastChild] $child3
+    } -cleanup $CLEANUP -result 1
+    test node-6.2 {cget -lastChild document} -setup $SETUP -body {
+	compareNodes [::dom::node cget $doc -lastChild] $top
+    } -cleanup $CLEANUP -result 1
+    test node-6.3 {configure -lastChild} -setup $SETUP -body {
+	compareNodes [::dom::node configure $top -lastChild] $child3
+    } -cleanup $CLEANUP -result 1
+    test node-6.3.1 {configure -lastChild} -setup $SETUP -body {
+	compareNodes [$top configure -lastChild] $child3
+    } -cleanup $CLEANUP -result 1
+
+    test node-6.4 {configure -lastChild document} -setup $SETUP -body {
+	compareNodes [::dom::node configure $doc -lastChild] $top
+    } -cleanup $CLEANUP -result 1
+
+    test node-6.5 {configure -lastChild readonly} -constraints {dom_c} -setup $SETUP -body {
+	expectError {
+	    ::dom::node configure $top -lastChild XXX
+	}
+    } -cleanup $CLEANUP -result {no modification allowed error: an attempt was made to modify an object\
+	where modifications are not allowed}
+    test node-6.5 {configure -lastChild readonly} -constraints {dom_tcl} -setup $SETUP -body {
+	expectError {
+	    ::dom::node configure $top -lastChild XXX
+	}
+    } -cleanup $CLEANUP -result {attribute "-lastChild" is read-only}
+
+    test node-7.1 {cget -previousSibling first} -setup $SETUP -body {
+	::dom::node cget $child1 -previousSibling
+    } -cleanup $CLEANUP -result {}
+    test node-7.1.1 {cget -previousSibling first} -setup $SETUP -body {
+	$child1 cget -previousSibling
+    } -cleanup $CLEANUP -result {}
+    test node-7.2 {cget -previousSibling last} -setup $SETUP -body {
+	compareNodes [::dom::node cget $child3 -previousSibling] $child2
+    } -cleanup $CLEANUP -result 1
+    test node-7.2 {cget -previousSibling last} -setup $SETUP -body {
+	compareNodes [$child3 cget -previousSibling] $child2
+    } -cleanup $CLEANUP -result 1
+
+    test node-7.3 {configure -previousSibling first} -setup $SETUP -body {
+	::dom::node configure $child1 -previousSibling
+    } -cleanup $CLEANUP -result {}
+    test node-7.3.1 {configure -previousSibling first} -setup $SETUP -body {
+	$child1 configure -previousSibling
+    } -cleanup $CLEANUP -result {}
+
+    test node-7.4 {configure -previousSibling last} -setup $SETUP -body {
+	compareNodes [::dom::node configure $child3 -previousSibling] $child2
+    } -cleanup $CLEANUP -result 1
+    test node-7.4.1 {configure -previousSibling last} -setup $SETUP -body {
+	compareNodes [$child3 configure -previousSibling] $child2
+    } -cleanup $CLEANUP -result 1
+
+    test node-7.5 {configure -previousSibling readonly} -constraints {dom_c} -setup $SETUP -body {
+	expectError {
+	    ::dom::node configure $top -previousSibling XXX
+	}
+    } -cleanup $CLEANUP -result {no modification allowed error: an attempt was made to modify an object\
+	where modifications are not allowed}
+    test node-7.5 {configure -previousSibling readonly} -constraints {dom_tcl || dom_libxml2} -setup $SETUP -body {
+	expectError {
+	    ::dom::node configure $top -previousSibling XXX
+	}
+    } -cleanup $CLEANUP -result {attribute "-previousSibling" is read-only}
+
+    test node-8.1 {cget -nextSibling first} -setup $SETUP -body {
+	compareNodes [::dom::node cget $child1 -nextSibling] $child2
+    } -cleanup $CLEANUP -result 1
+    test node-8.1.1 {cget -nextSibling first} -setup $SETUP -body {
+	compareNodes [$child1 cget -nextSibling] $child2
+    } -cleanup $CLEANUP -result 1
+    test node-8.2 {cget -nextSibling last} -setup $SETUP -body {
+	::dom::node cget $child3 -nextSibling
+    } -cleanup $CLEANUP -result {}
+    test node-8.2.1 {cget -nextSibling last} -setup $SETUP -body {
+	$child3 cget -nextSibling
+    } -cleanup $CLEANUP -result {}
+    test node-8.3 {configure -nextSibling first} -setup $SETUP -body {
+	compareNodes [::dom::node configure $child1 -nextSibling] $child2
+    } -cleanup $CLEANUP -result 1
+    test node-8.3.1 {configure -nextSibling first} -setup $SETUP -body {
+	compareNodes [$child1 configure -nextSibling] $child2
+    } -cleanup $CLEANUP -result 1
+
+    test node-8.4 {configure -nextSibling last} -setup $SETUP -body {
+	::dom::node configure $child3 -nextSibling
+    } -cleanup $CLEANUP -result {}
+    test node-8.4.1 {configure -nextSibling last} -setup $SETUP -body {
+	$child3 configure -nextSibling
+    } -cleanup $CLEANUP -result {}
+
+    test node-8.5 {configure -nextSibling readonly} -constraints {dom_c} -setup $SETUP -body {
+	expectError {
+	    ::dom::node configure $top -nextSibling XXX
+	}
+    } -cleanup $CLEANUP -result {no modification allowed error: an attempt was made to modify an object\
+	where modifications are not allowed}
+    test node-8.5 {configure -nextSibling readonly} -constraints {dom_tcl} -setup $SETUP -body {
+	expectError {
+	    ::dom::node configure $top -nextSibling XXX
+	}
+    } -cleanup $CLEANUP -result {attribute "-nextSibling" is read-only}
+    test node-8.5.1 {configure -nextSibling readonly} -constraints {dom_tcl} -setup $SETUP -body {
+	expectError {
+	    $top configure -nextSibling XXX
+	}
+    } -cleanup $CLEANUP -result {attribute "-nextSibling" is read-only}
+
+    test node-9.1 {cget -attributes} -setup $SETUP -body {
+	array get [::dom::node cget $top -attributes]
+    } -cleanup $CLEANUP -result {}
+    test node-9.1.1 {cget -attributes} -setup $SETUP -body {
+	array get [$top cget -attributes]
+    } -cleanup $CLEANUP -result {}
+
+    test node-9.2 {configure -attributes} -setup $SETUP -body {
+	array get [::dom::node configure $top -attributes]
+    } -cleanup $CLEANUP -result {}
+    test node-9.2.1 {configure -attributes} -setup $SETUP -body {
+	array get [$top configure -attributes]
+    } -cleanup $CLEANUP -result {}
+
+    variable SETUP9 {
+	set doc [dom::parse "<element1 a='123' b='456'>Some Text\n<element2>More Text\n</element2>Text\n</element1>"]
+	set top [::dom::document cget $doc -documentElement]
+    }
+
+    test node-9.4 {cget -attributes} -setup $SETUP9 -body {
+	set attrArray [::dom::node cget $top -attributes]
+	lsort [array names $attrArray]
+    } -cleanup $CLEANUP -result {a b}
+    test node-9.4.1 {cget -attributes} -setup $SETUP9 -body {
+	set attrArray [$top cget -attributes]
+	lsort [array names $attrArray]
+    } -cleanup $CLEANUP -result {a b}
+    test node-9.5 {configure -attributes} -setup $SETUP9 -body {
+	set attrArray [::dom::node cget $top -attributes]
+	lsort [array names $attrArray]
+    } -cleanup $CLEANUP -result {a b}
+    test node-9.5.1 {configure -attributes} -setup $SETUP9 -body {
+	set attrArray [$top cget -attributes]
+	lsort [array names $attrArray]
+    } -cleanup $CLEANUP -result {a b}
+
+    test node-9.6 {cget -attributes} -setup $SETUP9 -body {
+	set attrArray [::dom::node cget $top -attributes]
+	set result {}
+	upvar 0 $attrArray attr
+	foreach name [lsort [array names $attrArray]] {
+		lappend result $name $attr($name)
+	}
+	set result
+    } -cleanup $CLEANUP -result {a 123 b 456}
+    test node-9.6.1 {cget -attributes} -setup $SETUP9 -body {
+	set attrArray [$top cget -attributes]
+	set result {}
+	upvar 0 $attrArray attr
+	foreach name [lsort [array names $attrArray]] {
+		lappend result $name $attr($name)
+	}
+	set result
+    } -cleanup $CLEANUP -result {a 123 b 456}
+
+    test node-9.7 {configure -attributes} -setup $SETUP9 -body {
+	set attrArray [::dom::node cget $top -attributes]
+	set result {}
+	upvar 0 $attrArray attr
+	foreach name [lsort [array names $attrArray]] {
+		lappend result $name $attr($name)
+	}
+	set result
+    } -cleanup $CLEANUP -result {a 123 b 456}
+    test node-9.7.1 {configure -attributes} -setup $SETUP9 -body {
+	set attrArray [$top cget -attributes]
+	set result {}
+	upvar 0 $attrArray attr
+	foreach name [lsort [array names $attrArray]] {
+		lappend result $name $attr($name)
+	}
+	set result
+    } -cleanup $CLEANUP -result {a 123 b 456}
+
+    variable SETUP98 {
+	set doc [dom::parse {<?xml version="1.0"?><a v1="ok1" v2="ok2">foo</a>}]
+	set top [::dom::document cget $doc -documentElement]
+    }
+
+    test node-9.8 {cget -attributes} -setup $SETUP98 -body {
+	set attrArray [::dom::node cget $top -attributes]
+	set result {}
+	upvar 0 $attrArray attr
+	foreach name [lsort [array names $attrArray]] {
+		lappend result $name $attr($name)
+	}
+	set result
+    } -cleanup $CLEANUP -result {v1 ok1 v2 ok2}
+    test node-9.8.1 {cget -attributes} -setup $SETUP98 -body {
+	set attrArray [$top cget -attributes]
+	set result {}
+	upvar 0 $attrArray attr
+	foreach name [lsort [array names $attrArray]] {
+		lappend result $name $attr($name)
+	}
+	set result
+    } -cleanup $CLEANUP -result {v1 ok1 v2 ok2}
+
+    test node-9.9 {configure -attributes} -setup $SETUP98 -body {
+	set attrArray [::dom::node configure $top -attributes]
+	set result {}
+	upvar 0 $attrArray attr
+	foreach name [lsort [array names $attrArray]] {
+		lappend result $name $attr($name)
+	}
+	set result
+    } -cleanup $CLEANUP -result {v1 ok1 v2 ok2}
+    test node-9.9.1 {configure -attributes} -setup $SETUP98 -body {
+	set attrArray [$top configure -attributes]
+	set result {}
+	upvar 0 $attrArray attr
+	foreach name [lsort [array names $attrArray]] {
+		lappend result $name $attr($name)
+	}
+	set result
+    } -cleanup $CLEANUP -result {v1 ok1 v2 ok2}
+
+    # Discuss this with Joe English.
+    # Destroying the document will destroy the namespace that contains the
+    # attribute variable, so this script should result in an error.
+    # NB. If the application wants to save the attributes and their values
+    # then it should copy them to its own (array) variable. (FAQ topic)
+    test node-9.10 {cget -attributes not global} -constraints {knownBug} -setup {
+	proc xx {} {
+	    variable SETUP98
+	    eval $SETUP98
+	    set attrArray [::dom::node cget $top -attributes]
+	    dom::destroy $doc
+	    return [lsort [array get $attrArray]]
+	}
+	xx
+    } -cleanup {
+	rename xx {}
+    } -result {ok1 ok2 v1 v2}
+
+    test node-9.11 {cget -attributes not global} -setup $SETUP -body {
+	# bug 3529
+	proc xx {} {
+	    variable SETUP98
+	    variable top
+	    eval $SETUP98
+	    set attrArray [::dom::node cget $top -attributes]
+	    return [lsort [array get $attrArray]]
+	}
+	proc xx2 {v} {
+	    return [lsort [array get $v]]
+	}
+	set r1 [xx]
+	set attrArray [::dom::node cget $top -attributes]
+	set r2 [lsort [array get $attrArray]]
+	set r3 [xx2 $attrArray]
+	list $r1 $r2 $r3
+    } -cleanup {
+	dom::destroy [$top cget -ownerDocument]
+	rename xx {}
+	rename xx2 {}
+    } -result {{ok1 ok2 v1 v2} {ok1 ok2 v1 v2} {ok1 ok2 v1 v2}}
+
+    # See comments for node-9.10
+    test node-9.12 {configure -attributes not global} -constraints {knownBug} -setup $SETUP -body {
+	proc xx {} {
+	    variable SETUP98
+	    eval $SETUP98
+	    set attrArray [::dom::node configure $top -attributes]
+	    dom::destroy $doc
+	    return [lsort [array get $attrArray]]
+	}
+	xx
+    } -cleanup {
+	rename xx {}
+    } -result {ok1 ok2 v1 v2}
+
+    test node-9.13 {configure -attributes readonly} -constraints {dom_c} -setup $SETUP -body {
+	expectError {
+	    ::dom::node configure $top -attributes XXX
+	}
+    } -cleanup $CLEANUP -result {no modification allowed error: an attempt was made to modify an object\
+	where modifications are not allowed}
+    test node-9.13 {configure -attributes readonly} -constraints {dom_tcl} -setup $SETUP -body {
+	expectError {
+	    ::dom::node configure $top -attributes XXX
+	}
+    } -cleanup $CLEANUP -result {attribute "-attributes" is read-only}
+    test node-9.13.1 {configure -attributes readonly} -constraints {dom_tcl} -setup $SETUP -body {
+	expectError {
+	    $top configure -attributes XXX
+	}
+    } -cleanup $CLEANUP -result {attribute "-attributes" is read-only}
+
+    test node-10.1 {cget -nodeValue} -setup $SETUP -body {
+	::dom::node cget $top -nodeValue
+    } -cleanup $CLEANUP -result {}
+    test node-10.1.1 {cget -nodeValue} -setup $SETUP -body {
+	$top cget -nodeValue
+    } -cleanup $CLEANUP -result {}
+    test node-10.2 {cget -nodeValue text} -setup $SETUP -body {
+	::dom::node cget $child2 -nodeValue
+    } -cleanup $CLEANUP -result Child2
+    test node-10.2.1 {cget -nodeValue text} -setup $SETUP -body {
+	$child2 cget -nodeValue
+    } -cleanup $CLEANUP -result Child2
+
+    test node-10.3 {configure -nodeValue} -setup $SETUP -body {
+	::dom::node configure $top -nodeValue
+    } -cleanup $CLEANUP -result {}
+    test node-10.3.1 {configure -nodeValue} -setup $SETUP -body {
+	$top configure -nodeValue
+    } -cleanup $CLEANUP -result {}
+
+    test node-10.4 {configure -nodeValue text} -setup $SETUP -body {
+	::dom::node configure $child2 -nodeValue
+    } -cleanup $CLEANUP -result Child2
+    test node-10.4.1 {configure -nodeValue text} -setup $SETUP -body {
+	$child2 configure -nodeValue
+    } -cleanup $CLEANUP -result Child2
+
+    # According to the DOM spec attributes which have obvious mapping to the node type,
+    # ie nodeValue for Element nodes, return NULL for the value rather than an error.
+    test node-10.5 {configure -nodeValue readonly for elements} -constraints {dom_c && knownBug} -setup $SETUP -body {
+	expectError {
+	    ::dom::node configure $top -nodeValue XXX
+	}
+    } -cleanup $CLEANUP -result {no modification allowed error: an attempt was made to modify an object\
+	where modifications are not allowed}
+    test node-10.5 {configure -nodeValue readonly for elements} -constraints {dom_tcl||dom_libxml2} -setup $SETUP -body {
+	::dom::node configure $top -nodeValue XXX
+    } -cleanup $CLEANUP -result {}
+    test node-10.5.1 {configure -nodeValue readonly for elements} -constraints {dom_tcl||dom_libxml2} -setup $SETUP -body {
+	$top configure -nodeValue XXX
+    } -cleanup $CLEANUP -result {}
+
+    test node-10.6 {configure -nodeValue writable for text nodes} -setup $SETUP -body {
+	set result1 [catch {::dom::node configure $child2 -nodeValue XXX} msg1]
+	set result2 [catch {::dom::node configure $child2 -nodeValue} msg2]
+	list $result1 $msg1 $result2 $msg2
+    } -cleanup $CLEANUP -result {0 {} 0 XXX}
+
+    variable SETUP11 {
+	eval $SETUP
+	set branchA [$top appendChild [dom::document createElement $top BranchA]]
+	set branchB [$top appendChild [dom::document createElement $top BranchB]]
+	set new [$branchA appendChild [dom::document createElement $branchA MoveMe]]
+	set ref [$branchB appendChild [dom::document createElement $branchB Reference]]
+    }
+
+    test node-11.1 {insertBefore, different parent} -setup $SETUP11 -body {
+	::dom::node insertBefore $branchB $new $ref
+	# new should now have branchB as parent
+	# branchA should have no children
+	# branchB should have children {$new $ref}
+	list [compareNodes [dom::node cget $new -parentNode] $branchB] \
+	[dom::node children $branchA] \
+	[compareNodeList [dom::node children $branchB] [list $new $ref]]
+    } -cleanup $CLEANUP -result [list 1 {} 1]
+
+    test node-11.2 {insertBefore, same parent} -setup $SETUP11 -body {
+	::dom::node insertBefore $branchB $new $ref
+	::dom::node insertBefore $branchB $ref $new
+	# ref should still have branchB as its parent
+	# branchB should have children {$ref $new}
+	list [compareNodes [dom::node cget $ref -parentNode] $branchB] \
+	[compareNodeList [dom::node children $branchB] [list $ref $new]]
+    } -cleanup $CLEANUP -result [list 1 1]
+    test node-11.3 {insertBefore, no ref child given, node with no children} -setup $SETUP11 -body {
+	::dom::node insertBefore $branchB $new $ref
+	::dom::node insertBefore $branchB $ref $new
+	::dom::node insertBefore $branchA $new
+	# new should have parent branchA
+	# branchA should have child new
+	# branchB should have only child ref
+	list [compareNodes [dom::node cget $new -parentNode] $branchA] \
+	[compareNodeList [dom::node children $branchA] [list $new]] \
+	[compareNodeList [dom::node children $branchB] [list $ref]]
+    } -cleanup $CLEANUP -result [list 1 1 1]
+
+    test node-11.4 {insertBefore, no ref child given, node with children} -setup $SETUP11 -body {
+	::dom::node insertBefore $branchB $new $ref
+	::dom::node insertBefore $branchB $ref $new
+	::dom::node insertBefore $branchA $new
+	::dom::node insertBefore $branchA $ref
+	# ref should have parent branchA
+	# branchA should have children {$new $ref}
+	# branchB should have no children
+	list [compareNodes [dom::node cget $ref -parentNode] $branchA] \
+	[compareNodeList [dom::node children $branchA] [list $new $ref]] \
+	[dom::node children $branchB]
+    } -cleanup $CLEANUP -result [list 1 1 {}]
+
+    # TODO: test using node command, ie. $branchB insertBefore ...
+
+    variable SETUP12 {
+	eval $SETUP
+	set parent [$top appendChild [dom::document createElement  $top    Remove]]
+	set n1  [$parent appendChild [dom::document createTextNode $parent {Leave me alone}]]
+	set rem [$parent appendChild [dom::document createElement  $parent RemoveMe]]
+	set n2  [$parent appendChild [dom::document createTextNode $parent {Leave me alone}]]
+    }
+
+    # test node-12.0 obsolete
+    test node-12.1 {removeChild} -setup $SETUP12 -body {
+	set oldchild [::dom::node removeChild $parent $rem]
+	list [compareNodes $oldchild $rem] \
+	[compareNodeList [::dom::node children $parent] [list $n1 $n2]] \
+	[::dom::node children $oldchild]
+    } -cleanup $CLEANUP -result [list 1 1 {}]
+    test node-12.1.1 {removeChild} -setup $SETUP12 -body {
+	set oldchild [$parent removeChild $rem]
+	list [compareNodes $oldchild $rem] \
+	[compareNodeList [::dom::node children $parent] [list $n1 $n2]] \
+	[::dom::node children $oldchild]
+    } -cleanup $CLEANUP -result [list 1 1 {}]
+    test node-12.2 {removeChild: error, wrong num args} -setup $SETUP -match glob -body {
+	expectError {
+	    ::dom::node removeChild $top
+	}
+    } -cleanup $CLEANUP -result {wrong # args: *}
+    test node-12.2.1 {removeChild: error, wrong num args} -setup $SETUP -match glob -body {
+	expectError {
+	    $top removeChild
+	}
+    } -cleanup $CLEANUP -result {wrong # args: *}
+    test node-12.3 {removeChild: error, wrong num args} -setup $SETUP -match glob -body {
+	expectError {
+	    ::dom::node removeChild $top $child1 $child3
+	}
+    } -cleanup $CLEANUP -result {wrong # args: *}
+    test node-12.3.1 {removeChild: error, wrong num args} -setup $SETUP -match glob -body {
+	expectError {
+	    $top removeChild $child1 $child3
+	}
+    } -cleanup $CLEANUP -result {wrong # args: *}
+    test node-12.4 {removeChild: error, not a child} -setup $SETUP12 -match regexp -body {
+	expectError {
+    	    ::dom::node removeChild $doc $rem
+	}
+    } -cleanup $CLEANUP -result {^(document must have document element.*)|(not found.*)|(node "[^"]*" is not a child)}
+    test node-12.5 {removeChild: error, not a child} -setup $SETUP12 -match regexp -body {
+	expectError {
+    	    ::dom::node removeChild $top $rem
+	}
+    } -cleanup $CLEANUP -result {(not found.*)|(node "[^"]*" is not a child)}
+    test node-12.5.1 {removeChild: error, not a child} -setup $SETUP12 -match regexp -body {
+	expectError {
+    	    $top removeChild $rem
+	}
+    } -cleanup $CLEANUP -result {(not found.*)|(node "[^"]*" is not a child)}
+
+    variable SETUP13 {
+	eval $SETUP
+	set branchA [$top appendChild [dom::document createElement $top ReplaceA]]
+	set branchB [$top appendChild [dom::document createElement $top ReplaceB]]
+	set new [$branchA appendChild [dom::document createElement $branchA MoveMe]]
+	set replace [$branchB appendChild [dom::document createElement $branchB ReplaceMe]]
+    }
+
+    test node-13.1 {replaceChild} -setup $SETUP13 -body {
+	set replaced [::dom::node replaceChild $branchB $new $replace]
+	# replace becomes orphaned (no parent)
+	# new has parent branchB
+	# branchB has children {$new}
+	# branchA has no children
+	# returns $replace
+	list [expr {[::dom::node cget $replace -parentNode] == {} ? 1 : [::dom::node isSameNode $doc [::dom::node cget $replace -parentNode]]}] \
+    	[compareNodes [::dom::node cget $new -parentNode] $branchB ] \
+	[compareNodeList [::dom::node children $branchB] [list $new]] \
+	[::dom::node children $branchA] \
+	[$replace isSameNode $replaced] \
+	;
+    } -cleanup $CLEANUP -result [list 1 1 1 {} 1]
+
+    variable SETUP14 {
+	eval $SETUP
+	set branchA [$top appendChild     [dom::document createElement $top AppendA]]
+	set branchB [$top appendChild     [dom::document createElement $top AppendB]]
+	set node    [$branchA appendChild [dom::document createElement $branchA MoveMe]]
+	set after   [$branchB appendChild [dom::document createElement $branchB AfterMe]]
+    }
+
+    test node-14.1 {appendChild} -setup $SETUP14 -body {
+	::dom::node appendChild $branchB $node
+	# node should have parent branchB
+	# Branch A should have no children
+	# Branch B should have children: {$after $node}
+	list [compareNodes [::dom::node cget $node -parentNode] $branchB] \
+	[::dom::node children $branchA] \
+	[compareNodeList [::dom::node children $branchB] [list $after $node]] \
+	;
+    } -cleanup $CLEANUP -result [list 1 {} 1]
+
+    test node-14.2 {appendChild return value} -setup {
+	set doc [dom::create]
+	set top [dom::document createElement $doc Top]
+	set node [dom::document createElement $top Child]
+    } -body {
+	$node isSameNode [dom::node appendChild $top $node]
+    } -cleanup $CLEANUP -result 1
+    test node-14.2.1 {appendChild return value} -setup {
+	set doc [dom::create]
+	set top [dom::document createElement $doc Top]
+	set node [dom::document createElement $top Child]
+    } -body {
+	$node isSameNode [$top appendChild $node]
+    } -cleanup $CLEANUP -result 1
+    test node-14.3 {appendChild - document element} -setup {
+	set doc [dom::create]
+	set top [$doc createElement Top]
+    } -body {
+	$top isSameNode [dom::node appendChild $doc $top]
+    } -cleanup $CLEANUP -result 1
+
+    # cloneNode tests are disabled for libxml2 as it cannot serialize
+    # a node (only an entire document).
+
+    variable SETUP15 {
+	eval $SETUP
+	set cloneNode [$top appendChild       [dom::document createElement $top Clone]]
+	set clone1    [$cloneNode appendChild [dom::document createElement $cloneNode Nested]] ;#{id one}
+	set clone2    [$cloneNode appendChild [dom::document createElement $cloneNode Nested]] ;#{id two}
+	$cloneNode appendChild [dom::document createElement $cloneNode Nested] ;#{id three}
+	$clone1 appendChild    [dom::document createTextNode $clone1 {text for node 1}]
+	$clone2 appendChild    [dom::document createTextNode $clone2 {text for node 2}]
+    }
+
+    # test node-15.1 obsolete
+
+    test node-15.2 {cloneNode part 2} -constraints {!dom_libxml2} -setup $SETUP15 -body {
+	set cloned [dom::node cloneNode $cloneNode -deep yes]
+	set orig [dom::DOMImplementation serialize $cloneNode]
+	set new [dom::DOMImplementation serialize $cloned]
+	list [string compare $orig $new] [dom::node parent $cloned]
+    } -cleanup $CLEANUP -result {0 {}}
+
+    test node-15.3 {cloneNode of document} -constraints {!dom_libxml2} -setup {
+	set doc1 [dom::parse {<?xml version="1.0" standalone="yes"?><a v1="ok1" v2="ok2">foo</a>}]
+    } -body {
+	set doc2 [dom::node cloneNode $doc1 -deep 1]
+	set sdoc1 [dom::DOMImplementation serialize $doc1]
+	set sdoc2 [dom::DOMImplementation serialize $doc2]
+	string compare $sdoc1 $sdoc2
+    } -cleanup {
+	dom::destroy $doc1
+    } -result {0}
+
+    variable SETUP16 {
+	set doc [dom::parse "<element1>Some Text\n<element2>More Text\n</element2>Text\n</element1>"]
+	set top [::dom::document cget $doc -documentElement]
+    }
+
+    test node-16.1 {cget -startLine} -constraints {dom_c} -setup $SETUP16 -body {
+	::dom::node cget $top -startLine
+    } -cleanup $CLEANUP -result 1
+
+    test node-16.2 {cget -endLine} -constraints {dom_c} -setup $SETUP16 -body {
+	::dom::node cget $top -endLine
+    } -cleanup $CLEANUP -result 4
+
+    test node-16.3 {cget -startColumn} -constraints {dom_c} -setup {
+	set doc [dom::parse "<!-- --><element1>Some Text\n<element2>More Text\n</element2>Text\n</element1>"]
+	set top [::dom::document cget $doc -documentElement]
+    } -body {
+	::dom::node cget $top -startColumn
+    } -cleanup $CLEANUP -result 8
+
+    test node-16.4 {cget -endColumn} -constraints {dom_c} -setup {
+	set doc [dom::parse "<element1>Some Text\n<element2>More Text\n</element2>Text\nXXX</element1>"]
+	set top [::dom::document cget $doc -documentElement]
+    } -body {
+	::dom::node cget $top -endColumn
+    } -cleanup $CLEANUP -result 3
+
+    test node-16.5 {cget -startWidth} -constraints {dom_c} -setup {
+	set doc [dom::parse "<element1>Some Text\n<element2>More Text\n</element2>Text\nXXX</element1>"]
+	set top [::dom::document cget $doc -documentElement]
+    } -body {
+	::dom::node cget $top -startWidth
+    } -cleanup $CLEANUP -result 10
+
+    test node-16.6 {cget -endWidth} -constraints {dom_c} -setup {
+	set doc [dom::parse "<element1>Some Text\n<element2>More Text\n</element2>Text\nXXX</element1>"]
+	set top [::dom::document cget $doc -documentElement]
+    } -body {
+	::dom::node cget $top -endWidth
+    } -cleanup $CLEANUP -result 11
+
+    # documentFragment tests have been disabled for libxml2 because
+    # libxml2-2.5.1 (and earlier) appears to have a bug in serialising
+    # a document containing a document fragment.
+
+    variable SETUP17 {
+	set doc [::dom::DOMImplementation create]
+	set top [::dom::document createElement $doc top]
+	::dom::node appendChild $doc $top
+	set fragment [::dom::document createDocumentFragment $doc]
+    }
+
+    test node-17.1 {document fragments} -constraints {!dom_libxml2} -setup $SETUP17 -body {
+	set text [::dom::document createTextNode $doc \
+		"Now is the time for all good men to come to the aid of their party"]
+	::dom::node appendChild $fragment $text
+	::dom::node appendChild $top $fragment
+	::dom::DOMImplementation serialize $doc
+    } -cleanup $CLEANUP -result {<?xml version='1.0'?>
+<!DOCTYPE top>
+<top>Now is the time for all good men to come to the aid of their party</top>}
+
+    test node-17.2 {document fragment append with multiple text children} -constraints {!dom_libxml2} -setup $SETUP17 -body {
+	foreach xx {abc def ghi jkl mno} {
+		set text [::dom::document createTextNode $doc $xx]
+		::dom::node appendChild $fragment $text
+	}
+	::dom::node appendChild $top $fragment
+	::dom::DOMImplementation serialize $doc
+    } -cleanup $CLEANUP -result {<?xml version='1.0'?>
+<!DOCTYPE top>
+<top>abcdefghijklmno</top>}
+
+    test node-17.3 {document fragment append with multiple children} -constraints {!dom_libxml2} -setup $SETUP17 -body {
+	foreach xx {abc def ghi jkl} {
+	    set child [::dom::document createElement $doc [string toupper $xx]]
+	    set text [::dom::document createTextNode $doc $xx]
+	    ::dom::node appendChild $fragment $child
+	    ::dom::node appendChild $child $text
+	}
+	::dom::node appendChild $top $fragment
+	::dom::DOMImplementation serialize $doc
+    } -cleanup $CLEANUP -result {<?xml version='1.0'?>
+<!DOCTYPE top>
+<top><ABC>abc</ABC><DEF>def</DEF><GHI>ghi</GHI><JKL>jkl</JKL></top>}
+
+    test node-17.4 {document fragment insert} -constraints {!dom_libxml2} -setup $SETUP17 -body {
+	foreach xx {abc jkl} {
+	    set child [::dom::document createElement $doc [string toupper $xx]]
+	    set text [::dom::document createTextNode $doc $xx]
+	    ::dom::node appendChild $fragment $child
+	    ::dom::node appendChild $child $text
+	}
+	::dom::node appendChild $top $fragment
+	set fragment [::dom::document createDocumentFragment $doc]
+	foreach xx {def ghi} {
+	    set child2 [::dom::document createElement $doc [string toupper $xx]]
+	    set text [::dom::document createTextNode $doc $xx]
+	    ::dom::node appendChild $fragment $child2
+	    ::dom::node appendChild $child2 $text
+	}
+	::dom::node insertBefore $top $fragment $child
+	::dom::DOMImplementation serialize $doc
+    } -cleanup $CLEANUP -result {<?xml version='1.0'?>
+<!DOCTYPE top>
+<top><ABC>abc</ABC><DEF>def</DEF><GHI>ghi</GHI><JKL>jkl</JKL></top>}
+
+    test node-17.5 {document fragment replace} -constraints {!dom_libxml2} -setup $SETUP17 -body {
+	foreach xx {abc def xxx} {
+	    set child [::dom::document createElement $doc [string toupper $xx]]
+	    set text [::dom::document createTextNode $doc $xx]
+	    ::dom::node appendChild $fragment $child
+	    ::dom::node appendChild $child $text
+	}
+	::dom::node appendChild $top $fragment
+	set fragment [::dom::document createDocumentFragment $doc]
+	foreach xx {ghi jkl} {
+	    set child2 [::dom::document createElement $doc [string toupper $xx]]
+	    set text [::dom::document createTextNode $doc $xx]
+	    ::dom::node appendChild $fragment $child2
+	    ::dom::node appendChild $child2 $text
+	}
+	::dom::node replaceChild $top $fragment $child
+	::dom::DOMImplementation serialize $doc
+    } -cleanup $CLEANUP -result {<?xml version='1.0'?>
+<!DOCTYPE top>
+<top><ABC>abc</ABC><DEF>def</DEF><GHI>ghi</GHI><JKL>jkl</JKL></top>}
+
+    test node-18.1 {cget -parsingComplete} -constraints {dom_c} -setup $SETUP -body {
+	::dom::node cget $top -parsingComplete
+    } -cleanup $CLEANUP -result 1
+
+    test node-18.2 {cget -parsingComplete document} -constraints {dom_c} -setup $SETUP -body {
+	::dom::node cget $doc -parsingComplete
+    } -cleanup $CLEANUP -result 1
+
+    test node-18.3 {configure -parsingComplete} -constraints {dom_c} -setup $SETUP -body {
+	::dom::node configure $top -parsingComplete
+    } -cleanup $CLEANUP -result 1
+
+    test node-18.4 {configure -parsingComplete document} -constraints {dom_c} -setup $SETUP -body {
+	::dom::node configure $doc -parsingComplete
+    } -cleanup $CLEANUP -result 1
+
+    test node-18.5 {configure -parsingComplete readonly} -constraints {dom_c} -setup $SETUP -body {
+	expectError {
+	    ::dom::node configure $top -parsingComplete 1
+	}
+    } -cleanup $CLEANUP -result {no modification allowed error: an attempt was made to modify an object\
+	where modifications are not allowed}
+
+    test node-19.1 {isSameNode - too few arguments} -constraints {dom_tcl || dom_libxml2} -setup $SETUP -match glob -body {
+	expectError {
+	    ::dom::node isSameNode
+	}
+    } -cleanup $CLEANUP -result {wrong # args*}
+    test node-19.2 {isSameNode - too few arguments} -constraints {dom_tcl || dom_libxml2} -setup $SETUP -match glob -body {
+	expectError {
+	    ::dom::node isSameNode $top
+	}
+    } -cleanup $CLEANUP -result {wrong # args*}
+    test node-19.2.1 {isSameNode - too few arguments} -constraints {dom_tcl || dom_libxml2} -setup $SETUP -match glob -body {
+	expectError {
+	    $top isSameNode
+	}
+    } -cleanup $CLEANUP -result {wrong # args*}
+    test node-19.3 {isSameNode - too many arguments} -constraints {dom_tcl || dom_libxml2} -setup $SETUP -match glob -body {
+	expectError {
+	    ::dom::node isSameNode $top $child1 $child2
+	}
+    } -cleanup $CLEANUP -result {wrong # args*}
+    test node-19.4 {isSameNode - same node} -constraints {dom_tcl || dom_libxml2} -setup $SETUP -body {
+	::dom::node isSameNode $top $top
+    } -cleanup $CLEANUP -result 1
+    test node-19.4.1 {isSameNode - same node} -constraints {dom_tcl || dom_libxml2} -setup $SETUP -body {
+	$top isSameNode $top
+    } -cleanup $CLEANUP -result 1
+    test node-19.5 {isSameNode - different node} -constraints {dom_tcl || dom_libxml2} -setup $SETUP -body {
+	::dom::node isSameNode $top $child1
+    } -cleanup $CLEANUP -result 0
+    test node-19.5.1 {isSameNode - different node} -constraints {dom_tcl || dom_libxml2} -setup $SETUP -body {
+	$top isSameNode $child1
+    } -cleanup $CLEANUP -result 0
+    test node-19.4 {isSameNode - same doc} -constraints {dom_tcl || dom_libxml2} -setup $SETUP -body {
+	::dom::node isSameNode $doc $doc
+    } -cleanup $CLEANUP -result 1
+    test node-19.5 {isSameNode - different doc} -constraints {dom_tcl || dom_libxml2} -setup $SETUP -body {
+	::dom::node isSameNode $doc $top
+    } -cleanup $CLEANUP -result 0
+
+    test node-20.1 {stringValue - argument parsing} -setup $SETUP -match glob -body {
+	expectError {
+	    dom::node stringValue
+	}
+    } -cleanup $CLEANUP -result {wrong # args*}
+    test node-20.2 {stringValue - argument parsing} -setup $SETUP -match glob -body {
+	expectError {
+	    dom::node stringValue $top FooBar
+	}
+    } -cleanup $CLEANUP -result {wrong # args*}
+    test node-20.3 {stringValue - element} -setup $SETUP -body {
+	dom::node stringValue $top
+    } -cleanup $CLEANUP -result Child2
+    test node-20.3.1 {stringValue - element} -setup $SETUP -body {
+	$top stringValue
+    } -cleanup $CLEANUP -result Child2
+    test node-20.4 {stringValue - textNode} -setup $SETUP -body {
+	dom::node stringValue $child2
+    } -cleanup $CLEANUP -result Child2
+    test node-20.4.1 {stringValue - textNode} -setup $SETUP -body {
+	$child2 stringValue
+    } -cleanup $CLEANUP -result Child2
+    test node-20.5 {stringValue - document only containing text node} -setup {
+	set doc [dom::create]
+	set txt [dom::document createTextNode $doc {filename.xml}]
+	dom::node appendChild $doc $txt
+    } -body {
+	dom::node stringValue $doc
+    } -cleanup {
+	dom::destroy $doc
+    } -result {filename.xml}
+    # TODO: test multiple text nodes, attribute nodes, comments, PIs
+
+    cleanupTests
+}
+
+namespace delete ::dom::nodeTest
+
+return

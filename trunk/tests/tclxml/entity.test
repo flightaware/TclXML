@@ -1,0 +1,175 @@
+# Features covered:  Entities
+#
+# This file contains a collection of tests for the TclXML parser.
+# This file tests the parser's performance on entities.
+# Sourcing this file into Tcl runs the tests and generates output
+# for errors.  No output means no errors were found.
+#
+# Copyright (c) 2008 Explain
+# http://www.explain.com.au/
+# Copyright (c) 1999-2003 Zveno Pty Ltd.
+#
+# $Id: entity.test,v 1.9 2003/12/03 20:06:36 balls Exp $
+
+package require tcltest
+source [file join [tcltest::workingDirectory] tclxmlutils.tcl]
+
+testPackage $::tcltest::parser
+
+namespace eval ::xml::entityTest {
+    namespace import -force ::tcltest::*
+
+    variable SETUP {
+	variable elements 0
+	variable result {}
+	variable references {}
+
+	proc Start {name attrList args} {
+	    variable elements
+	    incr elements
+	}
+
+	proc pcdata text {
+	    variable result
+	    append result $text
+	}
+
+	proc EntityRef name {
+	    variable references
+	    variable result
+	    lappend references $name
+	    append result ##entityreference##
+	    return {}
+	}
+
+	set parser [xml::parser \
+		-characterdatacommand [namespace code pcdata]]
+    }
+    variable CLEANUP {
+	catch {unset elements}
+	catch {unset result}
+	catch {unset references}
+	rename EntityRef {}
+	rename Start {}
+	rename pcdata {}
+	$parser free
+    }
+
+    test entity-1.1 {parameter entity in document entity} -setup $SETUP -body {
+	$parser parse {<!DOCTYPE Test [
+<!ENTITY % Wrong "This is wrong">
+]>
+<Test>%wrong;</Test>}
+	set result
+    } -cleanup $CLEANUP -result {%wrong;}
+
+    test entity-1.2 {character entities in hex} -setup $SETUP -body {
+	$parser parse {<Test>&#x41;&#x3C;&#x3e;&#x24;&#x5B;&#x5D;</Test>}
+	set result
+    } -cleanup $CLEANUP -result {A<>$[]}
+
+    test entity-1.3 {character entities in decimal} -setup $SETUP -body {
+	$parser parse {<Test>&#65;&#60;&#62;&#36;&#91;&#93;</Test>}
+	set result
+    } -cleanup $CLEANUP -result {A<>$[]}
+
+    test entity-1.4 {illegal character entity} -setup $SETUP -match regexp -body {
+	expectError {
+	    $parser parse {<Test>&#blah;</Test>}
+	}
+    } -cleanup $CLEANUP -result {(invalid decimal value)|(malformed character entity)}
+
+    test entity-2.1 {predefined general entities} -setup $SETUP -body {
+	$parser parse {<Test>&lt;&gt;&amp;&quot;&apos;</Test>}
+	set result
+    } -cleanup $CLEANUP -result {<>&"'}
+
+    test entity-2.2 {undefined general entities - no callback} -setup $SETUP -match regexp -body {
+	expectError {
+	    $parser parse {<Test>&undefined;</Test>}
+	}
+    } -cleanup $CLEANUP -result {(Entity 'undefined' not defined)|(undefined entity reference)}
+
+    test entity-2.3 {undefined general entities - with callback} -setup $SETUP -constraints {!xml_libxml2} -match glob -body {
+	$parser configure \
+		-entityreferencecommand [namespace code EntityRef]
+	$parser parse {<Test>&undefined;</Test>}
+	list $result $references
+    } -cleanup $CLEANUP -result {*##entityreference##* undefined}
+
+    # This example is from the XML Recommendation, Appendix D p. 29.
+
+    variable example1_p_content {An ampersand (&) may be escaped
+numerically (&#38;) or with a general entity
+(&amp;).}
+
+    test entity-3.1 {replacement text with element markup} -setup $SETUP -constraints {!xml_libxml2} -body {
+	$parser configure \
+		-elementstartcommand [namespace code Start]
+	$parser parse {<!DOCTYPE Test [
+    <!ENTITY example "<p>An ampersand (&#38;#38;) may be escaped
+numerically (&#38;#38;#38;) or with a general entity
+(&amp;amp;).</p>">
+]>
+<Test>&example;</Test>}
+	list $result $elements
+    } -cleanup $CLEANUP -result [list $example1_p_content 2]
+
+    test entity-4.1 {entity references} -setup $SETUP -constraints {!xml_libxml2} -body {
+	$parser configure \
+		-entityreferencecommand [namespace code EntityRef]
+	$parser parse {<Test>undefined &myentity; reference</Test>}
+	list $result $references
+    } -cleanup $CLEANUP -result {{undefined ##entityreference## reference} myentity}
+
+    # Test case from bug #431353 submitted by Shaun Lowry
+
+    test entity-5.1 {entity references w/- Tcl special characters} -setup $SETUP -body {
+	$parser parse [format {<?xml version="1.0" standalone="no"?>
+<!DOCTYPE MyDoc>
+<MyDoc>
+&amp; %s
+</MyDoc>} \{]
+	set result
+    } -cleanup $CLEANUP -result [format {
+& %s
+} \{]
+
+    test entity-5.2 {entity references w/- Tcl special characters} -setup $SETUP -body {
+	$parser parse [format {<?xml version="1.0" standalone="no"?>
+<!DOCTYPE MyDoc>
+<MyDoc>
+&amp; %s
+</MyDoc>} \[]
+	set result
+    } -cleanup $CLEANUP -result [format {
+& %s
+} \[]
+
+    test entity-5.3 {entity references w/- Tcl special characters} -setup $SETUP -body {
+	$parser parse [format {<?xml version="1.0" standalone="no"?>
+<!DOCTYPE MyDoc>
+<MyDoc>
+&amp; %s
+</MyDoc>} \\]
+	set result
+    } -cleanup $CLEANUP -result [format {
+& %s
+} \\]
+
+    test entity-5.4 {entity references w/- Tcl special characters} -setup $SETUP -body {
+	$parser parse [format {<?xml version="1.0" standalone="no"?>
+<!DOCTYPE MyDoc>
+<MyDoc>
+&amp; %s%s
+</MyDoc>} \\ \{]
+	set result
+    } -cleanup $CLEANUP -result [format {
+& %s%s
+} \\ \{]
+
+    cleanupTests
+}
+
+namespace delete ::xml::entityTest
+return

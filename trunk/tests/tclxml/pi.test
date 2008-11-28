@@ -1,0 +1,87 @@
+# Features covered:  Processing Instructions
+#
+# This file contains a collection of tests for the TclXML parser.
+# This file tests the parser's performance on Processing Instructions.
+# Sourcing this file into Tcl runs the tests and generates output
+# for errors.  No output means no errors were found.
+#
+# Copyright (c) 1998-2004 Zveno Pty Ltd.
+#
+# $Id: pi.test,v 1.7 2004/02/20 09:15:52 balls Exp $
+
+package require tcltest
+source [file join [tcltest::workingDirectory] tclxmlutils.tcl]
+
+testPackage $::tcltest::parser
+
+namespace eval ::xml::piTest {
+    namespace import -force ::tcltest::*
+
+    variable SETUP {
+	variable result {}
+
+	proc PI {target data args} {
+	    variable result
+	    lappend result $target $data
+	}
+
+	set parser [xml::parser \
+		-processinginstructioncommand [namespace code PI]]
+    }
+    variable CLEANUP {
+	catch {unset result}
+	$parser free
+    }
+
+    test pi-1.1 {PI} -setup $SETUP -body {
+	$parser parse {<?xml version="1.0"?>
+<!DOCTYPE Test>
+<Test><?Test This is a processing instruction?></Test>
+}
+	set result
+    } -cleanup $CLEANUP -result {Test {This is a processing instruction}}
+
+    test pi-1.2 {PI: missing trailing ?} -setup $SETUP -match regexp -body {
+	expectError {
+	    $parser parse {<?xml version="1.0"?>
+<!DOCTYPE Test>
+<Test><?Test This is a syntax error></Test>
+}
+	}
+    } -cleanup $CLEANUP -result {(PI: expected '\?' character)|(error:.*PI Test never end)|(.*processing-instruction-not-finished.*)}
+
+    # Test Tcl special characters in PI data.
+    # NB. Tets had to modified since the PI target must be
+    # an XML Name (reported by rolf@pointsman.de)
+
+    test pi-2.1 {PI with special characters} -setup $SETUP -body {
+	$parser parse {<?xml version="1.0"?>
+<!DOCTYPE Test>
+<Test><?if [!VMLRender]?></Test>
+}
+	set result
+    } -cleanup $CLEANUP -result {if {[!VMLRender]}}
+
+    test pi-2.2 {PI target with special characters} -setup $SETUP -match regexp -body {
+	expectError {
+	    $parser parse {<?xml version="1.0"?>
+<!DOCTYPE Test>
+<Test><?[if !VMLRender]?></Test>
+}
+	}
+    } -cleanup $CLEANUP -result {(illegal character.*in processing instruction target)|(no target name)}
+
+    test pi-2.3 {PI target with "xml"} -setup $SETUP -constraints {!xml_libxml2} -match glob -body {
+	expectError {
+	    $parser parse {<?xml version="1.0"?>
+<!DOCTYPE Test>
+<Test><?abxMLcl illegal?></Test>
+}
+	}
+    } -cleanup $CLEANUP -result {*characters "xml" not permitted*}
+
+    cleanupTests
+}
+
+namespace delete ::xml::piTest
+return

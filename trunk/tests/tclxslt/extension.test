@@ -1,0 +1,141 @@
+# Features covered:  XSLT Extensions
+#
+# This file contains a collection of tests for the TclXSLT package.
+# This file tests the parser's performance on tranformations.
+# Sourcing this file into Tcl runs the tests and generates output
+# for errors.  No output means no errors were found.
+#
+# Copyright (c) 2008 Explain
+# http://www.explain.com.au/
+# Copyright (c) 2001-2003 Zveno Pty Ltd.
+#
+# $Id: extension.test,v 1.5 2003/12/03 20:20:39 balls Exp $
+
+package require tcltest
+source [file join [tcltest::workingDirectory] tclxsltutils.tcl]
+
+testPackage xslt
+
+namespace eval ::xslt::extensionTest {
+    namespace import -force ::tcltest::*
+
+    namespace eval ::xslt::extensionTest::exttest {
+	namespace export countargs
+    }
+
+    proc ::xslt::extensionTest::exttest::countargs args {
+	return [llength $args]
+    }
+
+    proc ::xslt::extensionTest::exttest::testnodes {ns args} {
+	variable nodenames
+
+	foreach node $ns {
+	    lappend nodenames [dom::node cget $node -nodeName]
+	}
+
+	return [lindex $ns end]
+    }
+
+    variable SETUP {
+	variable nodenames {}
+
+	xslt::extension add http://tclxml.sourceforge.net/schemas/exttest ::xslt::extensionTest::exttest
+
+	set srcdoc [dom::parse {<?xml version="1.0"?>
+<Test>
+  <value1>First value</value1>
+  <value2>Second value</value2>
+  <value3>Third value</value3>
+  <value4>
+    <para>Fourth</para>
+    <para>value</para>
+  </value4>
+</Test>
+}]
+    }
+    variable CLEANUP {
+	catch {unset nodenames}
+	xslt::extension remove http://tclxml.sourceforge.net/schemas/exttest
+	dom::destroy $srcdoc
+	dom::destroy $stydoc
+	rename $ssheet {}
+    }
+
+    test extension-1.1 {Register extension namespace} -body {
+	xslt::extension add http://tclxml.sourceforge.net/schemas/exttest ::exttest
+    } -cleanup {
+	xslt::extension remove http://tclxml.sourceforge.net/schemas/exttest
+    } -result {}
+    test extension-1.2 {Unregister extension namespace} -setup {
+	xslt::extension add http://tclxml.sourceforge.net/schemas/exttest ::exttest
+    } -body {
+	xslt::extension remove http://tclxml.sourceforge.net/schemas/exttest
+    } -result {}
+
+    test extension-2.1 {Extension function} -setup {
+	eval $SETUP
+	set stydoc [dom::parse {<xsl:stylesheet version='1.0'
+    xmlns:xsl='http://www.w3.org/1999/XSL/Transform'
+    xmlns:ext='http://tclxml.sourceforge.net/schemas/exttest'
+    extension-element-prefixes='ext'>
+  <xsl:output method='text'/>
+
+  <xsl:template match='/'>
+    <xsl:variable name='value' select='ext:countargs("arg1", "arg2")'/>
+    <xsl:value-of select='$value'/>
+  </xsl:template>
+
+</xsl:stylesheet>
+}]
+	set ssheet [xslt::compile $stydoc]
+    } -body {
+	set result [$ssheet transform $srcdoc]
+	dom::serialize $result -method text
+    } -cleanup $CLEANUP -result 2
+
+    test extension-2.2 {Extension function, no args} -setup {
+	eval $SETUP
+	set stydoc [dom::parse {<xsl:stylesheet version='1.0'
+    xmlns:xsl='http://www.w3.org/1999/XSL/Transform'
+    xmlns:ext='http://tclxml.sourceforge.net/schemas/exttest'
+    extension-element-prefixes='ext'>
+  <xsl:output method='text'/>
+
+  <xsl:template match='/'>
+    <xsl:variable name='value' select='ext:countargs()'/>
+    <xsl:value-of select='$value'/>
+  </xsl:template>
+
+</xsl:stylesheet>
+}]
+	set ssheet [xslt::compile $stydoc]
+    } -body {
+	set result [$ssheet transform $srcdoc]
+	dom::serialize $result -method text
+    } -cleanup $CLEANUP -result 0
+
+    test extension-2.3 {pass nodeset to function, return nodeset} -setup {
+	eval $SETUP
+	set stydoc [dom::parse {<xsl:stylesheet version='1.0'
+    xmlns:xsl='http://www.w3.org/1999/XSL/Transform'
+    xmlns:ext='http://tclxml.sourceforge.net/schemas/exttest'
+    extension-element-prefixes='ext'>
+  <xsl:output method='text'/>
+  <xsl:template match='/Test'>
+    <xsl:value-of select='ext:testnodes(*)/preceding-sibling::*[1]'/>
+  </xsl:template>
+
+</xsl:stylesheet>
+}]
+	set ssheet [xslt::compile $stydoc]
+    } -body {
+	set result [$ssheet transform $srcdoc]
+	list [dom::serialize $result -method text] $::xslt::extensionTest::exttest::nodenames
+    } -cleanup $CLEANUP -result {{Third value} {value1 value2 value3 value4}}
+
+    cleanupTests
+}
+
+namespace delete ::xslt::extensionTest
+return

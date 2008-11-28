@@ -1,0 +1,305 @@
+# Features covered:  Parser functions
+#
+# This file contains a collection of tests for the TclXML parser.
+# This file tests the parser's basic functions.
+# Sourcing this file into Tcl runs the tests and generates output
+# for errors.  No output means no errors were found.
+#
+# Copyright (c) 1999-2004 Zveno Pty Ltd.
+#
+# $Id: parser.test,v 1.10 2004/02/20 09:15:52 balls Exp $
+
+package require tcltest
+source [file join [tcltest::workingDirectory] tclxmlutils.tcl]
+
+testPackage $::tcltest::parser
+
+namespace eval ::xml::parserTest {
+    namespace import -force ::tcltest::*
+
+    variable SETUP {
+	variable started
+	array set started {}
+	variable ended
+	array set ended {}
+	variable elList {}
+	variable data {}
+
+	proc parray arrayName {
+	    upvar #0 $arrayName arr
+	    foreach key [lsort [array names $arrayName]] {
+		lappend result $key $arr($key)
+	    }
+	    return $result
+	}
+
+	proc Start {name atList args} {
+	    variable started
+	    array set opts $args
+	    array set atts $atList
+
+	    if {![info exists started($name)]} {
+		set started($name) 1
+	    } else {
+		incr started($name)
+	    }
+
+	    if {[info exists atts(class)]} {
+		switch $atts(class) {
+		    continue {
+			return -code continue
+		    }
+		    break {
+			return -code break
+		    }
+		    error {
+			return -code error "error condition in callback"
+		    }
+		    default {
+			return -code $atts(class) -errorcode $atts(class)
+		    }
+		}
+	    }
+	}
+
+	proc End {name args} {
+	    variable ended
+	    array set opts $args
+
+	    if {![info exists ended($name)]} {
+		set ended($name) 1
+	    } else {
+		incr ended($name)
+	    }
+	}
+	proc PI {name args} {
+	    return -code $name
+	}
+
+	proc ElStart {name atList args} {
+	    variable elList
+	    array set opts {-empty 0}
+	    array set opts $args
+	    lappend elList start $name $opts(-empty)
+	}
+	proc ElEnd {name args} {
+	    variable elList
+	    array set opts {-empty 0}
+	    array set opts $args
+	    lappend elList end $name $opts(-empty)
+	}
+	proc pcdata text {
+	    variable data
+	    append data $text
+	}
+    }
+    variable SETUP2 {
+	eval $SETUP
+	set p [::xml::parser -elementstartcommand [namespace code Start]]
+    }
+    variable CLEANUP {
+	catch {unset started}
+	catch {unset ended}
+	catch {unset elList}
+	catch {unset data}
+	rename parray {}
+	rename Start {}
+	rename End {}
+	rename PI {}
+	rename ElStart {}
+	rename ElEnd {}
+	rename pcdata {}
+	catch {$p free}
+    }
+
+    test parser-1.1 {parser creation} -setup $SETUP -body {
+	set p [::xml::parser]
+	list [regexp {^xmlparser[0-9]+$} $p] \
+		[string equal [info commands $p] $p]
+    } -cleanup $CLEANUP -result {1 1}
+
+    test parser-1.2 {parser creation, only options} -setup $SETUP -body {
+	set p [::xml::parser -elementstartcommand EStart]
+	list [regexp {^xmlparser[0-9]+$} $p] \
+		[string equal [info commands $p] $p]
+    } -cleanup $CLEANUP -result {1 1}
+
+    test parser-1.3 {parser creation, named} -body {
+	set result [::xml::parser testparser]
+	list $result [info commands testparser]
+    } -cleanup {
+	rename testparser {}
+    } -result {testparser testparser}
+
+    test parser-1.4 {parser creation, named with options} -body {
+	set result [::xml::parser testparser -elementstartcommand EStart]
+	list $result [info commands testparser]
+    } -cleanup {
+	rename testparser {}
+    } -result {testparser testparser}
+
+    test parser-1.5 {configure -baseuri} -body {
+	set parser [::xml::parser -baseuri file:///tmp/parser-1.5.test]
+	ok
+    } -cleanup {
+	$parser free
+    } -result {}
+
+    # Test break return code from callback
+
+    test parser-2.1 {break in callback} -setup $SETUP2 -body {
+	$p parse {<?xml version="1.0"?>
+<Test>
+<Element id="el1">Should see this data</Element>
+<Element class="break" id="el2">Should not see this data<Element id="el3"/></Element>
+<Element id='el4'>Should not see this data</Element>
+</Test>
+}
+	set started(Element)
+    } -cleanup $CLEANUP -result 2
+
+    test parser-2.2 {break in callback} -setup $SETUP2 -body {
+	$p parse {<?xml version="1.0"?>
+<Test>
+<Element>Should see this data</Element>
+<Element>Should see this data<Element class="break"/></Element>
+<Element>Should not see this data</Element>
+</Test>
+}
+	set started(Element)
+    } -cleanup $CLEANUP -result 3
+
+    test parser-2.3 {break in callback} -setup $SETUP2 -body {
+	$p parse {<?xml version="1.0"?>
+<Test>
+<Element>Should see this data</Element>
+<Element>Should see this data
+  <?break?>
+</Element>
+<Element>Should not see this data</Element>
+</Test>
+}
+	set started(Element)
+    } -cleanup $CLEANUP -result 3
+
+    test parser-3.1 {continue in callback} -setup $SETUP2 -body {
+	$p parse {<?xml version="1.0"?>
+<Test>
+<Element id='el1'>Should see this data</Element>
+<Element class="continue" id='el2'>Should not see this data
+  <Element id='el3'/>
+</Element>
+<Element id='el4'>Should see this data</Element>
+</Test>
+}
+	set started(Element)
+    } -cleanup $CLEANUP -result 3
+
+    test parser-3.2 {continue in callback} -setup $SETUP2 -body {
+	$p parse {<?xml version="1.0"?>
+<Test>
+<Element>Should see this data</Element>
+<Element>Should see this data
+  <Element class="continue">
+    Should not see this data
+    <Element/>
+  </Element>
+  Should see this data
+  <Element/>
+</Element>
+<Element>Should see this data</Element>
+</Test>
+}
+	set started(Element)
+    } -cleanup $CLEANUP -result 5
+
+    test parser-3.3 {continue in callback} -setup $SETUP2 -body {
+	$p parse {<?xml version="1.0"?>
+<Test>
+<Element>Should see this data</Element>
+<Element>Should see this data
+  <Element class="continue">
+    Should not see this data
+    <Element class="break"/>
+    break will have no effect
+  </Element>
+  Should see this data
+  <Element/>
+</Element>
+<Element>Should see this data</Element>
+</Test>
+}
+	set started(Element)
+    } -cleanup $CLEANUP -result 5
+
+    test parser-4.1 {error in callback} -setup $SETUP2 -body {
+	set result [catch {
+	    $p parse {<?xml version="1.0"?>
+<Test>
+<Element>Should see this data</Element>
+<Element class="error"/>
+<Element>Should not see this data</Element>
+</Test>
+}
+	}]
+	list $result $started(Element)
+    } -cleanup $CLEANUP -result {1 2}
+
+    # catch doesn't seem to return the actual error code
+    test parser-4.2 {error in callback} -setup $SETUP2 -body {
+	set errcode [catch {$p parse {<?xml version="1.0"?>
+<Test>
+<Element>Should see this data</Element>
+<Element class="13"/>
+<Element>Should not see this data</Element>
+</Test>
+}} result]
+	list $errcode $started(Element)
+    } -cleanup $CLEANUP -result {1 2}
+
+    test parser-5.0 {free parser} -body {
+	set p [::xml::parser]
+	$p free
+	info commands $p
+    } -result {}
+
+    # Test for bug #510418
+    test parser-5.1 {free in namespace} -body {
+	namespace eval ::xml::parserTest::test51 {
+	    set p [::xml::parser -elementstartcommand Foo]
+	    $p free
+	}
+    } -cleanup {
+	namespace delete ::xml::parserTest::test51
+    } -result {}
+
+    # Test for bug #510419
+    test parser-6.1 {reset parser instance} -setup $SETUP2 -body {
+	$p reset
+	$p parse {<Test/>}
+	set first $started(Test)
+
+	catch {unset started}
+	array set started {}
+	$p reset
+	$p parse {<Test><Test/></Test>}
+
+	list $first $started(Test)
+    } -cleanup $CLEANUP -result [list 1 2]
+
+    # Test for bug #579264
+    # libxml2 doesn't recognise ignorable whitespace unless validating
+    test parser-7.1 {-ignorewhitespace option} -setup $SETUP -constraints {!xml_libxml2} -body {
+	set p [::xml::parser -characterdatacommand [namespace code pcdata] -ignorewhitespace 1]
+	$p parse {<Test>
+  <Value/>
+</Test>
+}
+	string length $data
+    } -cleanup $CLEANUP -result 0
+
+    cleanupTests
+}
+
+namespace delete ::xml::parserTest
+return

@@ -1,0 +1,573 @@
+# Commands covered:  ::dom::document
+#
+# This file contains a collection of tests for one or more of the 
+# TclDOM commands.  Sourcing this file into Tcl runs the tests and
+# generates output for errors.  No output means no errors were found.
+#
+# Copyright (c) 2008 Explain
+# Copyright (c) 1998-2004 Zveno Pty Ltd.
+#
+# $Id: document.test,v 1.11 2004/02/25 20:10:30 balls Exp $
+
+package require tcltest
+source [file join [tcltest::workingDirectory] tcldomutils.tcl]
+
+testPackage dom
+
+namespace eval ::dom::documentTest {
+    namespace import -force ::tcltest::*
+
+    variable SETUP {
+	set doc [::dom::create]
+	set top [$doc createElement Test]
+	::dom::node appendChild $doc $top
+    }
+
+    variable CLEANUP {
+	dom::destroy $doc
+    }
+
+    test document-1.1 {cget -doctype} -setup $SETUP -constraints {dom_c} -body {
+	::dom::document cget $doc -doctype
+    } -cleanup $CLEANUP -result {}
+    test document-1.1 {cget -doctype} -setup $SETUP -constraints {dom_tcl} -body {
+	string equal [::dom::document cget $doc -doctype] {}
+    } -cleanup $CLEANUP -result 0
+    test document-1.1.1 {cget -doctype} -setup $SETUP -constraints {dom_c} -body {
+	$doc cget -doctype
+    } -cleanup $CLEANUP -result {}
+    test document-1.1.1 {cget -doctype} -setup $SETUP -constraints {dom_tcl} -body {
+	string equal [$doc cget -doctype] {}
+    } -cleanup $CLEANUP -result 0
+    test document-1.2 {cget -implementation} -setup $SETUP -constraints {dom_c} -body {
+	::dom::document cget $doc -implementation
+    } -cleanup $CLEANUP -result {::dom::DOMImplementation}
+    test document-1.2 {cget -implementation} -setup $SETUP -constraints {dom_tcl} -body {
+	::dom::document cget $doc -implementation
+    } -cleanup $CLEANUP -result {::dom::tcl::DOMImplementation}
+    test document-1.2.1 {cget -implementation} -setup $SETUP -constraints {dom_tcl} -body {
+	$doc cget -implementation
+    } -cleanup $CLEANUP -result {::dom::tcl::DOMImplementation}
+    test document-1.2 {cget -implementation} -setup $SETUP -constraints {dom_libxml2} -body {
+	::dom::document cget $doc -implementation
+    } -cleanup $CLEANUP -result {::dom::libxml2::DOMImplementation}
+    test document-1.2.1 {cget -implementation} -setup $SETUP -constraints {dom_libxml2} -body {
+	$doc cget -implementation
+    } -cleanup $CLEANUP -result {::dom::libxml2::DOMImplementation}
+    test document-1.3 {cget -documentElement} -body {
+	set doc [dom::create]
+	::dom::document cget $doc -documentElement
+    } -cleanup $CLEANUP -result {}
+    test document-1.3.1 {cget -documentElement} -body {
+	set doc [dom::create]
+	$doc cget -documentElement
+    } -cleanup $CLEANUP -result {}
+    test document-1.4 {error: cget too few arguments} -setup $SETUP -match glob -body {
+	expectError {
+	    ::dom::document cget $doc
+	}
+    } -cleanup $CLEANUP -result {wrong # args*}
+    test document-1.4.1 {error: cget too few arguments} -setup $SETUP -match glob -body {
+	expectError {
+	    $doc cget
+	}
+    } -cleanup $CLEANUP -result {wrong # args*}
+    test document-1.5 {error: cget too many arguments} -setup $SETUP -match glob -body {
+	expectError {
+	    ::dom::document cget $doc -foo bar
+	}
+    } -cleanup $CLEANUP -result {wrong # args*}
+    test document-1.5.1 {error: cget too many arguments} -setup $SETUP -match glob -body {
+	expectError {
+	    $doc cget -foo bar
+	}
+    } -cleanup $CLEANUP -result {wrong # args*}
+    test document-1.6 {error: cget unknown option} -setup $SETUP -match glob -body {
+	expectError {
+	    ::dom::document cget $doc -foo
+	}
+    } -cleanup $CLEANUP -result {bad option*}
+    test document-1.6.1 {error: cget unknown option} -setup $SETUP -match glob -body {
+	expectError {
+	    $doc cget -foo
+	}
+    } -cleanup $CLEANUP -result {bad option*}
+    test document-1.7 {cget -version} -constraints {dom_tcl} -setup $SETUP -body {
+	::dom::document cget $doc -version
+    } -cleanup $CLEANUP -result 1.0
+    test document-1.7.1 {cget -version} -constraints {dom_tcl} -setup $SETUP -body {
+	$doc cget -version
+    } -cleanup $CLEANUP -result 1.0
+
+    test document-2.1 {configure} -body {
+	set doc [dom::create]
+	::dom::document configure $doc -documentElement
+    } -cleanup $CLEANUP -result {}
+    test document-2.1.1 {configure} -body {
+	set doc [dom::create]
+	$doc configure -documentElement
+    } -cleanup $CLEANUP -result {}
+    test document-2.2 {error: configure read-only option} -setup $SETUP -match glob -body {
+	expectError {
+	    ::dom::document configure $doc -documentElement $doc
+	}
+    } -cleanup $CLEANUP -result {attribute * read-only}
+    test document-2.2.1 {error: configure read-only option} -setup $SETUP -match glob -body {
+	expectError {
+	    $doc configure -documentElement $doc
+	}
+    } -cleanup $CLEANUP -result {attribute * read-only}
+    test document-2.3 {configure -version} -constraints {dom_tcl} -setup $SETUP -body {
+	::dom::document configure $doc -version 1.0
+    } -cleanup $CLEANUP -result {}
+    test document-2.3.1 {configure -version} -constraints {dom_tcl} -setup $SETUP -body {
+	$doc configure -version 1.0
+    } -cleanup $CLEANUP -result {}
+    test document-2.4 {error: configure -version} -constraints {dom_tcl} -setup $SETUP -match glob -body {
+	expectError {
+	    ::dom::document configure $doc -version 1.1
+	}
+    } -cleanup $CLEANUP -result *
+    test document-2.4.1 {error: configure -version} -constraints {dom_tcl} -setup $SETUP -match glob -body {
+	expectError {
+	    $doc configure -version 1.1
+	}
+    } -cleanup $CLEANUP -result *
+    test document-2.5 {configure -encoding} -constraints {dom_tcl} -setup $SETUP -body {
+	::dom::document configure $doc -encoding ISO-8859-1
+	::dom::document cget $doc -encoding
+    } -cleanup $CLEANUP -result ISO-8859-1
+    test document-2.5.1 {configure -encoding} -constraints {dom_tcl} -setup $SETUP -body {
+	$doc configure -encoding ISO-8859-1
+	$doc cget -encoding
+    } -cleanup $CLEANUP -result ISO-8859-1
+    test document-2.6 {configure -standalone} -constraints {dom_tcl} -setup $SETUP -body {
+	::dom::document configure $doc -standalone 1
+	::dom::document cget $doc -standalone
+    } -cleanup $CLEANUP -result yes
+    test document-2.6.1 {configure -standalone} -constraints {dom_tcl} -setup $SETUP -body {
+	$doc configure -standalone 1
+	$doc cget -standalone
+    } -cleanup $CLEANUP -result yes
+
+    test document-3.1 {create document element} -body {
+	set doc [dom::create]
+	set top [::dom::document createElement $doc Test]
+	::dom::node appendChild $doc $top
+	ok
+    } -cleanup $CLEANUP -result {}
+    test document-3.1.1 {create document element} -body {
+	set doc [dom::create]
+	set top [$doc createElement Test]
+	::dom::node appendChild $doc $top
+	ok
+    } -cleanup $CLEANUP -result {}
+    test document-3.2 {element node type} -setup $SETUP -body {
+	::dom::node cget $top -nodeType
+    } -cleanup $CLEANUP -result element
+    test document-3.2.1 {element node type} -setup $SETUP -body {
+	$top cget -nodeType
+    } -cleanup $CLEANUP -result element
+    test document-3.3 {element name} -setup $SETUP -body {
+	::dom::node cget $top -nodeName
+    } -cleanup $CLEANUP -result Test
+    test document-3.3.1 {element name} -setup $SETUP -body {
+	$top cget -nodeName
+    } -cleanup $CLEANUP -result Test
+    test document-3.4 {document element set} -setup $SETUP -body {
+	$top isSameNode [::dom::document cget $doc -documentElement]
+    } -cleanup $CLEANUP -result 1
+    test document-3.4.1 {document element set} -setup $SETUP -body {
+	$top isSameNode [$doc cget -documentElement]
+    } -cleanup $CLEANUP -result 1
+    test document-3.5 {error: no element name} -setup $SETUP -match glob -body {
+	expectError {
+	    ::dom::document createElement $doc
+	}
+    } -cleanup $CLEANUP -result {wrong # args*}
+    test document-3.5.1 {error: no element name} -setup $SETUP -match glob -body {
+	expectError {
+	    $doc createElement
+	}
+    } -cleanup $CLEANUP -result {wrong # args*}
+    test document-3.6 {error: invalid element name} -setup $SETUP -match glob -body {
+	expectError {
+    	    ::dom::document createElement $top {Has Space}
+	}
+    } -cleanup $CLEANUP -result {invalid * name *}
+    test document-3.6.1 {error: invalid element name} -constraints {not_implemented} -setup $SETUP -match glob -body {
+	expectError {
+    	    $top createElement {Has Space}
+	}
+    } -cleanup $CLEANUP -result {invalid * name *}
+    test document-3.7 {error: too many arguments} -setup $SETUP -match glob -body {
+	expectError {
+	    ::dom::document createElement $doc Foo Bar
+	}
+    } -cleanup $CLEANUP -result {wrong # args*}
+    test document-3.7.1 {error: too many arguments} -constraints {not_implemented} -setup $SETUP -match glob -body {
+	expectError {
+	    $doc createElement Foo Bar
+	}
+    } -cleanup $CLEANUP -result {wrong # args*}
+    test document-3.8 {create node command} -setup {
+	set doc [dom::create]
+	set node [dom::document createElement $doc Test]
+    } -body {
+	string equal [info commands $node] {}
+    } -result 0 -cleanup $CLEANUP
+    test document-3.9 {create unconnected element} -setup {
+	set doc [dom::create]
+	set docel [dom::document createElement $doc Test]
+    } -body {
+	set new [$doc createElement New]
+	ok
+    } -result {} -cleanup $CLEANUP
+
+    test document-4.1 {create documentFragment} -setup $SETUP -body {
+	set frag [::dom::document createDocumentFragment $top]
+	ok
+    } -cleanup $CLEANUP -result {}
+    test document-4.1.1 {create documentFragment} -setup $SETUP -body {
+	set frag [$doc createDocumentFragment]
+	ok
+    } -cleanup $CLEANUP -result {}
+    test document-4.2 {documentFragment node type} -setup $SETUP -body {
+	set frag [::dom::document createDocumentFragment $top]
+	::dom::node cget $frag -nodeType
+    } -cleanup $CLEANUP -result documentFragment
+    test document-4.2.1 {documentFragment node type} -setup $SETUP -body {
+	set frag [::dom::document createDocumentFragment $top]
+	$frag cget -nodeType
+    } -cleanup $CLEANUP -result documentFragment
+    test document-4.3 {error: documentFragment too many arguments} -setup $SETUP -match glob -body {
+	expectError {
+	    ::dom::document createDocumentFragment $top Foo
+	}
+    } -cleanup $CLEANUP -result {wrong # args*}
+    test document-4.3.1 {error: documentFragment too many arguments} -constraints {not_implemented} -setup $SETUP -match glob -body {
+	expectError {
+	    $doc createDocumentFragment Foo
+	}
+    } -cleanup $CLEANUP -result {wrong # args*}
+
+    test document-5.1 {create textNode} -setup $SETUP -body {
+	set text [::dom::document createTextNode $top {Sample Data}]
+	ok;
+    } -cleanup $CLEANUP -result {}
+    test document-5.1.1 {create textNode} -setup $SETUP -body {
+	set text [$doc createTextNode {Sample Data}]
+	ok;
+    } -cleanup $CLEANUP -result {}
+    test document-5.2 {textNode node type} -setup $SETUP -body {
+	set text [$doc createTextNode {Sample Data}]
+	::dom::node cget $text -nodeType
+    } -cleanup $CLEANUP -result textNode
+    test document-5.2.1 {textNode node type} -setup $SETUP -body {
+	set text [$doc createTextNode {Sample Data}]
+	$text cget -nodeType
+    } -cleanup $CLEANUP -result textNode
+    test document-5.3 {textNode node name} -setup $SETUP -body {
+	set text [$doc createTextNode {Sample Data}]
+	::dom::node cget $text -nodeName
+    } -cleanup $CLEANUP -result {#text}
+    test document-5.3.1 {textNode node name} -setup $SETUP -body {
+	set text [$doc createTextNode {Sample Data}]
+	$text cget -nodeName
+    } -cleanup $CLEANUP -result {#text}
+    test document-5.4 {textNode node value} -setup $SETUP -body {
+	set text [$doc createTextNode {Sample Data}]
+	::dom::node cget $text -nodeValue
+    } -cleanup $CLEANUP -result {Sample Data}
+    test document-5.4.1 {textNode node value} -setup $SETUP -body {
+	set text [$doc createTextNode {Sample Data}]
+	$text cget -nodeValue
+    } -cleanup $CLEANUP -result {Sample Data}
+    test document-5.5 {error: textNode too few arguments} -setup $SETUP -match glob -body {
+	expectError {
+	    ::dom::document createTextNode $top
+	}
+    } -cleanup $CLEANUP -result {wrong # args*}
+    test document-5.5.1 {error: textNode too few arguments} -setup $SETUP -match glob -body {
+	expectError {
+	    $doc createTextNode
+	}
+    } -cleanup $CLEANUP -result {wrong # args*}
+    test document-5.6 {error: textNode too many arguments} -setup $SETUP -match glob -body {
+	expectError {
+	    ::dom::document createTextNode $top {More Sample Data} Foo
+	}
+    } -cleanup $CLEANUP -result {wrong # args*}
+    test document-5.6.1 {error: textNode too many arguments} -setup $SETUP -match glob -body {
+	expectError {
+	    $doc createTextNode {More Sample Data} Foo
+	}
+    } -cleanup $CLEANUP -result {wrong # args*}
+
+    test document-6.1 {create comment} -setup $SETUP -body {
+	set comm [::dom::document createComment $top {Comment Data}]
+	ok;
+    } -cleanup $CLEANUP -result {}
+    test document-6.1.1 {create comment} -setup $SETUP -body {
+	set comm [$doc createComment {Comment Data}]
+	ok;
+    } -cleanup $CLEANUP -result {}
+    test document-6.2 {comment node type} -setup $SETUP -body {
+	set comm [::dom::document createComment $top {Comment Data}]
+	::dom::node cget $comm -nodeType
+    } -cleanup $CLEANUP -result comment
+    test document-6.2.1 {comment node type} -setup $SETUP -body {
+	set comm [::dom::document createComment $top {Comment Data}]
+	$comm cget -nodeType
+    } -cleanup $CLEANUP -result comment
+    test document-6.3 {comment node name} -setup $SETUP -body {
+	set comm [::dom::document createComment $top {Comment Data}]
+	::dom::node cget $comm -nodeName
+    } -cleanup $CLEANUP -result {#comment}
+    test document-6.3.1 {comment node name} -setup $SETUP -body {
+	set comm [::dom::document createComment $top {Comment Data}]
+	$comm cget -nodeName
+    } -cleanup $CLEANUP -result {#comment}
+    test document-6.4 {comment node value} -setup $SETUP -body {
+	set comm [::dom::document createComment $top {Comment Data}]
+	::dom::node cget $comm -nodeValue
+    } -cleanup $CLEANUP -result {Comment Data}
+    test document-6.4.1 {comment node value} -setup $SETUP -body {
+	set comm [::dom::document createComment $top {Comment Data}]
+	$comm cget -nodeValue
+    } -cleanup $CLEANUP -result {Comment Data}
+    test document-6.5 {error: comment too few arguments} -setup $SETUP -match glob -body {
+	expectError {
+	    ::dom::document createComment $top
+	}
+    } -cleanup $CLEANUP -result {wrong # args*}
+    test document-6.5.1 {error: comment too few arguments} -setup $SETUP -match glob -body {
+	expectError {
+	    $doc createComment
+	}
+    } -cleanup $CLEANUP -result {wrong # args*}
+    test document-6.6 {error: comment too many arguments} -setup $SETUP -match glob -body {
+	expectError {
+	    ::dom::document createComment $top {More Comment Data} Foo
+	}
+    } -cleanup $CLEANUP -result {wrong # args*}
+    test document-6.6.1 {error: comment too many arguments} -setup $SETUP -match glob -body {
+	expectError {
+	    $doc createComment {More Comment Data} Foo
+	}
+    } -cleanup $CLEANUP -result {wrong # args*}
+
+    # dom::tcl and dom::libxml2 treat CDATA Sections as plain text
+
+    test document-7.1 {create CDATASection} -setup $SETUP -body {
+	set cdata [::dom::document createCDATASection $top {CDATASection <Data>}]
+	ok
+    } -cleanup $CLEANUP -result {}
+    test document-7.1.1 {create CDATASection} -setup $SETUP -body {
+	set cdata [$doc createCDATASection {CDATASection <Data>}]
+	ok
+    } -cleanup $CLEANUP -result {}
+    test document-7.2 {CDATASection node type} -constraints {dom_c} -setup $SETUP -body {
+	set cdata [::dom::document createCDATASection $top {CDATASection <Data>}]
+	::dom::node cget $cdata -nodeType
+    } -cleanup $CLEANUP -result CDATASection
+    test document-7.2 {CDATASection node type} -constraints {dom_tcl || dom_libxml2} -setup $SETUP -body {
+	set cdata [::dom::document createCDATASection $top {CDATASection <Data>}]
+	::dom::node cget $cdata -nodeType
+    } -cleanup $CLEANUP -result textNode
+    test document-7.2.1 {CDATASection node type} -constraints {dom_tcl || dom_libxml2} -setup $SETUP -body {
+	set cdata [::dom::document createCDATASection $top {CDATASection <Data>}]
+	$cdata cget -nodeType
+    } -cleanup $CLEANUP -result textNode
+    test document-7.3 {CDATASection node name} -constraints {dom_c} -setup $SETUP -body {
+	set cdata [::dom::document createCDATASection $top {CDATASection <Data>}]
+	::dom::node cget $cdata -nodeName
+    } -cleanup $CLEANUP -result {#cdata-section}
+    test document-7.3 {CDATASection node name} -constraints {dom_tcl || dom_libxml2} -setup $SETUP -body {
+	set cdata [::dom::document createCDATASection $top {CDATASection <Data>}]
+	::dom::node cget $cdata -nodeName
+    } -cleanup $CLEANUP -result {#text}
+    test document-7.3.1 {CDATASection node name} -constraints {dom_tcl || dom_libxml2} -setup $SETUP -body {
+	set cdata [::dom::document createCDATASection $top {CDATASection <Data>}]
+	$cdata cget -nodeName
+    } -cleanup $CLEANUP -result {#text}
+    test document-7.4 {CDATASection node value} -setup $SETUP -body {
+	set cdata [::dom::document createCDATASection $top {CDATASection <Data>}]
+	::dom::node cget $cdata -nodeValue
+    } -cleanup $CLEANUP -result {CDATASection <Data>}
+    test document-7.4.1 {CDATASection node value} -setup $SETUP -body {
+	set cdata [::dom::document createCDATASection $top {CDATASection <Data>}]
+	$cdata cget -nodeValue
+    } -cleanup $CLEANUP -result {CDATASection <Data>}
+    test document-7.5 {error: CDATASection too few arguments} -setup $SETUP -match glob -body {
+	expectError {
+	    ::dom::document createCDATASection $top
+	}
+    } -cleanup $CLEANUP -result {wrong # args*}
+    test document-7.5.1 {error: CDATASection too few arguments} -setup $SETUP -match glob -body {
+	expectError {
+	    $doc createCDATASection
+	}
+    } -cleanup $CLEANUP -result {wrong # args*}
+    test document-7.6 {error: CDATASection too many arguments} -setup $SETUP -match glob -body {
+	expectError {
+	    ::dom::document createCDATASection $top {More CDATA} Foo
+	}
+    } -cleanup $CLEANUP -result {wrong # args*}
+    test document-7.6.1 {error: CDATASection too many arguments} -setup $SETUP -match glob -body {
+	expectError {
+	    $doc createCDATASection {More CDATA} Foo
+	}
+    } -cleanup $CLEANUP -result {wrong # args*}
+
+    test document-8.1 {create processingInstruction} -setup $SETUP -body {
+	set pi [::dom::document createProcessingInstruction $top target {PI Data}]
+	ok;
+    } -cleanup $CLEANUP -result {}
+    test document-8.1.1 {create processingInstruction} -setup $SETUP -body {
+	set pi [$doc createProcessingInstruction target {PI Data}]
+	ok;
+    } -cleanup $CLEANUP -result {}
+    test document-8.2 {processingInstruction node type} -setup $SETUP -body {
+	set pi [::dom::document createProcessingInstruction $top target {PI Data}]
+	::dom::node cget $pi -nodeType
+    } -cleanup $CLEANUP -result processingInstruction
+    test document-8.2.1 {processingInstruction node type} -setup $SETUP -body {
+	set pi [::dom::document createProcessingInstruction $top target {PI Data}]
+	$pi cget -nodeType
+    } -cleanup $CLEANUP -result processingInstruction
+    test document-8.3 {processingInstruction node name} -setup $SETUP -body {
+	set pi [::dom::document createProcessingInstruction $top target {PI Data}]
+	::dom::node cget $pi -nodeName
+    } -cleanup $CLEANUP -result target
+    test document-8.3.1 {processingInstruction node name} -setup $SETUP -body {
+	set pi [::dom::document createProcessingInstruction $top target {PI Data}]
+	$pi cget -nodeName
+    } -cleanup $CLEANUP -result target
+    test document-8.4 {processingInstruction node value} -setup $SETUP -body {
+	set pi [::dom::document createProcessingInstruction $top target {PI Data}]
+	::dom::node cget $pi -nodeValue
+    } -cleanup $CLEANUP -result {PI Data}
+    test document-8.4.1 {processingInstruction node value} -setup $SETUP -body {
+	set pi [::dom::document createProcessingInstruction $top target {PI Data}]
+	$pi cget -nodeValue
+    } -cleanup $CLEANUP -result {PI Data}
+    test document-8.5 {error: processingInstruction too few arguments} -setup $SETUP -match glob -body {
+	expectError {
+	    ::dom::document createProcessingInstruction $top
+	}
+    } -cleanup $CLEANUP -result {wrong # args*}
+    test document-8.5.1 {error: processingInstruction too few arguments} -setup $SETUP -match glob -body {
+	expectError {
+	    $doc createProcessingInstruction
+	}
+    } -cleanup $CLEANUP -result {wrong # args*}
+    test document-8.6 {error: processingInstruction too many arguments} -setup $SETUP -match glob -body {
+	expectError {
+	    ::dom::document createProcessingInstruction $top target data Extra
+	}
+    } -cleanup $CLEANUP -result {wrong # args*}
+    test document-8.6.1 {error: processingInstruction too many arguments} -setup $SETUP -match glob -body {
+	expectError {
+	    $doc createProcessingInstruction target data Extra
+	}
+    } -cleanup $CLEANUP -result {wrong # args*}
+
+# TBD: Attribute
+# TBD: EntityReference
+
+    variable SETUP10 {
+	set doc [dom::create]
+	set top [$doc createElement Test]
+	set child1 [$doc createElement Child1]
+	$top appendChild $child1
+	set child2 [$doc createElement Child2]
+	$top appendChild $child2
+	set child3 [$doc createElement Test]
+	$top appendChild $child3
+    }
+
+    test document-10.1 {getElementsByTagName - document element} \
+    -constraints {!dom_libxml2} -setup $SETUP -body {
+	set docTestElements [::dom::document getElementsByTagName $doc Test]
+	list [llength [set $docTestElements]] [$top isSameNode [lindex [set $docTestElements] 0]]
+    } -cleanup $CLEANUP -result [list 1 1]
+    test document-10.1.1 {getElementsByTagName - document element} \
+    -constraints {!dom_libxml2} -setup $SETUP -body {
+	set docTestElements [$doc getElementsByTagName Test]
+	list [llength [set $docTestElements]] [$top isSameNode [lindex [set $docTestElements] 0]]
+    } -cleanup $CLEANUP -result [list 1 1]
+
+    test document-10.3 {getElementsByTagName - continued} \
+    -constraints {!dom_libxml2} -setup $SETUP10 -body {
+	set docTestElements [$doc getElementsByTagName Test]
+	set result [set $docTestElements]
+	list [llength $result] [compareNodeList $result [list $top $child3]]
+    } -cleanup $CLEANUP -result [list 2 1]
+
+    test document-10.4 {getElementsByTagName - element} \
+    -constraints {!dom_libxml2} -setup $SETUP10 -body {
+	set result [::dom::document getElementsByTagName $top Child2]
+	list [llength [set $result]] [compareNodeList [set $result] [list $child2]]
+    } -cleanup $CLEANUP -result [list 1 1]
+
+    test document-10.5 {getElementsByTagName - remove node} \
+    -constraints {!dom_libxml2} -setup $SETUP10 -body {
+	set docTestElements [$doc getElementsByTagName Test]
+	dom::node removeChild $top $child3
+	list [llength [set $docTestElements]] [compareNodeList [set $docTestElements] [list $top]]
+    } -cleanup $CLEANUP -result [list 1 1]
+
+    test document-10.6 {getElementsByTagName - read-only variable} \
+    -constraints {!dom_libxml2} -match glob -setup $SETUP10 -body {
+	set docTestElements [$doc getElementsByTagName Test]
+	expectError {
+	    lappend $docTestElements -foo-
+	}
+    } -cleanup $CLEANUP -result {*: Read-only variable}
+
+    test document-10.7 {getElementsByTagName - unset variable} -constraints {!dom_libxml2 && knownBug} -setup $SETUP10 -body {
+	set docTestElements [$doc getElementsByTagName Test]
+	unset $docTestElements
+	ok
+    } -cleanup $CLEANUP -result {}
+
+    test document-11.1 {importNode} -constraints {dom_c} -body {
+	set testXML "<?xml version=\"1.0\"?><Test><a>aaa<b>bbb</b>aaa</a></Test>"
+	# bug 3620
+	global testXML
+	set doc [::dom::DOMImplementation parse $testXML]
+	set copy [::dom::DOMImplementation create]
+	set root [::dom::document cget $doc -documentElement]
+	set result [catch {::dom::document importNode $copy $root -deep 1} node]
+	::dom::node insert $copy $node
+	set xml [::dom::DOMImplementation serialize $copy]
+	list $result $xml
+    } -result {0 {<?xml version='1.0'?>
+<!DOCTYPE Test>
+<Test><a>aaa<b>bbb</b>aaa</a></Test>}}
+
+    variable IMPORTSETUP {
+	set doc [dom::parse {<test><element>text</element></test>}]
+	set other [dom::parse {<other><element>import me!</element></other>}]
+	set replace [dom::selectNode $doc /test/element/text()]
+	set parent [$replace parent]
+	set with [dom::selectNode $other /other/element/text()]
+    }
+    variable IMPORTCLEANUP {
+	dom::destroy $doc
+	dom::destroy $other
+    }
+
+    test document-11.2 {importNode} -constraints {dom_c} -setup $IMPORTSETUP -match regexp -body {
+	$parent replaceChild [$doc importNode $with -deep 1] $replace
+	dom::serialize $doc
+    } -cleanup $IMPORTCLEANUP -result {.*<test><element>import me!</element></test>}
+
+    # cleanup
+    ::tcltest::cleanupTests
+}
+
+namespace delete ::dom::documentTest
+
+return

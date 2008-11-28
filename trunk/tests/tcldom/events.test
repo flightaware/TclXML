@@ -1,0 +1,501 @@
+# Commands covered:  ::dom::event
+#
+# This file contains a collection of tests for one or more of the 
+# TclDOM commands.  Sourcing this file into Tcl runs the tests and
+# generates output for errors.  No output means no errors were found.
+#
+# Copyright (c) 2008 Explain
+# Copyright (c) 2000-2004 Zveno Pty Ltd.
+#
+# $Id: events.test,v 1.7 2004/01/15 08:18:35 balls Exp $
+
+package require tcltest
+source [file join [tcltest::workingDirectory] tcldomutils.tcl]
+
+testPackage dom
+
+namespace eval ::dom::eventsTest {
+    namespace import -force ::tcltest::*
+
+    testConstraint Events \
+	[dom::DOMImplementation hasFeature Events 1.0]
+
+    # Event listener procs
+
+    proc HandleEvent evid {
+	variable data
+
+	lappend data(currNode) [dom::event cget $evid -currentNode]
+	lappend data(type) [dom::event cget $evid -type]
+	lappend data(phase) [dom::event cget $evid -eventPhase]
+	lappend data(target) [dom::event cget $evid -target]
+    }
+    proc HandleMutation evid {
+	variable data
+
+	lappend data(type) [dom::event cget $evid -type]
+	lappend data(target) [dom::event cget $evid -target]
+	lappend data(related) [$evid cget -relatedNode]
+	lappend data(prev) [$evid cget -prevValue]
+	lappend data(new) [$evid cget -newValue]
+	lappend data(attrname) [$evid cget -attrName]
+	lappend data(attrchange) [$evid cget -attrChange]
+    }
+
+    variable SETUP {
+	set doc [dom::create]
+	set top [dom::document createElement $doc Top]
+    }
+
+    variable BASICSETUP {
+	eval $SETUP
+
+	set l1 [dom::document createElement $top Node1]
+	set l2 [dom::document createElement $top Node2]
+
+	set l1_1 [dom::document createElement $l1 Node1_1]
+	set l1_2 [dom::document createElement $l1 Node1_2]
+
+	set l2_1 [dom::document createElement $l2 Node2_1]
+	set l2_2 [dom::document createElement $l2 Node2_2]
+
+	variable data
+	catch {unset data}
+	array set data {
+	    currNode {}
+	    type {}
+	    phase {}
+	    target {}
+	}
+    }
+    variable E2SETUP {
+	eval $SETUP
+	set event [$doc createEvent click]
+    }
+    variable E2UISETUP {
+	eval $SETUP
+	set event [$doc createEvent DOMActivate]
+    }
+    variable EVENTSETUP {
+	eval $SETUP
+	set event [$doc createEvent DOMActivate]
+	dom::event initUIEvent $event DOMActivate 0 1 {} 2
+    }
+    variable MOUSEEVENTSETUP {
+	eval $SETUP
+	set event [$doc createEvent click]
+	dom::event initMouseEvent $event click 0 1 {} 2 3 4 5 6 ctrl alt shift meta 7 $top
+    }
+    variable HANDLERSETUP {
+	eval $BASICSETUP
+
+	dom::node addEventListener $l1 DOMActivate [namespace code HandleEvent]
+
+	set event [$doc createEvent DOMActivate]
+	$event initUIEvent DOMActivate 1 1 {} 2
+    }
+    variable CAPTURESETUP {
+	eval $BASICSETUP
+
+	dom::node addEventListener $l1 DOMActivate [namespace code HandleEvent] -usecapture 1
+
+	set event [$doc createEvent DOMActivate]
+	$event initUIEvent DOMActivate 1 1 {} 2
+    }
+    variable CAPTUREDOCSETUP {
+	eval $BASICSETUP
+
+	dom::node addEventListener $doc DOMActivate [namespace code HandleEvent] -usecapture 1
+
+	set event [$doc createEvent DOMActivate]
+	$event initUIEvent DOMActivate 1 1 {} 2
+    }
+    variable MUTATIONSETUP {
+	eval $BASICSETUP
+
+	foreach type {DOMSubtreeModified DOMNodeInserted DOMNodeRemoved DOMNodeInsertedIntoDocument DOMNodeRemovedFromDocument DOMAttrModified DOMCharacterDataModified} {
+	    dom::node addEventListener $doc $type [namespace code HandleMutation] -usecapture 1
+	}
+    }
+    variable CLEANUP {
+	dom::destroy $doc
+	catch {unset data}
+    }
+
+    # Test:
+    #   1 creating an event
+
+    test event-1.0 {event creation} -constraints Events -setup $SETUP -body {
+	set event [dom::document createEvent $doc click]
+	dom::isNode $event
+    } -cleanup $CLEANUP -result 1
+    test event-1.0.1 {event creation} -constraints Events -setup $SETUP -body {
+	set event [$doc createEvent click]
+	dom::isNode $event
+    } -cleanup $CLEANUP -result 1
+    test event-1.1 {event creation: user-defined event type} -constraints Events -setup $SETUP -body {
+	set event [dom::document createEvent $doc myEvent]
+	dom::isNode $event
+    } -cleanup $CLEANUP -result 1
+    test event-1.2 {event creation: too few arguments} -constraints Events -match glob -setup $SETUP -body {
+	expectError {
+	    dom::document createEvent $doc
+	}
+    } -cleanup $CLEANUP -result {wrong # args:*}
+    test event-1.3 {event creation: too many arguments} -constraints Events -match glob -setup $SETUP -body {
+	expectError {
+	    dom::document createEvent $doc click here
+	}
+    } -cleanup $CLEANUP -result {wrong # args:*}
+
+    #   2 initialising an event
+
+    test event-2.0 {initialise event} -constraints Events -setup $E2SETUP -body {
+	dom::event initEvent $event click 1 1
+    } -cleanup $CLEANUP -result {}
+    test event-2.0.1 {initialise event} -constraints Events -setup $E2SETUP -body {
+	$event initEvent click 1 1
+    } -cleanup $CLEANUP -result {}
+    test event-2.1 {initialise event: user-defined type} -constraints Events -setup {
+	eval $SETUP
+	set event [dom::document createEvent $doc myEvent]
+    } -body {
+	dom::event initEvent $event myEvent 1 1
+    } -cleanup $CLEANUP -result {}
+    test event-2.2 {initialise event: too few arguments} -constraints Events -match glob -setup $E2SETUP -body {
+	expectError {
+	    dom::event initEvent $event
+	}
+    } -cleanup $CLEANUP -result {wrong # args:*}
+    test event-2.3 {initialise event: too few arguments} -constraints Events -match glob -setup $E2SETUP -body {
+	expectError {
+	    dom::event initEvent $event click
+	}
+    } -cleanup $CLEANUP -result {wrong # args:*}
+    test event-2.4 {initialise event: too few arguments} -constraints Events -match glob -setup $E2SETUP -body {
+	expectError {
+	    dom::event initEvent $event click 1
+	}
+    } -cleanup $CLEANUP -result {wrong # args:*}
+    test event-2.5 {initialise event: too many arguments} -constraints Events -match glob -setup $E2SETUP -body {
+	expectError {
+	    dom::event initEvent $event click 1 1 1
+	}
+    } -cleanup $CLEANUP -result {wrong # args:*}
+    test event-2.6 {initialise UI event} -constraints Events -setup $E2UISETUP -body {
+	dom::event initUIEvent $event DOMActivate 1 1 {} 1
+    } -cleanup $CLEANUP -result {}
+    test event-2.7 {initialise UI event: too few arguments} -constraints Events -setup $E2UISETUP -match glob -body {
+	expectError {
+	    dom::event initUIEvent $event DOMActivate 1 1
+	}
+    } -cleanup $CLEANUP -result {wrong # args:*}
+    test event-2.8 {initialise UI event: no optional arguments} -constraints Events -setup $E2UISETUP -body {
+	dom::event initUIEvent $event DOMActivate 1 1 {}
+    } -cleanup $CLEANUP -result {}
+    test event-2.9 {initialise UI event: too many arguments} -constraints Events -setup $E2UISETUP -match glob -body {
+	expectError {
+	    dom::event initUIEvent $event DOMActivate 1 1 {} 2 extra
+	}
+    } -cleanup $CLEANUP -result {wrong # args:*}
+    test event-2.10 {initialise mouse event} -constraints Events -setup $E2SETUP -body {
+	dom::event initMouseEvent $event click 1 1 {} 1 100 100 10 10 {} {} {} {} 2 {}
+    } -cleanup $CLEANUP -result {}
+    test event-2.11 {initialise mouse event: too few arguments} -constraints Events -match glob -setup {
+	eval $SETUP
+	set event [dom::document createEvent $doc mousedown]
+    } -body {
+	expectError {
+	    dom::event initMouseEvent $event
+	}
+    } -cleanup $CLEANUP -result {wrong # args:*}
+    test event-2.12 {initialise mouse event: too few arguments} -constraints Events -match glob -setup {
+	eval $SETUP
+	set event [dom::document createEvent $doc mouseup]
+    } -body {
+	expectError {
+	    dom::event initMouseEvent $event mouseup 1 1 {} 2 200 100 20 30
+	}
+    } -cleanup $CLEANUP -result {wrong # args:*}
+    test event-2.13 {initialise mouse event: too many arguments} -constraints Events -match glob -setup {
+	eval $SETUP
+	set event [dom::document createEvent $doc mouseover]
+    } -body {
+	expectError {
+	    dom::event initMouseEvent $event mouseover 1 1 {} 1 100 100 10 10 {} {} {} {} 2 {} toomany
+	}
+    } -cleanup $CLEANUP -result {wrong # args:*}
+    test event-2.14 {initialise mutation event} -constraints Events -setup {
+	eval $SETUP
+	set event [dom::document createEvent $doc DOMSubtreeModified]
+    } -body {
+	dom::event initMutationEvent $event click 1 1 {} {} {} {} {}
+    } -cleanup $CLEANUP -result {}
+    test event-2.15 {initialise mutation event: too few arguments} -constraints Events -match glob -setup {
+	eval $SETUP
+	set event [dom::document createEvent $doc DOMNodeInserted]
+    } -body {
+	expectError {
+	    dom::event initMutationEvent $event
+	}
+    } -cleanup $CLEANUP -result {wrong # args:*}
+    test event-2.16 {initialise mutation event: too few arguments} -constraints Events -match glob -setup {
+	eval $SETUP
+	set event [dom::document createEvent $doc DOMNodeRemoved]
+    } -body {
+	expectError {
+	    dom::event initMutationEvent $event DOMNodeRemoved 1 1 {}
+	}
+    } -cleanup $CLEANUP -result {wrong # args:*}
+    test event-2.17 {initialise mutation event: too many arguments} -constraints Events -match glob -setup {
+	eval $SETUP
+	set event [dom::document createEvent $doc DOMAttrModified]
+    } -body {
+	expectError {
+	    dom::event initMutationEvent $event DOMAttrModified 1 1 $top old new my_attribute change extra
+	}
+    } -cleanup $CLEANUP -result {wrong # args:*}
+
+    #   3 the event command
+
+    test event-3.1 {dom::event command} -constraints Events -setup $SETUP -body {
+	set event [dom::document createEvent $doc DOMActivate]
+	$event initEvent DOMActivate 1 1
+    } -cleanup $CLEANUP -result {}
+    test event-3.2 {dom::event cget -type} -constraints Events -setup $EVENTSETUP -body {
+	dom::event cget $event -type
+    } -cleanup $CLEANUP -result DOMActivate
+    test event-3.2.1 {dom::event cget -type} -constraints Events -setup $EVENTSETUP -body {
+	$event cget -type
+    } -cleanup $CLEANUP -result DOMActivate
+    test event-3.3 {dom::event cget -target} -constraints Events -setup $EVENTSETUP -body {
+	$event cget -target
+    } -cleanup $CLEANUP -result {}
+    test event-3.4 {dom::event cget -currentNode} -constraints Events -setup $EVENTSETUP -body {
+	$event cget -currentNode
+    } -cleanup $CLEANUP -result {}
+    test event-3.5 {dom::event cget -eventPhase} -constraints Events -setup $EVENTSETUP -body {
+	$event cget -eventPhase
+    } -cleanup $CLEANUP -result {}
+    test event-3.6 {dom::event cget -bubbles} -constraints Events -setup $EVENTSETUP -body {
+	$event cget -bubbles
+    } -cleanup $CLEANUP -result 0
+    test event-3.7 {dom::event cget -cancelable} -constraints Events -setup $EVENTSETUP -body {
+	$event cget -cancelable
+    } -cleanup $CLEANUP -result 1
+    test event-3.8 {dom::event cget -timeStamp} -constraints Events -match regexp -setup $EVENTSETUP -body {
+	$event cget -timeStamp
+    } -cleanup $CLEANUP -result {[0-9]+}
+    test event-3.9 {dom::event cget -detail} -constraints Events -setup $EVENTSETUP -body {
+	$event cget -detail
+    } -cleanup $CLEANUP -result 2
+    test event-3.10 {dom::event cget -view} -constraints Events -setup $EVENTSETUP -body {
+	$event cget -view
+    } -cleanup $CLEANUP -result {}
+    test event-3.11 {dom::event cget -screenX} -constraints Events -setup $MOUSEEVENTSETUP -body {
+	$event cget -screenX
+    } -cleanup $CLEANUP -result 3
+    test event-3.12 {dom::event cget -screenY} -constraints Events -setup $MOUSEEVENTSETUP -body {
+	$event cget -screenY
+    } -cleanup $CLEANUP -result 4
+    test event-3.13 {dom::event cget -clientX} -constraints Events -setup $MOUSEEVENTSETUP -body {
+	$event cget -clientX
+    } -cleanup $CLEANUP -result 5
+    test event-3.14 {dom::event cget -clientY} -constraints Events -setup $MOUSEEVENTSETUP -body {
+	$event cget -clientY
+    } -cleanup $CLEANUP -result 6
+    test event-3.15 {dom::event cget -ctrlKey} -constraints Events -setup $MOUSEEVENTSETUP -body {
+	$event cget -ctrlKey
+    } -cleanup $CLEANUP -result ctrl
+    test event-3.16 {dom::event cget -altKey} -constraints Events -setup $MOUSEEVENTSETUP -body {
+	$event cget -altKey
+    } -cleanup $CLEANUP -result alt
+    test event-3.17 {dom::event cget -shiftKey} -constraints Events -setup $MOUSEEVENTSETUP -body {
+	$event cget -shiftKey
+    } -cleanup $CLEANUP -result shift
+    test event-3.18 {dom::event cget -metaKey} -constraints Events -setup $MOUSEEVENTSETUP -body {
+	$event cget -metaKey
+    } -cleanup $CLEANUP -result meta
+    test event-3.19 {dom::event cget -button} -constraints Events -setup $MOUSEEVENTSETUP -body {
+	$event cget -button
+    } -cleanup $CLEANUP -result 7
+    test event-3.20 {dom::event cget -relatedNode} -constraints Events -setup $MOUSEEVENTSETUP -body {
+	$top isSameNode [$event cget -relatedNode]
+    } -cleanup $CLEANUP -result 1
+    # TODO: options read-only
+
+    #   4 destroying an event
+
+    test event-4.1 {destroy event} -constraints Events -setup $EVENTSETUP -body {
+	dom::destroy $event
+	list [dom::isNode $event] [info commands $event]
+    } -cleanup $CLEANUP -result {0 {}}
+    test event-4.2 {destroy event: delete Tcl command} -constraints Events -setup $EVENTSETUP -match glob -body {
+	rename $event {}
+	dom::isNode $event
+    } -cleanup $CLEANUP -result 0
+
+    #   5 adding an event listener
+
+    test event-5.1 {register event listener} -constraints {Events} -setup $BASICSETUP -body {
+	dom::node addEventListener $l1_1 click HandleEvent
+    } -cleanup $CLEANUP -result {}
+    test event-5.2 {register capturing event listener} -constraints {Events} -setup $BASICSETUP -body {
+	dom::node addEventListener $l1_1 click HandleEvent -usecapture 1
+    } -cleanup $CLEANUP -result {}
+    test event-5.3 {get event listener} -constraints {Events} -setup {
+	eval $BASICSETUP
+	dom::node addEventListener $l1_1 click HandleEvent
+    } -body {
+	dom::node addEventListener $l1_1 click
+    } -cleanup $CLEANUP -result {HandleEvent}
+    test event-5.4 {get event listener - bubbling vs capturing events} -constraints {Events} -setup {
+	eval $BASICSETUP
+	dom::node addEventListener $l1_1 click HandleEvent
+    } -body {
+	dom::node addEventListener $l1_1 click -usecapture 1
+    } -cleanup $CLEANUP -result {}
+    test event-5.5 {get event listener} -constraints {Events} -setup {
+	eval $BASICSETUP
+	dom::node addEventListener $l1_1 click HandleEvent -usecapture 1
+    } -body {
+	dom::node addEventListener $l1_1 click -usecapture 1
+    } -cleanup $CLEANUP -result {HandleEvent}
+    test event-5.6 {get event listener - bubbling vs capturing events} -constraints {Events} -setup {
+	eval $BASICSETUP
+	dom::node addEventListener $l1_1 click HandleEvent -usecapture 1
+    } -body {
+	dom::node addEventListener $l1_1 click
+    } -cleanup $CLEANUP -result {}
+    test event-5.7 {get event listener: multiple listeners} -constraints {Events} -setup {
+	eval $BASICSETUP
+	dom::node addEventListener $l1_1 click HandleEvent
+	dom::node addEventListener $l1_1 click YetAnotherEventListener
+    } -body {
+	lsort [dom::node addEventListener $l1_1 click]
+    } -cleanup $CLEANUP -result {HandleEvent YetAnotherEventListener}
+    test event-5.8 {register event listener: too few arguments} -constraints {Events} -match glob -setup $BASICSETUP -body {
+	expectError {
+	    dom::node addEventListener $l1_1
+	}
+    } -cleanup $CLEANUP -result {wrong # args:*}
+    test event-5.9 {register event listener: too many arguments} -constraints {Events} -match glob -setup $BASICSETUP -body {
+	expectError {
+	    dom::node addEventListener $l1_1 click HandleEvent tooMany
+	}
+    } -cleanup $CLEANUP -result {missing value*}
+
+    #   6 removing an event listener
+
+    test event-6.1 {remove event listener} -constraints Events -setup {
+	eval $BASICSETUP
+	$l1_1 addEventListener click HandleEvent
+    } -body {
+	dom::node removeEventListener $l1_1 click HandleEvent
+    } -cleanup $CLEANUP -result {}
+    test event-6.2 {remove capturing event listener} -constraints {Events} -setup {
+	eval $BASICSETUP
+	$l1_1 addEventListener click HandleEvent -usecapture 1
+    } -body {
+	dom::node removeEventListener $l1_1 click HandleEvent -usecapture 1
+    } -cleanup $CLEANUP -result {}
+    test event-6.3 {remove event listener: multiple listeners} -constraints Events -setup {
+	eval $BASICSETUP
+	$l1_1 addEventListener click HandleEvent
+	$l1_1 addEventListener click YetAnotherEventHandler
+    } -body {
+	dom::node removeEventListener $l1_1 click HandleEvent
+	$l1_1 addEventListener click
+    } -cleanup $CLEANUP -result YetAnotherEventHandler
+
+    #   7 dispatching an event, w/- and w/o a listener
+
+    test event-7.1 {dispatch an event, bubbling listener} -constraints {Events} -setup $HANDLERSETUP -body {
+	$l1_1 dispatchEvent $event
+	list [$l1 isSameNode $data(currNode)] $data(type) $data(phase) [$l1_1 isSameNode $data(target)]
+    } -cleanup $CLEANUP -result {1 DOMActivate bubbling_phase 1}
+    test event-7.2 {dispatch an event, capturing listener, doc} -constraints {Events} -setup $CAPTUREDOCSETUP -body {
+	$l1_1 dispatchEvent $event
+	list [dom::node isSameNode $doc $data(currNode)] $data(type) $data(phase) [$l1_1 isSameNode $data(target)]
+    } -cleanup $CLEANUP -result {1 DOMActivate capturing_phase 1}
+    test event-7.3 {dispatch an event, capturing listener, node} -constraints {Events} -setup $CAPTURESETUP -body {
+	$l1_1 dispatchEvent $event
+	list [dom::node isSameNode $l1 $data(currNode)] $data(type) $data(phase) [$l1_1 isSameNode $data(target)]
+    } -cleanup $CLEANUP -result {1 DOMActivate capturing_phase 1}
+    test event-7.4 {dispatch an event, no listener} -constraints {Events} -setup {
+	eval $BASICSETUP
+	set event [$doc createEvent DOMActivate]
+	dom::event initUIEvent $event DOMActivate 0 1 {} 2
+    } -body {
+	$l1_1 dispatchEvent $event
+	llength $data(type)
+    } -cleanup $CLEANUP -result 0
+    test event-7.5 {dispatch an event, user-defined type} -constraints {Events} -setup {
+	eval $BASICSETUP
+	$l1 addEventListener test [namespace code HandleEvent]
+	set event [$doc createEvent test]
+	dom::event initEvent $event test 1 1
+    } -body {
+	$l1_1 dispatchEvent $event
+	list [dom::node isSameNode $l1 $data(currNode)] $data(type) $data(phase) [$l1_1 isSameNode $data(target)]
+    } -cleanup $CLEANUP -result {1 test bubbling_phase 1}
+
+    #   7.X cancelling propagation: cancel allowed, cancel not allowed
+    #   7.X no bubbles option: make sure bubbling phase does not occur
+
+    #	8 posting an event, w/- and w/o a listener
+
+    test event-8.1 {Post UI event} -constraints {Events} -setup {
+	eval $BASICSETUP
+	dom::node addEventListener $doc DOMActivate [namespace code HandleEvent]
+    } -body {
+	dom::event postUIEvent $l1_1 DOMActivate -detail 2
+	list [dom::node isSameNode $doc $data(currNode)] $data(type) $data(phase) [$l1_1 isSameNode $data(target)]
+    } -cleanup $CLEANUP -result {1 DOMActivate bubbling_phase 1}
+    test event-8.2 {Post mouse event} -constraints {Events} -setup {
+	eval $BASICSETUP
+	dom::node addEventListener $doc click [namespace code HandleEvent]
+    } -body {
+	dom::event postMouseEvent $l1_1 click -button 3
+	list [dom::node isSameNode $doc $data(currNode)] $data(type) $data(phase) [$l1_1 isSameNode $data(target)]
+    } -cleanup $CLEANUP -result {1 click bubbling_phase 1}
+    test event-8.3 {Post mutation event} -constraints {Events} -setup {
+	eval $BASICSETUP
+	dom::node addEventListener $doc DOMSubtreeModified [namespace code HandleEvent]
+    } -body {
+	dom::event postMutationEvent $l1_1 DOMSubtreeModified -relatedNode $l1
+	list [dom::node isSameNode $doc $data(currNode)] $data(type) $data(phase) [$l1_1 isSameNode $data(target)]
+    } -cleanup $CLEANUP -result {1 DOMSubtreeModified bubbling_phase 1}
+
+    #  9 Mutation events
+
+    test event-9.1 {Mutation event: insert node} -constraints {Events} -setup $MUTATIONSETUP -body {
+	set new [dom::document createElement $top New]
+	list $data(type) \
+	    [list [$new isSameNode [lindex $data(target) 0]] [$new isSameNode [lindex $data(target) 1]] [$top isSameNode [lindex $data(target) 2]]] \
+	    [list [$top isSameNode [lindex $data(related) 0]] [lindex $data(related) 1] [lindex $data(related) 2]] \
+	    $data(prev) $data(new) $data(attrname) $data(attrchange)
+    } -cleanup $CLEANUP -result {{DOMNodeInserted DOMNodeInsertedIntoDocument DOMSubtreeModified} {1 1 1} {1 {} {}} {{} {} {}} {{} {} {}} {{} {} {}} {{} {} {}}}
+    test event-9.2 {Mutation event: move node} -constraints {Events} -setup $MUTATIONSETUP -body {
+	$l2 appendChild $l1_1
+	list $data(type) \
+	    [list [$l1_1 isSameNode [lindex $data(target) 0]] [$l1 isSameNode [lindex $data(target) 1]] [$l2 isSameNode [lindex $data(target) 2]] [$l1_1 isSameNode [lindex $data(target) 3]]] \
+	    [list [$l1 isSameNode [lindex $data(related) 0]] [lindex $data(related) 1] [lindex $data(related) 2] [lindex $data(related) 3]] \
+	    $data(prev) $data(new) $data(attrname) $data(attrchange)
+    } -cleanup $CLEANUP -result {{DOMNodeRemoved DOMSubtreeModified DOMSubtreeModified DOMNodeInserted} {1 1 1 1} {1 {} {} {}} {{} {} {} {}} {{} {} {} {}} {{} {} {} {}} {{} {} {} {}}}
+    test event-9.3 {Mutation event: replace node} -constraints {Events} -setup $MUTATIONSETUP -body {
+	$l2 replaceChild $l1_1 $l2_1
+	list $data(type) \
+	    [list [$l1_1 isSameNode [lindex $data(target) 0]] [$l1 isSameNode [lindex $data(target) 1]] [$l1_1 isSameNode [lindex $data(target) 2]]] \
+	    [list [$l1 isSameNode [lindex $data(related) 0]] [lindex $data(related) 1] [lindex $data(related) 2]] \
+	    $data(prev) $data(new) $data(attrname) $data(attrchange)
+    } -cleanup $CLEANUP -result {{DOMNodeRemoved DOMSubtreeModified DOMNodeInserted} {1 1 1} {1 {} {}} {{} {} {}} {{} {} {}} {{} {} {}} {{} {} {}}}
+    # removeChild
+    # attributes: create, change, remove
+
+    cleanupTests
+}
+
+namespace delete ::dom::eventsTest
+
+return

@@ -1,0 +1,14 @@
+		TclXML Test Suite
+
+This directory contains test scripts for TclXML, TclDOM and TclXSLT.
+
+MANIFEST:
+---------
+
+README		Tcl test suite design document.
+all.tcl         support module that finds & runs all tests
+tclxml		TclXML tests
+tcldom		TclDOM tests
+tclxslt		TclXSLT tests
+
+RCS: @(#) $Id: README,v 1.4 2003/12/03 20:06:36 balls Exp $

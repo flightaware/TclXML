@@ -1,0 +1,34 @@
+# Commands covered:  ::dom::DOMimplementation parse
+#
+# This file contains a collection of tests for one or more of the 
+# TclDOM commands.  Sourcing this file into Tcl runs the tests and
+# generates output for errors.  No output means no errors were found.
+#
+# Copyright (c) 2008 Explain
+# Copyright (c) 1998-2003 Zveno Pty Ltd.
+# Copyright (c) 2000 Ajuba Solutions
+#
+# $Id: zzlast.test,v 1.3 2003/12/03 20:18:45 balls Exp $
+
+package require tcltest
+source [file join [tcltest::workingDirectory] tcldomutils.tcl]
+
+testPackage dom
+
+namespace eval ::dom::zzlastTest {
+    namespace import -force ::tcltest::*
+
+    test zzlast-1.1 {cleanup after incomplete parse} -constraints {!dom_libxml2} -body {
+	set part1 {<?xml version="1.0"?>}
+	set part2 {<!DOCTYPE Test><Test></Test>}
+	set result1 [catch {::dom::DOMImplementation parse $part1 -final 0} m1]
+	catch {::dom::DOMImplementation destroy $m2}
+	list $result1
+    } -result 0
+
+    cleanupTests
+}
+
+namespace delete ::dom::zzlastTest
+
+return

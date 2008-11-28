@@ -1,0 +1,32 @@
+		TclXML Test Suite
+
+This directory contains test scripts for the TclXML package.
+See ../tcldom and ../tclxslt for tests for TclDOM and TclXSLT
+respectively.
+
+The Tcl interfaces to libxml2 and the Tcl-only implementations
+of an XML parser may be tested.  The test scripts accept the '-parser'
+argument to select which parser class to test.  Accepted values
+are 'xml', 'libxml2' and 'tclparser'.  Using the 'xml' value
+is not recommended, as the appropriate test constraint will not be
+set (this will result in various tests being performed that are not
+intended for the parser class that is the default - these will likely
+fail).
+
+all.tcl will test the parser class given by the 'parser' argument.
+If no '-parser' argument is given then all parser classes will
+be tested.
+
+The Tcl testing framework is used for testing TclXML.
+The file license.terms in this directory is from the
+Tcl distribution, and refers to this file, all.tcl and defs.tcl.
+
+MANIFEST:
+---------
+
+README		Tcl test suite design document.
+all.tcl         support module that finds & runs all tests
+*.test          test scripts
+*.dtd           dtd files for external dtd test scripts
+
+RCS: @(#) $Id: README,v 1.4 2003/12/03 20:06:36 balls Exp $

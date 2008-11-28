@@ -1,0 +1,121 @@
+# Features covered:  Elements
+#
+# This file contains a collection of tests for the TclXML parser.
+# This file tests the parser's performance on elements.
+# Sourcing this file into Tcl runs the tests and generates output
+# for errors.  No output means no errors were found.
+#
+# Copyright (c) 2005 Explain
+# http://www.explain.com.au/
+# Copyright (c) 1999-2003 Zveno Pty Ltd.
+#
+# $Id: element.test,v 1.6 2005/05/20 12:02:18 balls Exp $
+
+package require tcltest
+source [file join [tcltest::workingDirectory] tclxmlutils.tcl]
+
+testPackage $::tcltest::parser
+
+namespace eval ::xml::elementTest {
+    namespace import -force ::tcltest::*
+
+    variable SETUP {
+	variable started
+	array set started {}
+	variable ended
+	array set ended {}
+	variable elList {}
+
+	proc parray arrayName {
+	    upvar #0 $arrayName arr
+	    set result {}
+	    foreach key [lsort [array names $arrayName]] {
+		lappend result $key $arr($key)
+	    }
+	    return $result
+	}
+
+	proc Start {name atList args} {
+	    variable started
+	    array set opts $args
+	    if {![info exists started($name)]} {
+		set started($name) 1
+	    } else {
+		incr started($name)
+	    }
+	}
+	proc End {name args} {
+	    variable ended
+	    array set opts $args
+	    if {![info exists ended($name)]} {
+		set ended($name) 1
+	    } else {
+		incr ended($name)
+	    }
+	}
+
+	proc ElStart {name atList args} {
+	    variable elList
+	    array set opts {-empty 0}
+	    array set opts $args
+	    lappend elList start $name $opts(-empty)
+	}
+	proc ElEnd {name args} {
+	    variable elList
+	    array set opts {-empty 0}
+	    array set opts $args
+	    lappend elList end $name $opts(-empty)
+	}
+
+	set parser [xml::parser]
+    }
+    variable CLEANUP {
+	catch {unset started}
+	catch {unset ended}
+	catch {unset elList}
+	rename parray {}
+	rename Start {}
+	rename End {}
+	rename ElStart {}
+	rename ElEnd {}
+	$parser free
+    }
+
+    test element-1.1 {document element} -setup $SETUP -body {
+	$parser configure \
+		-elementstartcommand [namespace code Start] \
+		-elementendcommand [namespace code End]
+	$parser parse {<Test></Test>}
+	list [array get started] [array get ended]
+    } -cleanup $CLEANUP -result {{Test 1} {Test 1}}
+
+    test element-1.2 {distinct elements} -setup $SETUP -body {
+	$parser configure \
+		-elementstartcommand [namespace code Start] \
+		-elementendcommand [namespace code End]
+	$parser parse {<Test><Child1></Child1><Child2></Child2></Test>}
+	list [parray [namespace current]::started] [parray [namespace current]::ended]
+    } -cleanup $CLEANUP -result {{Child1 1 Child2 1 Test 1} {Child1 1 Child2 1 Test 1}}
+    # Test case for bug #1029795 reported by zugilio@users.sf.net
+    test element-1.3 {distinct empty elements} -setup $SETUP -body {
+	$parser configure \
+		-elementstartcommand [namespace code Start] \
+		-elementendcommand [namespace code End]
+	$parser parse {<Test><Child1/><Child2/></Test>}
+	list [parray [namespace current]::started] [parray [namespace current]::ended]
+    } -cleanup $CLEANUP -result {{Child1 1 Child2 1 Test 1} {Child1 1 Child2 1 Test 1}}
+
+    test element-2.1 {empty element} -setup $SETUP -constraints !xml_libxml2 -body {
+	$parser configure \
+		-reportempty 1 \
+		-elementstartcommand [namespace code ElStart] \
+		-elementendcommand [namespace code ElEnd]
+	$parser parse {<Test><Child1/></Test>}
+	set elList
+    } -cleanup $CLEANUP -result {start Test 0 start Child1 1 end Child1 1 end Test 0}
+
+    cleanupTests
+}
+
+namespace delete ::xml::elementTest
+return

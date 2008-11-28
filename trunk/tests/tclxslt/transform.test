@@ -1,0 +1,322 @@
+# Features covered:  XSLT Transformations
+#
+# This file contains a collection of tests for the TclXSLT package.
+# This file tests the parser's performance on tranformations.
+# Sourcing this file into Tcl runs the tests and generates output
+# for errors.  No output means no errors were found.
+#
+# Copyright (c) 2008 Explain
+# http://www.explain.com.au/
+# Copyright (c) 2001-2003 Zveno Pty Ltd.
+#
+# $Id: transform.test,v 1.4 2003/12/03 20:20:39 balls Exp $
+
+package require tcltest
+source [file join [tcltest::workingDirectory] tclxsltutils.tcl]
+
+testPackage xslt
+
+namespace eval ::xslt::transformTest {
+    namespace import -force ::tcltest::*
+
+    variable SETUP {
+	variable style1 [dom::parse {<xsl:stylesheet version="1.0"
+		xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+
+	  <xsl:output method="text"/>
+
+	  <xsl:template match="/">
+	    <xsl:value-of select='name(/*)'/>
+	  </xsl:template>
+
+	</xsl:stylesheet>
+	}]
+	set xml1 [dom::parse <Test/>]
+	set xml2 [dom::parse <AnotherTest/>]
+    }
+    variable SETUP2 {
+	eval $SETUP
+	set ssheet [xslt::compile $style1]
+    }
+    variable CLEANUP {
+	dom::destroy $style1
+	dom::destroy $xml1
+	dom::destroy $xml2
+    }
+    variable CLEANUP2 {
+	eval $CLEANUP
+	rename $ssheet {}
+    }
+
+    test transform-1.1 {Compile and destroy stylesheet} -setup $SETUP -body {
+	set s1 [xslt::compile $style1]
+	rename $s1 {}
+    } -cleanup $CLEANUP -result {}
+
+    test transform-1.2 {Compile stylesheet} -setup $SETUP -body {
+	variable s1 [xslt::compile $style1]
+	string equal [info commands $s1] {}
+    } -cleanup {
+	eval $CLEANUP
+	rename $s1 {}
+    } -result 0
+
+    test transform-1.3 {-method option, default} -setup {
+	set stydoc [dom::parse {<xsl:stylesheet version='1.0'
+xmlns:xsl='http://www.w3.org/1999/XSL/Transform'>
+</xsl:stylesheet>
+}]
+	set ssheet [xslt::compile $stydoc]
+    } -body {
+	$ssheet cget -method
+    } -cleanup {
+	dom::destroy $stydoc
+	rename $ssheet {}
+    } -result {}
+    test transform-1.4 {-method option, text} -setup $SETUP2 -body {
+	$ssheet cget -method
+    } -cleanup $CLEANUP2 -result text
+    test transform-1.5 {-method option, html} -setup {
+	set stydoc [dom::parse {<xsl:stylesheet version='1.0'
+xmlns:xsl='http://www.w3.org/1999/XSL/Transform'>
+  <xsl:output method='html'/>
+</xsl:stylesheet>
+}]
+	set ssheet [xslt::compile $stydoc]
+    } -body {
+	$ssheet cget -method
+    } -cleanup {
+	dom::destroy $stydoc
+	rename $ssheet {}
+    } -result html
+    test transform-1.5 {-method option, xml} -setup {
+	set stydoc [dom::parse {<xsl:stylesheet version='1.0'
+xmlns:xsl='http://www.w3.org/1999/XSL/Transform'>
+  <xsl:output method='xml'/>
+</xsl:stylesheet>
+}]
+	set ssheet [xslt::compile $stydoc]
+    } -body {
+	$ssheet cget -method
+    } -cleanup {
+	dom::destroy $stydoc
+	rename $ssheet {}
+    } -result xml
+    test transform-1.6 {configure -method} -match glob -setup {
+	set stydoc [dom::parse {<xsl:stylesheet version='1.0'
+xmlns:xsl='http://www.w3.org/1999/XSL/Transform'>
+  <xsl:output method='xml'/>
+</xsl:stylesheet>
+}]
+	set ssheet [xslt::compile $stydoc]
+    } -body {
+	expectError {
+	    $ssheet configure -method html
+	}
+    } -cleanup {
+	dom::destroy $stydoc
+	rename $ssheet {}
+    } -result {*read-only*}
+    test transform-1.7 {error: too many arguments} -setup $SETUP -match glob -body {
+	expectError {
+	    ::xslt::compile $style1 somethingelse
+	}
+    } -cleanup $CLEANUP -result {wrong # args*}
+
+    # In-memory tests
+
+    test transform-2.1 {Single, simple XSLT Transformation} -setup $SETUP2 -body {
+	set result [$ssheet transform $xml1]
+	dom::serialize $result -method text
+    } -cleanup $CLEANUP2 -result {Test}
+
+    test transform-2.2 {Multiple simple XSLT Transformations} -setup $SETUP2 -body {
+	set result1 [$ssheet transform $xml1]
+	set result2 [$ssheet transform $xml2]
+	list [::dom::serialize $result1 -method text] \
+		[::dom::serialize $result2 -method text]
+    } -cleanup $CLEANUP2 -result [list Test AnotherTest]
+
+    test transform-2.3 {Complex XSLT Transformation} -setup {
+	set ch [open [file join [workingDirectory] transform-1.3.xsl]]
+	set ssheetdoc [::dom::parse [read $ch]]
+	close $ch
+
+	set ch [open [file join [workingDirectory] transform-1.3.xml]]
+	set source [::dom::parse [read $ch]]
+	close $ch
+
+	set ch [open [file join [workingDirectory] transform-1.3-result.html]]
+	set expectedxml [read $ch]
+	close $ch
+    } -body {
+	set ssheet [xslt::compile $ssheetdoc]
+	set result [$ssheet transform $source]
+	string equal [dom::serialize $result -method html] $expectedxml
+    } -cleanup {
+	dom::destroy $ssheetdoc
+	dom::destroy $source
+	dom::destroy $result
+	rename $ssheet {}
+	catch {unset expectedxml}
+    } -result 1
+
+    # Parameters
+
+    test transform-5.1 {Pass parameters} -setup {
+	eval $SETUP
+	set styledoc [::dom::parse {<xsl:stylesheet
+    version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+
+  <xsl:output method="text"/>
+
+  <xsl:param name="test">wrong value</xsl:param>
+
+  <xsl:template match="/">
+    <xsl:value-of select="$test"/>
+  </xsl:template>
+
+</xsl:stylesheet>
+}]
+	set style [xslt::compile $styledoc]
+    } -body {
+	set result [$style transform $xml1 test {'correct value'}]
+	::dom::serialize $result -method text
+    } -cleanup {
+	eval $CLEANUP
+	dom::destroy $styledoc
+	dom::destroy $result
+	rename $style {}
+    } -result {correct value}
+
+    test transform-5.2 {Pass parameter, calculate result} -setup {
+	# Create a large source document
+	set sourcexml {<?xml version="1.0"?>
+<Test>
+}
+	for {set i 0} {$i < 1000} {incr i} {
+	    append sourcexml "  <value/>\n"
+	}
+	append sourcexml {
+</Test>
+}
+	set source [::dom::parse $sourcexml]
+	set styledoc [::dom::parse {<xsl:stylesheet
+    version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+
+  <xsl:output method="text"/>
+  <xsl:strip-space elements='*'/>
+
+  <xsl:param name="test" select="'10'"/>
+
+  <xsl:template match="value">
+    <!--
+    <xsl:message>Processing value <xsl:value-of select="position()"/></xsl:message>
+    -->
+    <xsl:call-template name="recurse">
+      <xsl:with-param name="value" select="$test"/>
+    </xsl:call-template>
+  </xsl:template>
+
+  <xsl:template name="recurse">
+    <xsl:param name="value" select="'0'"/>
+
+    <xsl:choose>
+      <xsl:when test="$value = 0">
+      </xsl:when>
+      <xsl:otherwise>
+	<xsl:text>ooooXXXXoooo</xsl:text>
+	<xsl:call-template name="recurse">
+	  <xsl:with-param name="value" select="$value - 1"/>
+	</xsl:call-template>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
+</xsl:stylesheet>
+}]
+	set style [xslt::compile $styledoc]
+    } -body {
+	set result [$style transform $source test '2']
+	expr {[string length [dom::serialize $result -method text]] == 1000 * 2 * [string length "ooooXXXXoooo"]}
+    } -cleanup {
+	unset sourcexml
+	dom::destroy $source
+	dom::destroy $styledoc
+	dom::destroy $result
+	rename $style {}
+    } -result 1
+
+    test transform-5.3 {get parameters} -setup {
+	set stydoc [dom::parse {<xsl:stylesheet version='1.0'
+xmlns:xsl='http://www.w3.org/1999/XSL/Transform'>
+
+  <xsl:param name='firstParameter' select='"firstValue"'/>
+  <xsl:param name='secondParameter'>
+    second value
+  </xsl:param>
+  <xsl:variable name='thirdVariable' select='"thirdValue"'/>
+
+</xsl:stylesheet>
+}]
+	set style [xslt::compile $stydoc]
+    } -body {
+	$style get parameters
+    } -cleanup {
+	dom::destroy $stydoc
+	rename $style {}
+    } -result {{firstParameter {} {"firstValue"}} {secondParameter {} {}}}
+
+    test transform-6.1 {-message} -setup {
+	variable msg {}
+	proc message text {
+	    variable msg
+	    append msg $text
+	}
+	set src [dom::parse <Test>value</Test>]
+	set stydoc [dom::parse {<xsl:stylesheet
+    version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+
+  <xsl:template match='/'>
+    <xsl:message>Testing message command</xsl:message>
+  </xsl:template>
+
+</xsl:stylesheet>
+}]
+	set ssheet [xslt::compile $stydoc]
+    } -body {
+	$ssheet configure -messagecommand [namespace code message]
+	set result [$ssheet transform $src]
+	set msg
+    } -cleanup {
+	dom::destroy $src
+	dom::destroy $stydoc
+	rename $ssheet {}
+	catch {unset msg}
+    } -result {Testing message command
+}
+
+    test transform-7.1 {error while compiling} -match glob -setup {
+	set srcdoc [dom::parse <Test>whatever</Test>]
+	set stydoc [dom::parse {
+<xsl:stylesheet version='1.0'
+  xmlns:xsl='http://www.w3.org/not/the/XSLT/namespace/URI'>
+</xsl:stylesheet>
+}]
+    } -body {
+	expectError {
+	    xslt::compile $stydoc
+	}
+    } -cleanup {
+	dom::destroy $srcdoc
+	dom::destroy $stydoc
+    } -result {*document is not a stylesheet*}
+
+    cleanupTests
+}
+
+namespace delete ::xslt::transformTest
+return

@@ -1,0 +1,167 @@
+# Features covered:  comments
+#
+# This file contains a collection of tests for the TclXML parser.
+# This file tests the parser's performance on comments.
+# Sourcing this file into Tcl runs the tests and generates output
+# for errors.  No output means no errors were found.
+#
+# Copyright (c) 1998-2003 Zveno Pty Ltd.
+#
+# $Id: comment.test,v 1.5 2003/12/03 20:06:36 balls Exp $
+
+package require tcltest
+source [file join [tcltest::workingDirectory] tclxmlutils.tcl]
+
+testPackage $::tcltest::parser
+
+namespace eval ::xml::commentTest {
+    namespace import -force ::tcltest::*
+
+    variable SETUP {
+	variable result {}
+	variable comment {}
+	variable element 0
+
+	proc pcdata data {
+	    variable result
+	    append result $data
+	}
+	proc comment data {
+	    variable comment
+	    append comment $data
+	}
+	proc EStart {tagName attrList args} {
+	    variable element
+	    switch -- $tagName {
+		test -
+		Test {
+		}
+		default {
+		    incr element
+		}
+	    }
+	}
+	proc EStop {tagName args} {
+	}
+
+	set parser [xml::parser \
+	    -elementstartcommand [namespace code EStart] \
+	    -elementendcommand [namespace code EStop] \
+	    -characterdatacommand [namespace code pcdata] \
+	    -commentcommand [namespace code comment]]
+    }
+
+    variable CLEANUP {
+	catch {unset result}
+	catch {unset comment}
+	catch {unset element}
+	rename pcdata {}
+	rename comment {}
+	rename EStart {}
+	rename EStop {}
+	$parser free
+    }
+
+    test comment-1.1 {Simple comment} -setup $SETUP -body {
+	$parser parse {<?xml version="1.0"?>
+<!DOCTYPE Test>
+<Test><!-- This is a comment --></Test>
+}
+	list $comment $result $element
+    } -cleanup $CLEANUP -result {{ This is a comment } {} 0}
+
+    test comment-1.2 {Simple comment, no white space} -setup $SETUP -body {
+	$parser parse {<?xml version="1.0"?>
+<!DOCTYPE Test>
+<Test><!--This is a comment--></Test>
+}
+	list $comment $result $element
+    } -cleanup $CLEANUP -result {{This is a comment} {} 0}
+
+    test comment-1.3 {Simple comment, within PCDATA} -setup $SETUP -body {
+	$parser parse {<?xml version="1.0"?>
+<!DOCTYPE Test>
+<Test>surrounding <!--This is a comment--> PCDATA</Test>
+}
+	list $comment $result $element
+    } -cleanup $CLEANUP -result {{This is a comment} {surrounding  PCDATA} 0}
+
+    test comment-1.4 {Simple comment, no white space} -setup $SETUP -body {
+	$parser parse {<?xml version="1.0"?>
+<!DOCTYPE Test>
+<Test><!--comment--></Test>
+}
+	list $comment $result $element
+    } -cleanup $CLEANUP -result {comment {} 0}
+
+    test comment-1.5 {comment, with nested element} -setup $SETUP -body {
+	$parser parse {<?xml version="1.0"?>
+<!DOCTYPE Test>
+<Test><!-- comment <!blah>--></Test>
+}
+	list $comment $result $element
+    } -cleanup $CLEANUP -result {{ comment <!blah>} {} 0}
+
+    test comment-2.1 {comment with an angle bracket} -setup $SETUP -body {
+	$parser parse {<?xml version="1.0"?>
+<!DOCTYPE Test>
+<Test><!-- This is a > greater than sign --></Test>
+}
+	list $comment $result $element
+    } -cleanup $CLEANUP -result {{ This is a > greater than sign } {} 0}
+
+    test comment-2.2 {comment with multiple angle brackets} -setup $SETUP -body {
+	$parser parse {<?xml version="1.0"?>
+<!DOCTYPE Test>
+<Test><!-- 
+  <Test>
+    <Element>
+      <Empty/>
+    </Element>
+  </Test>
+ --></Test>
+}
+	list $comment $result $element
+    } -cleanup $CLEANUP -result {{ 
+  <Test>
+    <Element>
+      <Empty/>
+    </Element>
+  </Test>
+ } {} 0}
+
+    variable SETUP2 {
+	eval $SETUP
+	variable commentData [format {
+    <question title="This is &lt;okay&gt;, right?" />
+    <question title="Is &lt;this> bogus?" />
+    <section title="This is a problem%s" />
+  } \}]
+    }
+    variable CLEANUP2 {
+	eval $CLEANUP
+	unset commentData
+    }
+
+    test comment-2.3 {comment with entities} -setup $SETUP2 -body {
+	$parser parse "<?xml version='1.0'?>
+<!DOCTYPE test SYSTEM 'test.dtd'>
+<test>
+
+<author>
+<organization/>
+</author>
+
+<!--${commentData}-->
+</test>"
+
+	list [string equal $comment $commentData] [string trim $result] $element
+    } -cleanup $CLEANUP2 -result [list 1 {} 2]
+
+
+    cleanupTests
+}
+
+namespace delete ::xml::commentTest
+
+return

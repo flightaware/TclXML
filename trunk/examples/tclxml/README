@@ -1,0 +1,29 @@
+examples/tclxml/README --
+
+This directory contains example scripts to demonstrate
+the use of TclXML.
+
+---------------------------------------------------------------------------
+See the file "LICENSE" for information on usage and
+redistribution of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+---------------------------------------------------------------------------
+
+flatten.tcl
+	Parses an XML document or DTD and produces the document's DTD
+	with all external entities expanded, parameter entities
+	resolved and conditional sections resolved.
+
+xmlwc
+	Counts the number of lines, words, characters and bytes
+	in the character data of an XML document.
+	Inspired by the Unix wc program.
+
+REC-xml-20001006.xml 
+        The W3C XML spec in XML format. A handy file to run xmlwc over
+        to test your build. You should get this output with the command
+             tclsh xmlwc REC-xml-20001006.xml 
+        :
+ 
+           2929   14978  116827 REC-xml-20001006.xml 
+
+
