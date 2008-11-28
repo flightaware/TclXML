@@ -1,0 +1,44 @@
+# Features covered:  Stress test
+#
+# This file contains a collection of tests for the TclDOM package.
+# This file tests the package's overall realtime and memory performance.
+# Sourcing this file into Tcl runs the tests and generates output
+# for errors.  No output means no errors were found.
+#
+# Copyright (c) 2008 Explain
+# Copyright (c) 2004 Zveno Pty Ltd.
+#
+# $Id: stress.test,v 1.1 2004/02/24 20:16:10 balls Exp $
+
+package require tcltest
+source [file join [tcltest::workingDirectory] tcldomutils.tcl]
+
+testPackage dom
+
+namespace eval ::dom::stressTest {
+    namespace import -force ::tcltest::*
+
+    variable SETUP {
+	proc createdoc {} {
+	    set doc [dom::create]
+	    set top [dom::document createElement $doc top]
+	    dom::document createElement $top child
+	    return $doc
+	}
+	proc createAndDestroy {} {
+	    set doc [createdoc]
+	    dom::destroy $doc
+	}
+    }
+    variable CLEANUP {}
+
+    test stress-1.1 {} -setup $SETUP -body {
+	time createAndDestroy 10000
+	ok
+    } -result {}
+
+    cleanupTests
+}
+
+namespace delete ::dom::stressTest
+return

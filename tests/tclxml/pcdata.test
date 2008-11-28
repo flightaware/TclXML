@@ -1,0 +1,126 @@
+# Features covered:  PCDATA
+#
+# This file contains a collection of tests for the TclXML parser.
+# This file tests the parser's performance on PCDATA.
+# Sourcing this file into Tcl runs the tests and generates output
+# for errors.  No output means no errors were found.
+#
+# Copyright (c) 2005 Explain
+# http://www.explain.com.au/
+# Copyright (c) 1998-2004 Zveno Pty Ltd.
+#
+# $Id: pcdata.test,v 1.10 2005/05/20 12:02:18 balls Exp $
+
+package require tcltest
+source [file join [tcltest::workingDirectory] tclxmlutils.tcl]
+
+testPackage $::tcltest::parser
+
+namespace eval ::xml::pcdataTest {
+    namespace import -force ::tcltest::*
+
+    variable SETUP {
+	variable result {}
+	variable pcdataCounter 0
+	variable element 0
+
+	proc pcdata data {
+	    variable result
+	    variable pcdataCounter
+
+	    append result $data
+	    incr pcdataCounter
+	}
+	proc EStart {tagName attrList args} {
+	    variable element
+	    switch -- $tagName {
+		Test {
+		}
+		default {
+		    incr element
+		}
+	    }
+	}
+	proc EStop {tagname args} {}
+
+	set parser [xml::parser \
+		-elementstartcommand [namespace code EStart] \
+		-elementendcommand [namespace code EStop] \
+		-characterdatacommand [namespace code pcdata]]
+    }
+    variable CLEANUP {
+	catch {unset result}
+	catch {unset pcdataCounter}
+	catch {unset element}
+	rename pcdata {}
+	rename EStart {}
+	rename EStop {}
+	$parser free
+    }
+
+    test pcdata-1.1 {Simple PCDATA} -setup $SETUP -body {
+	$parser parse {<?xml version="1.0"?>
+<!DOCTYPE Test>
+<Test>This is PCDATA</Test>
+}
+	list $result $element
+    } -cleanup $CLEANUP -result {{This is PCDATA} 0}
+
+    test pcdata-1.2 {PCDATA section with Tcl specials} -setup $SETUP -body {
+	$parser parse {<?xml version="1.0"?>
+<!DOCTYPE Test>
+<Test>Dollar $ backslash \ square brackets [ ] braces { }</Test>
+}
+	list $result $element
+    } -cleanup $CLEANUP -result {{Dollar $ backslash \ square brackets [ ] braces { }} 0}
+
+    # Requested by Marshall Rose, 20/3/1999
+    test pcdata-1.3 {PCDATA with no entity expansion} -setup $SETUP -match regexp -body {
+	$parser configure \
+		-defaultexpandinternalentities 0
+	$parser parse {<?xml version="1.0"?>
+<!DOCTYPE Test>
+<Test>This is &lt;PCDATA&gt;</Test>
+}
+	list $result $pcdataCounter
+    } -cleanup $CLEANUP -result {{This is (<|&lt;)PCDATA(>|&gt;)} 1}
+
+    # Test case from bug #468029 contributed by kenstir@users.sourceforge.net
+
+    test pcdata-1.4 {PCDATA with Tcl special character} -setup $SETUP -body {
+	$parser parse {<d>UPPER(&apos;new&apos;)$UPPER(TKT_STATE)</d>}
+	set result
+    } -cleanup $CLEANUP -result {UPPER('new')$UPPER(TKT_STATE)}
+
+    # Test case from bug #515972 contributed by kenstir@users.sourceforge.net
+    # Similar to #468029
+
+    test pcdata-1.5 {PCDATA with Tcl special character} -setup $SETUP -body {
+	$parser parse {<t>Welcome $to [\{]asd &amp;asd f@af!a.htm</t>}
+	set result
+    } -cleanup $CLEANUP -result {Welcome $to [\{]asd &asd f@af!a.htm}
+
+    # Test case from bug #1040550 contributed by imamit@users.sf.net
+
+    test pcdata-1.6 {PCDATA with backslash characters} -setup $SETUP -body {
+	$parser parse [format {<t>%s%s( -type f -o -type d%s%s)</t>} \\ \\ \\ \\]
+	set result
+    } -cleanup $CLEANUP -result [format {%s%s( -type f -o -type d%s%s)} \\ \\ \\ \\]
+
+    test pcdata-2.1 {Bad PCDATA: illegal Unicode character} -setup $SETUP -match glob -body {
+	expectError {
+	    $parser parse [format {<t>Bad %s character</t>} \x04]
+	}
+    } -cleanup $CLEANUP -result *
+
+    test pcdata-2.2 {Bad PCDATA: entity resolves to illegal Unicode character} -setup $SETUP -match glob -body {
+	expectError {
+	    $parser parse {<t>Bad &#x4; character</t>}
+	}
+    } -cleanup $CLEANUP -result *
+
+    cleanupTests
+}
+
+namespace delete ::xml::pcdataTest
+return

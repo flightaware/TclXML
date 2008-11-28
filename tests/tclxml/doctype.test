@@ -1,0 +1,71 @@
+# Features covered:  Document Type Declaration
+#
+# This file contains a collection of tests for the TclXML parser.
+# This file tests the parser's performance on Document Type Declarations.
+# Sourcing this file into Tcl runs the tests and generates output
+# for errors.  No output means no errors were found.
+#
+# Copyright (c) 1998-2003 Zveno Pty Ltd.
+#
+# $Id: doctype.test,v 1.7 2003/12/03 20:06:36 balls Exp $
+
+package require tcltest
+source [file join [tcltest::workingDirectory] tclxmlutils.tcl]
+
+testPackage $::tcltest::parser
+
+namespace eval ::xml::doctypeTest {
+    namespace import -force ::tcltest::*
+
+    variable SETUP {
+	variable result {}
+
+	proc doctype {name pub system dtd} {
+	    variable result
+	    lappend result $name $pub $system $dtd
+	}
+
+	set parser [xml::parser \
+		-doctypecommand [namespace code doctype]]
+    }
+    variable CLEANUP {
+	catch {unset result}
+	rename doctype {}
+	$parser free
+    }
+
+    test doctype-1.1 {Document Type Declaration: no internal DTD subset} -setup $SETUP -constraints !xml_libxml2 -body {
+	$parser parse {<?xml version="1.0"?>
+<!DOCTYPE Test>
+<Test></Test>
+}
+	set result
+    } -cleanup $CLEANUP -result {Test {} {} {{}}}
+
+    test doctype-2.1 {Document Type Declaration: internal DTD subset} -setup $SETUP -constraints !xml_libxml2 -body {
+	$parser parse {<?xml version="1.0"?>
+<!DOCTYPE Test [<!ELEMENT Test EMPTY>]>
+<Test></Test>
+}
+	set result
+    } -cleanup $CLEANUP -result {Test {} {} {{<!ELEMENT Test EMPTY>}}}
+
+    test doctype-2.2 {Document Type Declaration: internal DTD subset} -setup $SETUP -constraints !xml_libxml2 -body {
+	$parser parse {<?xml version="1.0"?>
+<!DOCTYPE Test [
+    <!ELEMENT Test EMPTY>
+    <!ATTLIST Test id CDATA #IMPLIED>
+]>
+<Test></Test>
+}
+	set result
+    } -cleanup $CLEANUP -result {Test {} {} {{
+    <!ELEMENT Test EMPTY>
+    <!ATTLIST Test id CDATA #IMPLIED>
+}}}
+
+    cleanupTests
+}
+
+namespace delete ::xml::doctypeTest
+return

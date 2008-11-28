@@ -1,0 +1,353 @@
+# Features covered:  Declarations
+#
+# This file contains a collection of tests for the TclXML parser.
+# This file tests the parser's performance on markup declarations.
+# Sourcing this file into Tcl runs the tests and generates output
+# for errors.  No output means no errors were found.
+#
+# Copyright (c) 2008 Explain
+# http://www.explain.com.au/
+# Copyright (c) 2000-2004 Zveno Pty Ltd.
+#
+# $Id: decls.test,v 1.15 2004/02/20 09:15:52 balls Exp $
+
+package require tcltest
+source [file join [tcltest::workingDirectory] tclxmlutils.tcl]
+
+testPackage $::tcltest::parser
+
+namespace eval ::xml::declsTest {
+    namespace import -force ::tcltest::*
+
+    variable SETUP {
+	catch {unset elements}
+	variable elements
+	array set elements {}
+	catch {unset attrs}
+	variable attrs
+	array set attrs {}
+	catch {unset entities}
+	variable entities
+	array set entities {}
+	catch {unset externals}
+	variable externals
+	array set externals {}
+	catch {unset cdata}
+	variable cdata {}
+
+	proc elementDecl {name cmodel} {
+	    variable elements
+	    set elements($name) $cmodel
+	}
+	proc attlistDecl {name attName type default dfltValue} {
+	    variable attrs
+	    lappend attrs($name/$attName) $type $default $dfltValue
+	}
+	proc entityDecl {name args} {
+	    variable entities
+	    switch [llength $args] {
+		1 {
+		    set entities($name) [lindex $args 0]
+	 	}
+		2 {
+		    set externals($name) $args
+		}
+		default {
+		    error "wrong number of arguments"
+		}
+	    }
+	}
+	proc CData data {
+	    variable cdata
+	    append cdata [string trim $data]
+	}
+
+	set parser [xml::parser \
+		-elementdeclcommand [namespace code elementDecl] \
+		-attlistdeclcommand [namespace code attlistDecl] \
+		-entitydeclcommand [namespace code entityDecl]]
+
+    }
+    variable CLEANUP {
+	catch {unset elements}
+	catch {unset attrs}
+	catch {unset entities}
+	catch {unset externals}
+	catch {unset cdata}
+	rename elementDecl {}
+	rename attlistDecl {}
+	rename entityDecl {}
+	rename CData {}
+	$parser free
+    }
+
+    # Internal DTD subset
+
+    test decls-1.1 {element declaration} -setup $SETUP -constraints {!xml_libxml2} -body {
+	$parser parse {<?xml version="1.0"?>
+<!DOCTYPE Test [
+<!ELEMENT Test (#PCDATA)>
+]>
+<Test></Test>
+}
+
+	array get elements
+    } -cleanup $CLEANUP -result {Test (#PCDATA)}
+
+    test decls-2.1 {attribute list declaration, implied} -setup $SETUP -constraints {!xml_libxml2} -body {
+	$parser parse {<?xml version='1.0'?>
+<!DOCTYPE Test [
+<!ELEMENT Test (#PCDATA)>
+<!ATTLIST Test
+	test CDATA #IMPLIED>
+]>
+<Test test="value"/>}
+
+	array get attrs
+    } -cleanup $CLEANUP -result {Test/test {CDATA #IMPLIED {}}}
+
+    test decls-2.2 {attribute list declaration, enum} -setup $SETUP -constraints {!xml_libxml2} -body {
+	$parser parse {<?xml version='1.0'?>
+<!DOCTYPE Test [
+<!ELEMENT Test (#PCDATA)>
+<!ATTLIST Test
+	test (LGL|OTH) "LGL">
+]>
+<Test test="value"/>}
+
+	array get attrs
+    } -cleanup $CLEANUP -result {Test/test {LGL|OTH {} LGL}}
+
+    # Disable this test for the moment
+    test decls-2.3 {attribute list declaration, error} -setup $SETUP -match regexp -constraints {disabled} -body {
+	expectError {
+	    $parser parse {<?xml version='1.0'?>
+<!DOCTYPE Test [
+<!ELEMENT Test (#PCDATA)>
+<!ATTLIST Test
+	test CDATA>
+]>
+<Test test="value"/>}}
+    } -cleanup $CLEANUP -result {(unexpected text)|(.*space-required.*)}
+
+    # Bug #714316
+    test decls-2.4 {attribute list declaration - multiple attribute definitions} -setup $SETUP -body {
+	$parser parse {<!DOCTYPE Test [
+<!ELEMENT Test (#PCDATA)>
+<!ATTLIST Test
+	test CDATA #IMPLIED
+	id ID #IMPLIED>
+]>
+<Test/>
+}
+	ok
+    } -cleanup $CLEANUP -result {}
+
+    test decls-3.1 {entity declarations} -setup $SETUP -constraints {!xml_libxml2} -body {
+	$parser parse {<?xml version='1.0'?>
+<!DOCTYPE Test [
+<!ENTITY testEnt "replacement text">
+<!ELEMENT Test (#PCDATA)>
+]>
+<Test/>}
+
+	array get entities
+    } -cleanup $CLEANUP -result {testEnt {replacement text}}
+
+    test decls-4.1 {parameter entity declarations} -setup $SETUP -constraints {!xml_libxml2 && !xml_tcl} -body {
+	expectError {
+	$parser parse {<?xml version='1.0'?>
+<!DOCTYPE Test [
+<!ENTITY % PEnt "&#60;!ELEMENT Test (#PCDATA)&#62;">
+%PEnt;
+]>
+<Test/>}
+	}
+	#list [array get entities] [array get elements]
+    } -cleanup $CLEANUP -result {{PEnt {<!ELEMENT Test (#PCDATA)>}} {Test (#PCDATA)}}
+
+    # Example from XML Rec. section 4.5
+    test decls-4.2 {parameter entity declarations} -setup $SETUP -constraints {!xml_libxml2} -body {
+	$parser parse {<?xml version='1.0'?>
+<!DOCTYPE Test [
+<!ENTITY % pub    "&#xc9;ditions Gallimard" >
+<!ENTITY   rights "All rights reserved" >
+<!ENTITY   book   "La Peste: Albert Camus,
+&#xA9; 1947 %pub;. &rights;" >
+
+<!ELEMENT Test EMPTY>
+]>
+<Test>&book;</Test>}
+
+	array get entities book
+    } -cleanup $CLEANUP -result [list book [format {La Peste: Albert Camus,
+%c 1947 %cditions Gallimard. &rights;} 169 201]]
+
+    # First example from XML Rec. appendix D
+    # This test requires a validating parser
+    test decls-4.3 {parameter entity declarations} -setup $SETUP -constraints {validating} -body {
+	$parser configure -validate 1
+	$parser parse {<?xml version='1.0'?>
+<!DOCTYPE Test [
+<!ENTITY Example "<p>An ampersand (&#38;#38;) may be escaped
+numerically (&#38;#38;#38;) or with a general entity
+(&amp;amp;).</p>" >
+
+<!ELEMENT Test (#PCDATA|p)*>
+<!ELEMENT p (#PCDATA)>
+]>
+<Test>&Example;</Test>}
+
+	set cdata
+    } -cleanup $CLEANUP -result {An ampersand (&) may be escaped
+numerically (&#38;) or with a general entity
+(&amp;).}
+
+    # NB. entity.test tests entity replacement as well
+
+    # External entities
+
+    test decls-5.1 {external entity} -setup $SETUP -constraints {validating} -body {
+	$parser configure \
+		-validate 1 \
+		-baseuri file://[file join [pwd] decls.test]]
+	$parser parse {<?xml version='1.0'?>
+<!DOCTYPE Test SYSTEM "dtd-5.1.dtd">
+<Test/>}
+
+	array get elements
+    } -cleanup $CLEANUP -result {Test (#PCDATA)}
+
+    test decls-5.2 {external DTD subset} -setup $SETUP -constraints {validating} -body {
+	$parser configure \
+		-validate 1 \
+		-parameterentitydeclcommand entityDecl \
+		-baseuri file://[file join [pwd] decls.test]]
+	$parser parse {<?xml version='1.0'?>
+<!DOCTYPE Test SYSTEM "dtd-5.2.dtd">
+<Test/>}
+
+	list [array get elements] [array get entities]
+    } -cleanup $CLEANUP -result {{Test (#PCDATA)} {content (#PCDATA)}}
+
+    test decls-5.3 {external entity} -setup $SETUP -constraints {validating} -body {
+	$parser configure \
+		-validate 1 \
+		-parameterentitydeclcommand entityDecl \
+		-baseuri file://[file join [pwd] decls.test]]
+	$parser parse {<?xml version='1.0'?>
+<!DOCTYPE Test [
+<!ENTITY % module SYSTEM "dtd-5.2.dtd">
+%module;
+]>
+<Test/>}
+
+	list [array get elements] [array get entities] [array get externals]
+    } -cleanup $CLEANUP -result {{Test (#PCDATA)} {content (#PCDATA)} {module {dtd-5.2.dtd {}}}}
+
+    # Bug #676399
+    test decls-5.4 {external entity w/- baseuri} -constraints {validating && !xml_tcl} -setup {
+	set parser [::xml::parser -validate 1 -baseuri file://[file join [workingDirectory] decls.test]]
+    } -constraints {xml_tcl} -body {
+	$parser parse {<?xml version='1.0' encoding='ISO-8859-1'?>
+<!DOCTYPE foo SYSTEM "dtd-5.4.dtd">
+<foo/>
+}
+    } -cleanup {
+	$parser free
+    } -result {}
+
+    # Conditional Sections
+
+    test decls-6.1 {conditional section: include} -setup $SETUP -constraints {validating} -body {
+	$parser configure \
+		-validate 1 \
+		-baseuri file://[file join [pwd] decls.test]]
+	$parser parse {<?xml version='1.0'?>
+<!DOCTYPE Test SYSTEM "dtd-6.1.dtd">
+<Test/>}
+
+	array get elements
+    } -cleanup $CLEANUP -result {Test (#PCDATA)}
+
+    test decls-6.2 {conditional section: include, empty} -setup $SETUP -constraints {validating} -body {
+	$parser configure \
+		-validate 1 \
+		-baseuri file://[file join [pwd] decls.test]]
+	$parser parse {<?xml version='1.0'?>
+<!DOCTYPE Test SYSTEM "dtd-6.2.dtd">
+<Test/>}
+
+	array get elements
+    } -cleanup $CLEANUP -result {}
+    test decls-6.3 {conditional section: include, empty} -setup $SETUP -constraints {validating} -body {
+	$parser configure \
+		-validate 1 \
+		-baseuri file://[file join [pwd] decls.test]]
+	$parser parse {<?xml version='1.0'?>
+<!DOCTYPE Test SYSTEM "dtd-6.3.dtd">
+<Test/>}
+
+	array get elements
+    } -cleanup $CLEANUP -result {}
+
+    test decls-6.4 {conditional section: include, nested} -setup $SETUP -constraints {validating} -body {
+	$parser configure \
+		-validate 1 \
+		-baseuri file://[file join [pwd] decls.test]]
+	$parser parse {<?xml version='1.0'?>
+<!DOCTYPE Test SYSTEM "dtd-6.4.dtd">
+<Test/>}
+
+	array size elements
+    } -cleanup $CLEANUP -result 3
+
+    test decls-6.5 {conditional section: ignore} -setup $SETUP -constraints {validating} -body {
+	$parser configure \
+		-validate 1 \
+		-baseuri file://[file join [pwd] decls.test]]
+	$parser parse {<?xml version='1.0'?>
+<!DOCTYPE Test SYSTEM "dtd-6.5.dtd">
+<Test/>}
+
+	array size elements
+    } -cleanup $CLEANUP -result 0
+
+    test decls-6.6 {conditional section/PE combo} -setup $SETUP -constraints {validating} -body {
+	$parser configure \
+		-validate 1 \
+		-baseuri file://[file join [pwd] decls.test]]
+	$parser parse {<?xml version='1.0'?>
+<!DOCTYPE Test SYSTEM "dtd-6.6.dtd">
+<Test/>}
+
+	array size elements
+    } -cleanup $CLEANUP -result 2
+
+    test decls-7.1 {comment in DTD} -setup $SETUP -constraints !xml_libxml2 -body {
+	$parser parse {
+<!DOCTYPE Test [
+<!-- a simple comment -->
+<!ELEMENT Test (#PCDATA)>
+]>
+<Test></Test>
+}
+	array get elements
+    } -cleanup $CLEANUP -result {Test (#PCDATA)}
+
+    test decls-7.2 {complex comment in DTD} -setup $SETUP -constraints !xml_libxml2 -body {
+	$parser parse {
+<!DOCTYPE Test [
+<!-- <Type> </Type> -->
+<!ELEMENT Test (#PCDATA)>
+]>
+<Test></Test>
+}
+	array get elements
+    } -cleanup $CLEANUP -result {Test (#PCDATA)}
+
+    cleanupTests
+}
+
+namespace delete ::xml::declsTest
+return

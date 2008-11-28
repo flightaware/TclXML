@@ -1,0 +1,333 @@
+# Features covered:  Attribute Lists
+#
+# This file contains a collection of tests for the TclXML parser.
+# This file tests the parser's performance on Attribute Lists.
+# Sourcing this file into Tcl runs the tests and generates output
+# for errors.  No output means no errors were found.
+#
+# Copyright (c) 2008 Explain
+# http://www.explain.com.au/
+# Copyright (c) 1998-2004 Zveno Pty Ltd.
+#
+# $Id: attribute.test,v 1.12 2004/02/20 09:15:52 balls Exp $
+
+package require tcltest
+source [file join [tcltest::workingDirectory] tclxmlutils.tcl]
+
+testPackage $::tcltest::parser
+
+namespace eval ::xml::attributeTest {
+    namespace import -force ::tcltest::*
+
+    variable SETUP {
+	variable countAttributesOnly 1
+	variable result
+	catch {unset result}
+	array set result {}
+
+	proc EStart {tagName attrList args} {
+	    variable result
+	    variable countAttributesOnly
+
+	    if {![llength $attrList] && !$countAttributesOnly} {
+		if {[info exists result($tagName)]} {
+		    set count 0
+		    while {[info exists result($tagName/[incr count])]} {}
+		    set result($tagName/$count) {}
+		} else {
+		    set result($tagName) {}
+		}
+		return {}
+	    }
+
+	    foreach {name value} $attrList {
+		if {[info exists result($tagName,$name)]} {
+		    set count 0
+		    while {[info exists result($tagName,$name,[incr count])]} {}
+		    set result($tagName,$name,$count) $value
+		} else {
+		    set result($tagName,$name) $value
+		}
+	    }
+	}
+
+	proc pcdata t {
+	    variable pcdata
+	    append pcdata $t
+	}
+
+	proc EntRef args {
+	    variable entrefs
+	    if {[catch {incr entrefs}]} {
+		set entrefs 1
+	    }
+	}
+
+	set parser [::xml::parser -elementstartcommand [namespace code EStart]]
+    }
+    variable SETUP2 {
+	eval $SETUP
+	$parser configure -characterdatacommand [namespace code pcdata]
+    }
+    variable SETUP3 {
+	eval $SETUP
+	$parser configure -entityreferencecommand [namespace code EntRef]
+	variable entrefs 0
+    }
+
+    variable CLEANUP {
+	$parser free
+	catch {unset result}
+	catch {unset pcdata}
+	catch {unset entrefs}
+	rename EStart {}
+	rename pcdata {}
+	rename EntRef {}
+    }
+
+    test attrList-1.1 {empty attribute list} -setup $SETUP -body {
+	$parser parse {<?xml version="1.0"?>
+<!DOCTYPE Test>
+<Test></Test>
+}
+	array size result
+    } -cleanup $CLEANUP -result 0
+
+    test attrList-1.2 {single attribute} -setup $SETUP -body {
+	$parser parse {<?xml version="1.0"?>
+<!DOCTYPE Test>
+<Test attr="1"></Test>
+}
+
+	array get result
+    } -cleanup $CLEANUP -result {Test,attr 1}
+
+    test attrList-1.3 {multiple distinct attributes} -setup $SETUP -body {
+	$parser parse {<?xml version="1.0"?>
+<!DOCTYPE Test>
+<Test first="1" second='2'></Test>
+}
+
+	list [array size result] $result(Test,first) $result(Test,second)
+    } -cleanup $CLEANUP -result {2 1 2}
+
+    test attrList-1.4 {hyphen in attribute name} -setup $SETUP -body {
+	$parser parse {<?xml version="1.0"?>
+<!DOCTYPE Test>
+<Test first-attr="1"></Test>
+}
+
+	array get result
+    } -cleanup $CLEANUP -result {Test,first-attr 1}
+
+    test attrList-2.1 {right angle bracket in attribute value} -setup $SETUP -body {
+	$parser parse {<?xml version="1.0"?>
+<!DOCTYPE Test>
+<Test attr="value>"></Test>
+}
+
+	array get result
+    } -cleanup $CLEANUP -result {Test,attr value>}
+
+    test attrList-2.2 {right angle bracket in attribute value} -setup $SETUP -body {
+	$parser parse {<?xml version="1.0"?>
+<!DOCTYPE Test>
+<Test attr="value1>value2"></Test>
+}
+
+	array get result
+    } -cleanup $CLEANUP -result {Test,attr value1>value2}
+
+    test attrList-2.3 {right angle bracket in attribute value} -setup $SETUP -body {
+	$parser parse {<?xml version="1.0"?>
+<!DOCTYPE Test>
+<Test attr1="value1" attr2="value2>"></Test>
+}
+
+	sortedarray result
+    } -cleanup $CLEANUP -result {Test,attr1 value1 Test,attr2 value2>}
+
+    test attrList-2.4 {right angle bracket in attribute value} -setup $SETUP -body {
+	$parser parse {<?xml version="1.0"?>
+<!DOCTYPE Test>
+<Test attr2="value2>" attr1="value1"></Test>
+}
+
+	sortedarray result
+    } -cleanup $CLEANUP -result {Test,attr1 value1 Test,attr2 value2>}
+
+    test attrList-2.5 {right angle brackets in attribute values} -setup $SETUP -body {
+	$parser parse {<?xml version="1.0"?>
+<!DOCTYPE Test>
+<Test attr1="value>1" attr2="value>2"></Test>
+}
+
+	sortedarray result
+    } -cleanup $CLEANUP -result {Test,attr1 value>1 Test,attr2 value>2}
+
+    test attrList-2.6 {right angle brackets in attribute values} -setup $SETUP2 -body {
+	$parser parse {<?xml version="1.0"?>
+<!DOCTYPE Test>
+<Test attr1="value>1">some text</Test>
+}
+
+	list [array get result] $pcdata
+    } -cleanup $CLEANUP -result {{Test,attr1 value>1} {some text}}
+
+    test attrList-3.1 {unnested left brace in attribute value} -setup $SETUP -body {
+	$parser parse [format {<?xml version="1.0"?>
+<!DOCTYPE Test>
+<Test attr="%svalue"></Test>
+} \{]
+
+	array get result
+    } -cleanup $CLEANUP -result [list Test,attr [format {%svalue} \{]]
+
+    test attrList-3.2 {unnested right brace in attribute value} -setup $SETUP -body {
+	$parser parse [format {<?xml version="1.0"?>
+<!DOCTYPE Test>
+<Test attr="value%s"></Test>
+} \}]
+
+	array get result
+    } -cleanup $CLEANUP -result [list Test,attr [format {value%s} \}]]
+
+    test attrList-3.3 {Tcl special characters in attribute value} -setup $SETUP -body {
+	$parser parse {<?xml version="1.0"?>
+<!DOCTYPE Test>
+<Test attr="dollar $ backslash \ brackets [puts hello]"></Test>
+}
+
+	array get result
+    } -cleanup $CLEANUP -result {Test,attr {dollar $ backslash \ brackets [puts hello]}}
+
+    test attrList-4.1 {Unquoted attribute value} -constraints {xml_tcl} -setup $SETUP -match glob -body {
+	expectError {
+	    $parser parse {<?xml version="1.0"?>
+<!DOCTYPE Test>
+<Test attr=noquotes></Test>
+}
+	}
+    } -cleanup $CLEANUP -result {*invalid attribute list around line 2*}
+    test attrList-4.1 {Unquoted attribute value} -constraints {xml_expat} -setup $SETUP -body {
+	expectError {
+	    $parser parse {<?xml version="1.0"?>
+<!DOCTYPE Test>
+<Test attr=noquotes></Test>
+}
+	}
+    } -cleanup $CLEANUP -result {error "not well-formed" at line 3 character 11}
+    test attrList-4.1 {Unquoted attribute value} -constraints {xml_libxml2} -match glob -setup $SETUP -body {
+	expectError {
+	    $parser parse {<?xml version="1.0"?>
+<!DOCTYPE Test>
+<Test attr=noquotes></Test>
+}
+	}
+    } -cleanup $CLEANUP -result {*unterminatedattribute*}
+
+    # Test case contributed by David Sutton <dsutton@coactive.com>
+    test attrList-5.0 {Complicated attribute list} -setup $SETUP2 -body {
+	variable countAttributesOnly 0
+
+	$parser parse {<?xml version="1.0"?>
+<event name='LogAlarmReset' ID='22' startDisabled='no' deleteOnCompletion='no' startDateTime='' endDateTime=''>
+  <stateChangeTrigger initialState='true' condition='AlarmSwitch = FALSE'/>
+  <eventAction>LightState = LightCtl</eventAction>
+  <eventAction>LOG(AlarmSwitch)</eventAction>
+  <eventAction>DISABLE(BlinkLight)</eventAction>
+  <eventAction>NOTIFY( AlarmSwitch,"Alarm has been reset")</eventAction>
+</event>
+}
+
+	regsub -all "\[ \t\n\]+" $pcdata { } pcdata
+	set sortedResult {}
+	foreach key [lsort -dictionary [array names result]] {
+	    lappend sortedResult $key $result($key)
+	}
+	list $sortedResult $pcdata
+    } -cleanup $CLEANUP -result [list {event,deleteOnCompletion no event,endDateTime {} event,ID 22 event,name LogAlarmReset event,startDateTime {} event,startDisabled no eventAction {} eventAction/1 {} eventAction/2 {} eventAction/3 {} stateChangeTrigger,condition {AlarmSwitch = FALSE} stateChangeTrigger,initialState true} { LightState = LightCtl LOG(AlarmSwitch) DISABLE(BlinkLight) NOTIFY( AlarmSwitch,"Alarm has been reset") }]
+
+    # Test case contributed by Marshall Rose <mrose@dbc.mtview.ca.us>
+    test attrList-5.1 {Attribute list with quoted value} -setup $SETUP -body {
+	variable countAttributesOnly 0
+
+	$parser parse {<test example="isn&apos;t this legal?"/>}
+
+	array get result
+    } -cleanup $CLEANUP -result {test,example {isn't this legal?}}
+
+    test attrList-5.2 {Attribute list with unresolved entity reference} -match glob -setup $SETUP -body {
+	variable countAttributesOnly 0
+
+	expectError {
+	    $parser parse {
+<test example='isn&apos;t this legal&ques;'/>
+}
+	}
+    } -cleanup $CLEANUP -result *
+
+    test attrList-5.3 {Attribute list with unresolved entity reference and entity callback} -setup $SETUP3 -body {
+	variable countAttributesOnly 0
+
+	$parser parse {
+<test example='isn&apos;t this great&quot;'/>
+}
+
+	set entrefs
+    } -cleanup $CLEANUP -result 0
+
+    test attrList-5.4 {Attribute list with entity reference} -setup $SETUP -body {
+	variable countAttributesOnly 0
+
+	$parser parse {<!DOCTYPE test [
+<!ENTITY ques "?">
+]>
+<test example='isn&apos;t this great&ques;'/>
+}
+
+	array get result
+    } -cleanup $CLEANUP -result {test,example {isn't this great?}}
+
+    test attrList-5.5 {Attribute list with nested entity references} -setup $SETUP -body {
+	variable countAttributesOnly 0
+
+	$parser parse {<!DOCTYPE test [
+<!ENTITY level2 "OK">
+<!ENTITY rules "rules, &level2;?">
+]>
+<test example='XML &rules;'/>
+}
+
+	array get result
+    } -cleanup $CLEANUP -result {test,example {XML rules, OK?}}
+
+    # Test case contributed by Joe English, bug #546295
+    test attrList-5.6 {Attribute list with character entity references} -setup $SETUP -body {
+	variable countAttributesOnly 0
+
+	$parser parse {
+<foo bar="abc&#xA;def"/>
+}
+
+	array get result
+    } -cleanup $CLEANUP -result {foo,bar {abc
+def}}
+
+    # Test case contributed by Laurent Duperval, bug #620034
+    test attrList-5.7 {Attribute with right angle bracket} -setup $SETUP -body {
+	variable countAttributesOnly 0
+
+	$parser parse {
+<foo><bar att=">=foo"/></foo>
+}
+
+	array get result
+    } -cleanup $CLEANUP -result {foo {} bar,att >=foo}
+
+    cleanupTests
+}
+
+namespace delete ::xml::attributeTest
+
+return

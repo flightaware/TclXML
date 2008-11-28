@@ -1,0 +1,13 @@
+examples/tclxslt/README --
+
+This directory contains example scripts to demonstrate
+the use of TclXSLT.
+
+---------------------------------------------------------------------------
+See the file "LICENSE" for information on usage and
+redistribution of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+---------------------------------------------------------------------------
+
+tkxsltproc
+	A GUI version of libxslt's xsltproc.
+
