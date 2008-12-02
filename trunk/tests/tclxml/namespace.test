@@ -5,6 +5,8 @@
 # Sourcing this file into Tcl runs the tests and generates output
 # for errors.  No output means no errors were found.
 #
+# Copyright (c) 2008 Explain
+# http://www.explain.com.au/
 # Copyright (c) 2000-2004 Zveno Pty Ltd.
 #
 # $Id: namespace.test,v 1.4 2004/02/20 09:15:52 balls Exp $
@@ -61,7 +63,7 @@ namespace eval ::xml::namespaceTest {
 <Test xmlns:test="http://tclxml.sf.net/Schemas"></Test>
 }
 	list $result $nsdecls
-    } -cleanup $CLEANUP -result {Test {http://www.zveno.com/Schemas test}}
+    } -cleanup $CLEANUP -result {Test {http://tclxml.sf.net/Schemas test}}
 
     test ns-1.2 {Multiple namespace declarations} -setup $SETUP -constraints {!xml_libxml2} -body {
 	$parser parse {<?xml version="1.0"?>
