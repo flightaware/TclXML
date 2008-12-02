@@ -10186,9 +10186,8 @@ if test "${with_xml2_config+set}" = set; then
 fi
 
 
-if test -x "${with_xml2_config}" ; then
-    LIBXML2_CONFIG="${with_xml2_config}"
-else
+LIBXML2_CONFIG=
+if test "x${with_xml2_config}" = "x" ; then
     for c in \
 	/Library/Frameworks/libxml.framework/Resources/Scripts/xml2-config \
 	${prefix}/bin/xml2-config \
@@ -10200,6 +10199,8 @@ else
 	    break
 	fi
     done
+else
+    LIBXML2_CONFIG="${with_xml2_config}"
 fi
 if test "x$LIBXML2_CONFIG" = "x" ; then
     { { echo "$as_me:$LINENO: error: unable to find xml2-config" >&5
@@ -10233,9 +10234,7 @@ fi
 
 
 LIBXSLT_CONFIG=
-if test -x "${with_xslt_config}" ; then
-    LIBXSLT_CONFIG="${with_xslt_config}"
-else
+if test "x${with_xslt_config}" = "x" ; then
     if test "x${with_xml2_config}" = "x" ; then
 	:
     else
@@ -10243,6 +10242,8 @@ else
 	    LIBXSLT_CONFIG="`dirname ${with_xml2_config}`/xslt-config"
 	fi
     fi
+else
+    LIBXSLT_CONFIG="${with_xslt_config}"
 fi
 if test "x${LIBXSLT_CONFIG}" = "x" ; then
     for c in \

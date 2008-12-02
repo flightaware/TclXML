@@ -184,7 +184,10 @@ COMPILE		= $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(C
 # for the BINARIES that you specified above have already been done.
 #========================================================================
 
-all: binaries libraries doc
+# Do not build the documentation by default, since it requires
+# additional dependencies that may not be installed.
+
+all: binaries libraries
 
 #========================================================================
 # The binaries target builds executable programs, Windows .dll's, unix
@@ -213,7 +216,10 @@ doc:
 	-$(XSLTPROC) -o README.html doc/html.xsl doc/README.xml
 	-$(XSLTPROC) -o README doc/txt.xsl doc/README.xml
 
-install: all install-binaries install-libraries install-doc
+# Do not install the documentation by default,
+# since it may not have been built (see above).
+
+install: all install-binaries install-libraries
 
 install-binaries: binaries install-lib-binaries install-bin-binaries
 	if test "x$(SHARED_BUILD)" = "x1"; then \
