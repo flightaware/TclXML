@@ -1,3 +1,10 @@
+2008-12-04  Steve Ball  <Steve.Ball@explain.com.au>
+	* doc/html.xsl, doc/*.xml: Upgrade to DocBook v5.0. Eliminate
+	dependency on DocBook XSL stylesheets.
+
+2008-12-02  Steve Ball  <Steve.Ball@explain.com.au>
+	* configure.in, Makefie.in: fix build problems on Linux.
+
 2008-11-26  Steve Ball  <Steve.Ball@explain.com.au>
 	* Makefile.in, tests/*: reorganised tests subdir and merged
 	tests from all three packages.
