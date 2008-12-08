@@ -19,11 +19,11 @@
 
   <!-- Provide a template which adds a TOC -->
 
-  <xsl:template match="refentry">
-    <xsl:variable name="refmeta" select=".//refmeta"/>
-    <xsl:variable name="refentrytitle" select="$refmeta//refentrytitle"/>
-    <xsl:variable name="refnamediv" select=".//refnamediv"/>
-    <xsl:variable name="refname" select="$refnamediv//refname"/>
+  <xsl:template match="d:refentry">
+    <xsl:variable name="refmeta" select=".//d:refmeta"/>
+    <xsl:variable name="refentrytitle" select="$refmeta//d:refentrytitle"/>
+    <xsl:variable name="refnamediv" select=".//d:refnamediv"/>
+    <xsl:variable name="refname" select="$refnamediv//d:refname"/>
     <xsl:variable name="title">
       <xsl:choose>
 	<xsl:when test="$refentrytitle">
@@ -32,11 +32,10 @@
 	<xsl:when test="$refname">
 	  <xsl:apply-templates select="$refname[1]" mode="title"/>
 	</xsl:when>
-	<xsl:otherwise></xsl:otherwise>
       </xsl:choose>
     </xsl:variable>
 
-    <div class="{name(.)}">
+    <div class="{local-name(.)}">
       <h1 class="title">
 	<a>
 	  <xsl:attribute name="name">
@@ -47,25 +46,35 @@
       </h1>
       <h2>Contents</h2>
       <ul>
-	<xsl:if test="refsynopsisdiv">
+	<xsl:if test="d:refsynopsisdiv">
 	  <li><a href="#synopsis">Synopsis</a></li>
 	</xsl:if>
-	<xsl:for-each select="refsect1">
-	  <xsl:variable name="sect1name" select="translate(title,' ','-')"/>
+	<xsl:for-each select="d:refsect1">
+	  <xsl:variable name="sect1name"
+			select="translate(d:info/d:title,' ','-')"/>
 	  <li>
-	    <a href="#{$sect1name}"><xsl:value-of select="title"/></a>
-	    <xsl:if test="refsect2">
+	    <a href="#{$sect1name}">
+              <xsl:apply-templates select="d:info/d:title" mode='toc'/>
+            </a>
+	    <xsl:if test="d:refsect2">
 	      <ul>
-		<xsl:for-each select="refsect2">
-		  <xsl:variable name="sect2name" select="translate(title,' ','-')"/>
+		<xsl:for-each select="d:refsect2">
+		  <xsl:variable name="sect2name"
+                    select="translate(d:info/d:title,' ','-')"/>
 		  <li>
-		    <a href="#{$sect1name}-{$sect2name}"><xsl:value-of select="title"/></a>
-		    <xsl:if test="refsect3">
+		    <a href="#{$sect1name}-{$sect2name}">
+                      <xsl:apply-templates select="d:info/d:title" mode='toc'/>
+                    </a>
+		    <xsl:if test="d:refsect3">
 		      <ul>
-			<xsl:for-each select="refsect3">
-			  <xsl:variable name="sect3name" select="translate(title,' ','-')"/>
+			<xsl:for-each select="d:refsect3">
+			  <xsl:variable name="sect3name"
+                            select="translate(d:info/d:title,' ','-')"/>
 			  <li>
-			    <a href="#{$sect1name}-{$sect2name}-{$sect3name}"><xsl:value-of select="title"/></a>
+			    <a href="#{$sect1name}-{$sect2name}-{$sect3name}">
+                              <xsl:apply-templates select="d:info/d:title"
+                                mode='toc'/>
+                            </a>
 			  </li>
 			</xsl:for-each>
 		      </ul>
@@ -82,57 +91,56 @@
     </div>
   </xsl:template>
 
-  <xsl:template match="refsynopsisdiv">
-    <div class="{name(.)}">
-      <a name="synopsis">
-      </a>
+  <xsl:template match="d:refsynopsisdiv">
+    <div class="{local-name(.)}">
+      <a name="synopsis"/>
       <h2>Synopsis</h2>
-      <xsl:apply-templates select="*[name() != 'tclnamespacesynopsis']"/>
-      <xsl:apply-templates select="tclnamespacesynopsis"/>
+      <xsl:apply-templates select="*[not(self::tcl:namespacesynopsis)]"/>
+      <xsl:apply-templates select="tcl:namespacesynopsis"/>
     </div>
   </xsl:template>
 
   <xsl:template match="tclcmdsynopsis">
     <xsl:variable name="id"><xsl:call-template name="object.id"/></xsl:variable>
 
-    <div class="{name(.)}" id="{$id}">
+    <div class="{local-name(.)}" id="{$id}">
       <a name="{$id}"/>
       <xsl:apply-templates/>
     </div>
   </xsl:template>
-  <xsl:template match="tclcmdsynopsis/command">
+  <xsl:template match="tcl:cmdsynopsis/d:command">
     <br/>
     <xsl:call-template name="inline.monoseq"/>
     <xsl:text> </xsl:text>
   </xsl:template>
-  <xsl:template match="tclcmdsynopsis/command[1]">
+  <xsl:template match="tcl:cmdsynopsis/d:command[1]">
     <xsl:call-template name="inline.monoseq"/>
     <xsl:text> </xsl:text>
   </xsl:template>
 
-  <xsl:template match="refsynopsisdiv/tclcmdsynopsis/command">
+  <xsl:template match="d:refsynopsisdiv/tcl:cmdsynopsis/d:command">
     <xsl:variable name="id"><xsl:call-template name="object.id"/></xsl:variable>
 
     <br/>
-    <span class="{name(.)}" id="{$id}">
+    <span class="{local-name(.)}" id="{$id}">
       <a name="{translate(.,': ','__')}"/>
       <xsl:call-template name="inline.monoseq"/>
       <xsl:text> </xsl:text>
     </span>
   </xsl:template>
-  <xsl:template match="refsynopsisdiv/tclcmdsynopsis/command[1]">
+  <xsl:template match="d:refsynopsisdiv/tcl:cmdsynopsis/d:command[1]">
     <xsl:variable name="id"><xsl:call-template name="object.id"/></xsl:variable>
 
-    <span class="{name(.)}" id="{$id}">
+    <span class="{local-name(.)}" id="{$id}">
       <a name="{translate(.,': ','__')}"/>
       <xsl:call-template name="inline.monoseq"/>
       <xsl:text> </xsl:text>
     </span>
   </xsl:template>
-  <xsl:template match="tclcmdsynopsis/option">
+  <xsl:template match="tcl:cmdsynopsis/d:option">
     <u><xsl:apply-templates/></u>
   </xsl:template>
-  <xsl:template match="tclcmdsynopsis/group">
+  <xsl:template match="tcl:cmdsynopsis/d:group">
     <xsl:if test="@choice='opt'">
       <xsl:text>?</xsl:text>
     </xsl:if>
@@ -144,73 +152,72 @@
       <xsl:text>?</xsl:text>
     </xsl:if>
   </xsl:template>
-  <xsl:template match="tclcmdsynopsis//arg[1]">
+  <xsl:template match="tcl:cmdsynopsis//d:arg[1]">
     <xsl:apply-templates/>
   </xsl:template>
-  <xsl:template match="tclcmdsynopsis//arg[position() > 1]">
+  <xsl:template match="tcl:cmdsynopsis//d:arg[position() > 1]">
     <xsl:text> </xsl:text>
     <xsl:apply-templates/>
   </xsl:template>
 
-  <xsl:template match="tclcommand">
+  <xsl:template match="tcl:command">
     <a href="#{translate(.,': ','__')}">
       <xsl:call-template name="inline.boldseq"/>
     </a>
   </xsl:template>
 
-  <xsl:template match='tclpackage|tclnamespace'>
+  <xsl:template match='tcl:package|tcl:namespace'>
     <xsl:call-template name='inline.monoseq'/>
   </xsl:template>
 
-  <xsl:template match="tclpkgsynopsis">
+  <xsl:template match="tcl:pkgsynopsis">
     <br/>
     <span class="{name(.)}">
-      <pre>package require <xsl:value-of select="package"/> ?<xsl:value-of select="version"/>?</pre>
+      <pre>package require <xsl:value-of select="tcl:package"/> ?<xsl:value-of select="tcl:version"/>?</pre>
     </span>
   </xsl:template>
 
-  <xsl:template match="tclnamespacesynopsis">
+  <xsl:template match="tcl:namespacesynopsis">
     <h3>Tcl Namespace Usage</h3>
     <xsl:apply-templates/>
     <p/>
   </xsl:template>
 
-  <xsl:template match="tclnamespacesynopsis/tclnamespace[1]">
+  <xsl:template match="tcl:namespacesynopsis/tcl:namespace[1]">
     <xsl:call-template name="inline.monoseq"/>
   </xsl:template>
 
-  <xsl:template match="tclnamespacesynopsis/tclnamespace">
+  <xsl:template match="tcl:namespacesynopsis/tcl:namespace">
     <br/>
     <xsl:call-template name="inline.monoseq"/>
   </xsl:template>
 
-  <xsl:template match="refsect1[title = 'Commands'][refsect2/title]//tclcmdsynopsis/*[position() = 1 and name() = 'option']">
+  <xsl:template match="d:refsect1[d:info/d:title = 'Commands'][d:refsect2/d:info/d:title]//tcl:cmdsynopsis/*[position() = 1 and local-name() = 'option']">
     <tt>
       <xsl:choose>
-	<xsl:when test="ancestor::refsect3//*[@role='subject']">
-	  <i><xsl:value-of select="ancestor::refsect3//*[@role='subject']"/></i>
+	<xsl:when test="ancestor::d:refsect3//*[@role='subject']">
+	  <i><xsl:value-of select="ancestor::d:refsect3//*[@role='subject']"/></i>
 	</xsl:when>
-	<xsl:when test="ancestor::refsect2/title">
-	  <xsl:value-of select="ancestor::refsect2/title"/>
+        <xsl:when test="ancestor::d:refsect2/d:info/d:title">
+          <xsl:value-of select="ancestor::d:refsect2/d:info/d:title"/>
 	</xsl:when>
-	<xsl:otherwise/>
       </xsl:choose>
     </tt>
     <xsl:text> </xsl:text>
     <u><xsl:apply-templates/></u>
   </xsl:template>
 
-  <xsl:template match="tcloptionsynopsis">
+  <xsl:template match="tcl:optionsynopsis">
     <p>
       <xsl:apply-templates/>
     </p>
   </xsl:template>
 
-  <xsl:template match="tcloptionsynopsis/option">
+  <xsl:template match="tcl:optionsynopsis/d:option">
     <xsl:call-template name="inline.monoseq"/>
   </xsl:template>
 
-  <xsl:template match="tcloptionsynopsis/arg">
+  <xsl:template match="tcl:optionsynopsis/d:arg">
     <u>
       <xsl:apply-templates/>
     </u>
@@ -218,26 +225,30 @@
 
   <!-- Do a segmentedlist as a table, instead of the poxy way DocBook does them -->
 
-  <xsl:template match="segmentedlist">
+  <xsl:template match="d:segmentedlist">
     <table border="0">
       <xsl:apply-templates/>
     </table>
   </xsl:template>
 
-  <xsl:template match="seglistitem">
+  <xsl:template match="d:seglistitem">
     <tr>
       <xsl:apply-templates/>
     </tr>
   </xsl:template>
 
-  <xsl:template match="seg">
+  <xsl:template match="d:seg">
     <td valign="top">
       <xsl:apply-templates/>
     </td>
   </xsl:template>
 
-  <xsl:template match="seg/arg">
+  <xsl:template match="d:seg/d:arg">
     <xsl:call-template name="inline.monoseq"/>
+  </xsl:template>
+
+  <xsl:template match='*'>
+    <xsl:message>unmatched element "<xsl:value-of select='name()'/>" in "<xsl:value-of select='name(..)'/>"</xsl:message>
   </xsl:template>
 
 </xsl:stylesheet>

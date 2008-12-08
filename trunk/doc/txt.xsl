@@ -1,42 +1,50 @@
 <xsl:stylesheet version='1.0'
   xmlns:xsl='http://www.w3.org/1999/XSL/Transform'
-  xmlns:doc="http://nwalsh.com/xsl/documentation/1.0"
+  xmlns:d='http://docbook.org/ns/docbook'
+  xmlns:xlink='http://www.w3.org/1999/xlink'
+  xmlns:tcl='http://tclxml.sourceforge.net/doc'
   xmlns:str='http://xsltsl.org/string'
   extension-element-prefixes='str'
-  exclude-result-prefixes="doc">
+  exclude-result-prefixes="d xlink tcl">
 
   <xsl:import href='xsltsl/stdlib.xsl'/>
 
-  <doc:book xmlns=''>
-    <title>Text Stylesheet</title>
+  <d:article>
+    <d:info>
+      <d:title>Text Stylesheet</d:title>
+      <d:copyright>
+        <d:year>2008</d:year>
+        <d:holder>Explain</d:holder>
+      </d:copyright>
+    </d:info>
 
-    <para>This stylesheet produces a text rendition of a DocBook document.</para>
-  </doc:book>
+    <d:para>This stylesheet produces a text rendition of a DocBook document.</d:para>
+  </d:article>
 
   <xsl:output method='text'/>
 
   <xsl:strip-space elements='*'/>
-  <xsl:preserve-space elements='programlisting literallayout command'/>
+  <xsl:preserve-space elements='d:programlisting d:literallayout d:command'/>
 
-  <xsl:template match='article'>
+  <xsl:template match='d:article'>
     <xsl:choose>
-      <xsl:when test='title'>
-        <xsl:apply-templates select='title'/>
+      <xsl:when test='d:title'>
+        <xsl:apply-templates select='d:title'/>
       </xsl:when>
-      <xsl:when test='articleinfo/title'>
-        <xsl:apply-templates select='articleinfo/title'/>
+      <xsl:when test='d:info/d:title'>
+        <xsl:apply-templates select='d:info/d:title'/>
       </xsl:when>
     </xsl:choose>
 
-    <xsl:apply-templates select='author|articleinfo/author'/>
+    <xsl:apply-templates select='d:info/d:author'/>
     <xsl:text>
 
 </xsl:text>
 
-    <xsl:apply-templates select='*[not(self::articleinfo)]'/>
+    <xsl:apply-templates select='*[not(self::d:info|self::d:title)]'/>
   </xsl:template>
 
-  <xsl:template match='article/title|articleinfo/title'>
+  <xsl:template match='d:article/d:title|d:article/d:info/d:title'>
     <xsl:text>
 	</xsl:text>
     <xsl:apply-templates/>
@@ -44,12 +52,12 @@
 
 </xsl:text>
 
-    <xsl:if test='following-sibling::subtitle'>
+    <xsl:if test='following-sibling::d:subtitle'>
       <xsl:text>	</xsl:text>
-      <xsl:apply-templates select='following-sibling::subtitle'/>
-      <xsl:if test='following-sibling::revhistory'>
+      <xsl:apply-templates select='following-sibling::d:subtitle'/>
+      <xsl:if test='following-sibling::d:revhistory'>
         <xsl:text> Version </xsl:text>
-        <xsl:apply-templates select='following-sibling::revhistory/revision[1]/revnumber'/>
+        <xsl:apply-templates select='following-sibling::d:revhistory/d:revision[1]/d:revnumber'/>
       </xsl:if>
     </xsl:if>
     <xsl:text>
@@ -57,17 +65,17 @@
 </xsl:text>
   </xsl:template>
 
-  <xsl:template match='author'>
-    <xsl:apply-templates select='firstname'/>
+  <xsl:template match='d:author'>
+    <xsl:apply-templates select='d:firstname'/>
     <xsl:text> </xsl:text>
-    <xsl:apply-templates select='surname'/>
-    <xsl:if test='affiliation'>
+    <xsl:apply-templates select='d:surname'/>
+    <xsl:if test='d:affiliation'>
       <xsl:text>, </xsl:text>
-      <xsl:apply-templates select='affiliation/orgname'/>
+      <xsl:apply-templates select='d:affiliation/d:orgname'/>
     </xsl:if>
   </xsl:template>
 
-  <xsl:template match='para'>
+  <xsl:template match='d:para'>
     <xsl:param name='indent' select='0'/>
     <xsl:param name='linelen' select='80'/>
 
@@ -83,7 +91,7 @@
 </xsl:text>
   </xsl:template>
 
-  <xsl:template match='note'>
+  <xsl:template match='d:note'>
     <xsl:call-template name='str:justify'>
       <xsl:with-param name='text'>
         <xsl:apply-templates/>
@@ -95,25 +103,25 @@
 </xsl:text>
   </xsl:template>
 
-  <xsl:template match='section'>
+  <xsl:template match='d:section'>
     <xsl:text>
 
 </xsl:text>
-    <xsl:apply-templates select='title'/>
-    <xsl:if test='subtitle'>
+    <xsl:apply-templates select='d:info/d:title'/>
+    <xsl:if test='d:info/d:subtitle'>
       <xsl:text> (</xsl:text>
-      <xsl:apply-templates select='subtitle'/>
+      <xsl:apply-templates select='d:info/d:subtitle'/>
       <xsl:text>)</xsl:text>
     </xsl:if>
     <xsl:text>
 </xsl:text>
     <xsl:variable name='titlelen'>
       <xsl:choose>
-        <xsl:when test='subtitle'>
-          <xsl:value-of select='string-length(title) + 3 + string-length(subtitle)'/>
+        <xsl:when test='d:subtitle'>
+          <xsl:value-of select='string-length(d:info/d:title) + 3 + string-length(d:info/d:subtitle)'/>
         </xsl:when>
         <xsl:otherwise>
-          <xsl:value-of select='string-length(title)'/>
+          <xsl:value-of select='string-length(d:info/d:title)'/>
         </xsl:otherwise>
       </xsl:choose>
     </xsl:variable>
@@ -121,7 +129,7 @@
       <xsl:with-param name='count' select='$titlelen'/>
       <xsl:with-param name='text'>
         <xsl:choose>
-          <xsl:when test='parent::section'>-</xsl:when>
+          <xsl:when test='parent::d:section'>-</xsl:when>
           <xsl:otherwise>=</xsl:otherwise>
         </xsl:choose>
       </xsl:with-param>
@@ -130,57 +138,57 @@
 
 </xsl:text>
 
-    <xsl:apply-templates select='*[not(self::title|self::subtitle|self::sectioninfo)]'/>
+    <xsl:apply-templates select='*[not(self::d:info)]'/>
   </xsl:template>
 
-  <xsl:template match='itemizedlist'>
-    <xsl:apply-templates select='listitem'/>
+  <xsl:template match='d:itemizedlist'>
+    <xsl:apply-templates select='d:listitem'/>
     <xsl:text>
 </xsl:text>
   </xsl:template>
-  <xsl:template match='itemizedlist/listitem'>
+  <xsl:template match='d:itemizedlist/d:listitem'>
     <xsl:call-template name='str:generate-string'>
       <xsl:with-param name='text' select='" "'/>
-      <xsl:with-param name='count' select='count(ancestor::itemizedlist|ancestor::variablelist) * 4'/>
+      <xsl:with-param name='count' select='count(ancestor::d:itemizedlist|ancestor::d:variablelist) * 4'/>
     </xsl:call-template>
 
     <xsl:text>* </xsl:text>
     <xsl:apply-templates select='*'>
-      <xsl:with-param name='indent' select='count(ancestor::itemizedlist|ancestor::variablelist) * 4'/>
-      <xsl:with-param name='linelen' select='80 - count(ancestor::itemizedlist|ancestor::variablelist) * 4'/>
+      <xsl:with-param name='indent' select='count(ancestor::d:itemizedlist|ancestor::d:variablelist) * 4'/>
+      <xsl:with-param name='linelen' select='80 - count(ancestor::d:itemizedlist|ancestor::d:variablelist) * 4'/>
     </xsl:apply-templates>
   </xsl:template>
 
-  <xsl:template match='variablelist'>
-    <xsl:apply-templates select='varlistentry'/>
+  <xsl:template match='d:variablelist'>
+    <xsl:apply-templates select='d:varlistentry'/>
   </xsl:template>
-  <xsl:template match='varlistentry'>
+  <xsl:template match='d:varlistentry'>
     <xsl:call-template name='str:generate-string'>
       <xsl:with-param name='text' select='" "'/>
-      <xsl:with-param name='count' select='(count(ancestor::variablelist|ancestor::itemizedlist) - 1) * 4'/>
+      <xsl:with-param name='count' select='(count(ancestor::d:variablelist|ancestor::d:itemizedlist) - 1) * 4'/>
     </xsl:call-template>
 
-    <xsl:apply-templates select='term'/>
-    <xsl:apply-templates select='listitem'/>
+    <xsl:apply-templates select='d:term'/>
+    <xsl:apply-templates select='d:listitem'/>
     <xsl:text>
 
 </xsl:text>
   </xsl:template>
-  <xsl:template match='varlistentry/term'>
+  <xsl:template match='d:varlistentry/d:term'>
     <xsl:apply-templates/>
     <xsl:text>
 </xsl:text>
   </xsl:template>
-  <xsl:template match='varlistentry/listitem'>
+  <xsl:template match='d:varlistentry/d:listitem'>
     <xsl:apply-templates select='*'>
-      <xsl:with-param name='indent' select='count(ancestor::variablelist|ancestor::itemizedlist) * 4'/>
+      <xsl:with-param name='indent' select='count(ancestor::d:variablelist|ancestor::d:itemizedlist) * 4'/>
     </xsl:apply-templates>
   </xsl:template>
 
-  <xsl:template match='programlisting|literallayout'>
+  <xsl:template match='d:programlisting|d:literallayout'>
     <xsl:call-template name='indent'>
       <xsl:with-param name='text' select='.'/>
-      <xsl:with-param name='indent' select='(count(ancestor::itemizedlist|ancestor::variablelist) + 1) * 4'/>
+      <xsl:with-param name='indent' select='(count(ancestor::d:itemizedlist|ancestor::d:variablelist) + 1) * 4'/>
     </xsl:call-template>
     <xsl:text>
 
@@ -216,10 +224,10 @@
     </xsl:choose>
   </xsl:template>
 
-  <xsl:template match='ulink'>
+  <xsl:template match='d:link'>
     <xsl:apply-templates/>
     <xsl:text> [</xsl:text>
-    <xsl:value-of select='@url'/>
+    <xsl:value-of select='@xlink:href'/>
     <xsl:text>]</xsl:text>
   </xsl:template>
 
