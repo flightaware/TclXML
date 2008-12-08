@@ -126,8 +126,6 @@ TCL_SRC_DIR     = @TCL_SRC_DIR@
 # Not used, but retained for reference of what libs Tcl required
 #TCL_LIBS       = @TCL_LIBS@
 
-XSLTPROC        = @XSLTPROC@
-
 #========================================================================
 # TCLLIBPATH seeds the auto_path in Tcl's init.tcl so we can test our
 # package without installing.  The other environment variables allow us
@@ -207,14 +205,14 @@ libraries:
 #========================================================================
 
 doc:
-	-$(XSLTPROC) -o doc/tclxml.html doc/html.xsl doc/tclxml.xml
-	-$(XSLTPROC) -o doc/tclxml.n doc/nroff.xsl doc/tclxml.xml
-	-$(XSLTPROC) -o doc/tcldom.html doc/html.xsl doc/tcldom.xml
-	-$(XSLTPROC) -o doc/tcldom.n doc/nroff.xsl doc/tcldom.xml
-	-$(XSLTPROC) -o doc/tclxslt.html doc/html.xsl doc/tclxslt.xml
-	-$(XSLTPROC) -o doc/tclxslt.n doc/nroff.xsl doc/tclxslt.xml
-	-$(XSLTPROC) -o README.html doc/html.xsl doc/README.xml
-	-$(XSLTPROC) -o README doc/txt.xsl doc/README.xml
+	-$(TCLSH) doc/transform.tcl doc/tclxml.xml doc/html.xsl doc/tclxml.html
+	-$(TCLSH) doc/transform.tcl doc/tclxml.xml doc/nroff.xsl doc/tclxml.n
+	-$(TCLSH) doc/transform.tcl doc/tcldom.xml doc/html.xsl doc/tcldom.html
+	-$(TCLSH) doc/transform.tcl doc/tcldom.xml doc/nroff.xsl doc/tcldom.n
+	-$(TCLSH) doc/transform.tcl doc/tclxslt.xml doc/html.xsl doc/tclxslt.html
+	-$(TCLSH) doc/transform.tcl doc/tclxslt.xml doc/nroff.xsl doc/tclxslt.n
+	-$(TCLSH) doc/transform.tcl doc/README.xml doc/html.xsl README.html
+	-$(TCLSH) doc/transform.tcl doc/README.xml doc/txt.xsl -o README
 
 # Do not install the documentation by default,
 # since it may not have been built (see above).
