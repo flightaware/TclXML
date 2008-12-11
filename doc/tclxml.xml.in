@@ -47,8 +47,7 @@
     <manvolnum>n</manvolnum>
   </refmeta>
   <refnamediv>
-    <refname>::xml::parser</refname>
-    <refname>::xml::parserclass</refname>
+    <refname>TclXML</refname>
     <refpurpose>XML parser support for Tcl</refpurpose>
   </refnamediv>
   <refsynopsisdiv>
@@ -109,7 +108,7 @@
     <para>TclXML provides event-based parsing of <acronym xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.w3.org/XML/">XML</acronym> documents.  The application may register callback scripts for certain document features, and when the parser encounters those features while parsing the document the callback is evaluated.</para>
     <para>The parser may also perform other functions, such as normalisation, validation and/or entity expansion.  Generally, these functions are under the control of configuration options.  Whether these functions can be performed at all depends on the parser implementation.</para>
     <para>The TclXML package provides a generic interface for use by a Tcl application, along with a low-level interface for use by a parser implementation.  Each implementation provides a class of XML parser, and these register themselves using the <command xmlns="http://tclxml.sourceforge.net/doc">::xml::parserclass create</command> command.  One of the registered parser classes will be the default parser class.</para>
-    <para>Loading the package with the generic <command xmlns="http://tclxml.sourceforge.net/doc">package require xml</command> command allows the package to automatically determine the default parser class.  In order to select a particular parser class as the default, that class' package may be loaded directly, eg. <command xmlns="http://tclxml.sourceforge.net/doc">package require expat</command>.  In all cases, all available parser classes are registered with the TclXML package, the difference is simply in which one becomes the default.</para>
+    <para>Loading the package with the generic <command xmlns="http://tclxml.sourceforge.net/doc">package require xml</command> command allows the package to automatically determine the default parser class.  In order to select a particular parser class as the default, that class' package may be loaded directly, eg. <command xmlns="http://tclxml.sourceforge.net/doc">package require xml::libxml2</command>.  In all cases, all available parser classes are registered with the TclXML package, the difference is simply in which one becomes the default.</para>
   </refsect1>
   <refsect1>
     <d:info xmlns:d="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:tcl="http://tclxml.sourceforge.net/doc">
@@ -1754,12 +1753,6 @@ puts "The XML document contains $count elements"
     </refsect2>
     <refsect2>
       <d:info xmlns:d="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:tcl="http://tclxml.sourceforge.net/doc">
-        <d:title>Expat Parser Class</d:title>
-      </d:info>
-      <para>This section will discuss the Expat parser class.</para>
-    </refsect2>
-    <refsect2>
-      <d:info xmlns:d="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:tcl="http://tclxml.sourceforge.net/doc">
         <d:title>libxml2 Parser Class</d:title>
       </d:info>
       <para>The libxml2 parser class provides a Tcl interface to the libxml2 XML parser library.  This parser class is referred to as TclXML/libxml2.</para>
@@ -1845,7 +1838,7 @@ package require xml::libxml2
             <para><option>-reportempty</option> has no effect.  libxml2 does not report empty element syntax.</para>
           </listitem>
           <listitem>
-            <para>Incremental (push) parsing, ie. <arg><option>-final</option><literal>0</literal></arg> is not supported.</para>
+            <para>Incremental (push) parsing, ie. <arg><option>-final</option>&#xa0;<literal>0</literal></arg> is not supported.</para>
           </listitem>
           <listitem>
             <para>TclXML/libxml2 does not provide (DTD) validation, (WXS) schema validation or Relax NG validation, although the libxml2 library does provide those functions.  These functions are provided by the TclDOM/libxml2 package, but only in a "posteriori" fashion (ie. only after the document has been parsed).</para>
@@ -1856,12 +1849,6 @@ package require xml::libxml2
         </itemizedlist>
       </refsect3>
     </refsect2>
-  </refsect1>
-  <refsect1>
-    <d:info xmlns:d="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:tcl="http://tclxml.sourceforge.net/doc">
-      <d:title>See Also</d:title>
-    </d:info>
-    <para>TclDOM, a Tcl interface for the W3C Document Object Model.</para>
   </refsect1>
   <refsect1>
     <d:info xmlns:d="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:tcl="http://tclxml.sourceforge.net/doc">
