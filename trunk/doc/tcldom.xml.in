@@ -1,13 +1,15 @@
 <!DOCTYPE refentry [
   <!ENTITY version "@PACKAGE_VERSION@">
 ]>
-<refentry xmlns="http://docbook.org/ns/docbook">
+<refentry xmlns="http://docbook.org/ns/docbook"
+	  xmlns:tcl='http://tclxml.sourceforge.net/doc'>
   <d:info xmlns:d="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:tcl="http://tclxml.sourceforge.net/doc">
     <author xmlns:xlink="http://www.w3.org/XLink" xlink:href="http://www.explain.com.au/staff/Steve.Ball/">
       <firstname>Steve</firstname>
       <surname>Ball</surname>
     </author>
     <copyright>
+      <year>2008</year>
       <year>2007</year>
       <holder xmlns:xlink="http://www.w3.org/XLink" xlink:href="http://www.explain.com.au/">Explain</holder>
     </copyright>
@@ -211,31 +213,25 @@
     <para>TclDOM is a Tcl language binding for the <d:link xmlns:d="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:tcl="http://tclxml.sourceforge.net/doc" xlink:href="http://www.w3c.org/DOM/">W3C Document Object Model</d:link> (DOM).  DOM provides a view of a XML (or HTML) document as a tree structure.  Currently, TclDOM only supports XML documents.</para>
     <para>The package implements most of the DOM Level 1 interfaces and also some Level 2 and Level 3 interfaces.  There are also a number of non-standard commands and methods provided for the convenience of application developers (these are documented).</para>
     <para>The DOM specification should be read in conjunction with this reference manual, as it explains the meaning and purpose of the various interfaces.  This manual is not a tutorial on how to use the DOM.</para>
-    <para>TclDOM also provides several implementations of the API:  a pure-Tcl implementation, a C implementation (based on TclDOMPro) and another C implementation based on the Gnome libxml2 library.</para>
+    <para>TclDOM also provides two implementations of the API:  a pure-Tcl implementation and a C implementation based on the Gnome libxml2 library.</para>
   </refsect1>
   <refsect1>
     <d:info xmlns:d="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:tcl="http://tclxml.sourceforge.net/doc">
       <d:title>Packages and Namespaces</d:title>
     </d:info>
-    <para>TclDOM defines the <tclpackage>dom</tclpackage> package and also a Tcl namespace using that same name.</para>
+    <para>TclDOM defines the <tcl:package>dom</tcl:package> package and also a Tcl namespace using that same name.</para>
     <para>Implementations define their own package name and Tcl namespace within the <namespace xmlns="http://tclxml.sourceforge.net/doc">::dom</namespace> Tcl namespace:</para>
     <variablelist>
       <varlistentry>
         <term>Tcl implementation</term>
         <listitem>
-          <para>Package <tclpackage>dom::tcl</tclpackage>, Tcl namespace <namespace xmlns="http://tclxml.sourceforge.net/doc">::dom::tcl</namespace>.</para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-        <term>TclDOMPro</term>
-        <listitem>
-          <para>Package <tclpackage>dom::c</tclpackage>, Tcl namespace <namespace xmlns="http://tclxml.sourceforge.net/doc">::dom::c</namespace>.</para>
+          <para>Package <tcl:package>dom::tcl</tcl:package>, Tcl namespace <namespace xmlns="http://tclxml.sourceforge.net/doc">::dom::tcl</namespace>.</para>
         </listitem>
       </varlistentry>
       <varlistentry>
         <term>libxml2</term>
         <listitem>
-          <para>Package <tclpackage>dom::libxml2</tclpackage>, Tcl namespace <namespace xmlns="http://tclxml.sourceforge.net/doc">::dom::libxml2</namespace>.</para>
+          <para>Package <tcl:package>dom::libxml2</tcl:package>, Tcl namespace <namespace xmlns="http://tclxml.sourceforge.net/doc">::dom::libxml2</namespace>.</para>
         </listitem>
       </varlistentry>
     </variablelist>
@@ -247,7 +243,7 @@
     </d:info>
     <para>The TclDOM API uses <emphasis>tokens</emphasis> as identifiers for nodes within the document tree.  This technique has been used to allow alternate implementations of TclDOM to be efficient, while retaining compatibility with the pure-Tcl implementation.</para>
     <para>The format of the token itself as well as the data structure referred to by the token are <emphasis>not</emphasis> public and an application should not rely on these.  Instead, an application should use the accessor methods provided by the API.</para>
-    <para>There is no requirement to always use the same token for a node.  In fact, an important performance optimisation for some implementations is to create a new token when a node is accessed, regardless of whether a token has already been issued for that node.  This implies that in order to test whether two tokens refer to the same node it is not sufficient to test the string values of the tokens; the <tclmethod>isSameNode</tclmethod> method must be used for this purpose.  For example,</para>
+    <para>There is no requirement to always use the same token for a node.  In fact, an important performance optimisation for some implementations is to create a new token when a node is accessed, regardless of whether a token has already been issued for that node.  This implies that in order to test whether two tokens refer to the same node it is not sufficient to test the string values of the tokens; the <tcl:method>isSameNode</tcl:method> method must be used for this purpose.  For example,</para>
     <informalexample>
       <programlisting>
 proc NodeCompare1 {A B} {
@@ -445,8 +441,8 @@ proc NodeCompare2 {A B} {
                   </arg>
                 </group>
               </cmdsynopsis>
-              <para>This method parses XML formatted text given by the <option><replaceable class="parameter">xml</replaceable></option> argument and constructs a DOM tree for the document.  The return result is the token of the root node of the newly created document.  The document will also have a Tcl command associated with it, see the <tclmethod>createDocument</tclmethod> method.</para>
-              <para>This method uses the <d:link xmlns:d="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:tcl="http://tclxml.sourceforge.net/doc" xlink:href="http://tclxml.sourceforge.net/">TclXML</d:link> package to perform the parsing operation.  The <tclpackage>dom</tclpackage> package itself does not include an XML parser.  TclXML supports the use of multiple parser implementations.  The <option>-parser</option> may be used to specify which XML parser class to use.</para>
+              <para>This method parses XML formatted text given by the <option><replaceable class="parameter">xml</replaceable></option> argument and constructs a DOM tree for the document.  The return result is the token of the root node of the newly created document.  The document will also have a Tcl command associated with it, see the <tcl:method>createDocument</tcl:method> method.</para>
+              <para>This method uses the <d:link xmlns:d="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:tcl="http://tclxml.sourceforge.net/doc" xlink:href="http://tclxml.sourceforge.net/">TclXML</d:link> package to perform the parsing operation.  The <tcl:package>dom</tcl:package> package itself does not include an XML parser.  TclXML supports the use of multiple parser implementations.  The <option>-parser</option> may be used to specify which XML parser class to use.</para>
               <para>All options not listed below are passed to the TclXML parser.</para>
               <para>Valid configuration options are:</para>
               <variablelist>
@@ -456,7 +452,7 @@ proc NodeCompare2 {A B} {
                     <arg>
                       <group>
                         <arg>{}</arg>
-                        <arg>expat</arg>
+                        <arg>libxml2</arg>
                         <arg>tcl</arg>
                       </group>
                     </arg>
@@ -587,7 +583,7 @@ proc NodeCompare2 {A B} {
                   </term>
                   <listitem>
                     <para>This option specifies a list of element types for which newline characters will be added before and after the start and end tags for those elements upon serialization.  This option is deprecated: the <arg>-indent</arg> option should be used instead.</para>
-                    <para>White space is significant in XML, so the <tclpackage>dom</tclpackage> package never adds extra white space for purposes of "pretty-printing" the XML source document.  On some platforms, such as VMS, this can actually cause serious problems due to line length limitations.  This option provides the convenience of adding newlines to certain nominated element types for formatting the source into lines.</para>
+                    <para>White space is significant in XML, so the <tcl:package>dom</tcl:package> package never adds extra white space for purposes of "pretty-printing" the XML source document.  On some platforms, such as VMS, this can actually cause serious problems due to line length limitations.  This option provides the convenience of adding newlines to certain nominated element types for formatting the source into lines.</para>
                     <para>Examples:</para>
                     <para>Suppose the following DOM document is constructed:</para>
                     <informalexample>
@@ -1427,7 +1423,7 @@ $schema schema validate $instance
                 <replaceable>event</replaceable>
               </arg>
             </cmdsynopsis>
-            <para>Dispatches the event given by <arg><replaceable>event</replaceable></arg> with target node <arg><replaceable>token</replaceable></arg>.  The event mechanism functions as described in the W3C DOM Level 2 Event module.  The event enters the capturing phase first, followed by the bubbling phase.  During each phase any event listeners registered for the same event type as the event <arg><replaceable>event</replaceable></arg> are triggered; their script is evaluated.  Unless the script invokes the <tclmethod>stopPropagation</tclmethod> method of the <command xmlns="http://tclxml.sourceforge.net/doc">dom::event</command> command, all registered event listeners will be triggered.  The order in which listeners registered at a particular node for a particular phase are triggered is undefined.</para>
+            <para>Dispatches the event given by <arg><replaceable>event</replaceable></arg> with target node <arg><replaceable>token</replaceable></arg>.  The event mechanism functions as described in the W3C DOM Level 2 Event module.  The event enters the capturing phase first, followed by the bubbling phase.  During each phase any event listeners registered for the same event type as the event <arg><replaceable>event</replaceable></arg> are triggered; their script is evaluated.  Unless the script invokes the <tcl:method>stopPropagation</tcl:method> method of the <command xmlns="http://tclxml.sourceforge.net/doc">dom::event</command> command, all registered event listeners will be triggered.  The order in which listeners registered at a particular node for a particular phase are triggered is undefined.</para>
           </listitem>
         </varlistentry>
       </variablelist>
@@ -1920,7 +1916,7 @@ $schema schema validate $instance
                   <option>-timeStamp</option>
                 </term>
                 <listitem>
-                  <para>This option gives the time at which the event was posted.  The value is the number of milliseconds since the epoch, which is compatible with the Tcl <command>clock</command> command.  </para>
+                  <para>This option gives the time at which the event was posted.  The value is the number of milliseconds since the epoch, which is compatible with the Tcl <tcl:command>clock</tcl:command> command.  </para>
                   <note>The implementation of this method depends on the <methodname>Tcl_GetTime</methodname> function.This function only became publically available in Tcl 8.4.  If a version of Tcl prior to 8.4 is being used, then this option will have the value <literal>0</literal>.</note>
                 </listitem>
               </varlistentry>
@@ -2041,7 +2037,7 @@ $schema schema validate $instance
                 <replaceable>detail</replaceable>
               </arg>
             </cmdsynopsis>
-            <para>Initialise a user interface event.  See <tclmethod>initEvent</tclmethod> for further information.</para>
+            <para>Initialise a user interface event.  See <tcl:method>initEvent</tcl:method> for further information.</para>
             <para><arg><replaceable>view</replaceable></arg> gives the view for the event (not supported by TclDOM).  <arg><replaceable>detail</replaceable></arg> provides extra data for the event.</para>
           </listitem>
         </varlistentry>
@@ -2101,7 +2097,7 @@ $schema schema validate $instance
                 <replaceable>relatedNode</replaceable>
               </arg>
             </cmdsynopsis>
-            <para>Initialise a mouse event.  See <tclmethod>initUIEvent</tclmethod> for further information.</para>
+            <para>Initialise a mouse event.  See <tcl:method>initUIEvent</tcl:method> for further information.</para>
             <para><arg><replaceable>screenX</replaceable></arg> and <arg><replaceable>screenY</replaceable></arg> give the coordinates at which the event occurred relative to the screen.  <arg><replaceable>screenX</replaceable></arg> and <arg><replaceable>screenY</replaceable></arg> give the coordinates at which the event occurred relative to the window.</para>
             <para><arg><replaceable>ctrlKey</replaceable></arg>, <arg><replaceable>altKey</replaceable></arg>, <arg><replaceable>shiftKey</replaceable></arg>, <arg><replaceable>metaKey</replaceable></arg> indicate whether the respective modifier key was pressed when the event occurred.</para>
             <para><arg><replaceable>button</replaceable></arg> indicates which button, if any, was pressed when the event occurred.</para>
@@ -2140,7 +2136,7 @@ $schema schema validate $instance
                 <replaceable>attrName</replaceable>
               </arg>
             </cmdsynopsis>
-            <para>Initialise a tree mutation event event.  See <tclmethod>initEvent</tclmethod> for further information.</para>
+            <para>Initialise a tree mutation event event.  See <tcl:method>initEvent</tcl:method> for further information.</para>
             <para><arg><replaceable>relatedNode</replaceable></arg> specifies a DOM node to associate with the event.  <arg><replaceable>prevValue</replaceable></arg> gives the previous value of the node.  <arg><replaceable>newValue</replaceable></arg> gives the new value of the node.  <arg><replaceable>attrName</replaceable></arg> gives the name of the attribute where the event is modifying an attribute value.</para>
           </listitem>
         </varlistentry>
@@ -2481,7 +2477,7 @@ $schema schema validate $instance
       <d:info xmlns:d="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:tcl="http://tclxml.sourceforge.net/doc">
         <d:title>Tcl Implementation</d:title>
       </d:info>
-      <para>The Tcl implementation is provided by the <tclpackage>dom::tcl</tclpackage> package.</para>
+      <para>The Tcl implementation is provided by the <tcl:package>dom::tcl</tcl:package> package.</para>
       <refsect3>
         <d:info xmlns:d="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:tcl="http://tclxml.sourceforge.net/doc">
           <d:title>Limitations</d:title>
@@ -2501,15 +2497,7 @@ $schema schema validate $instance
       <d:info xmlns:d="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:tcl="http://tclxml.sourceforge.net/doc">
         <d:title>libxml2 Implementation</d:title>
       </d:info>
-      <para>The TclDOM/libxml2 implementation is a wrapper for the <d:link xmlns:d="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:tcl="http://tclxml.sourceforge.net/doc" xlink:href="http://xmlsoft.org/">Gnome libxml2 library</d:link>.  It is provided by the <tclpackage>dom::libxml2</tclpackage> package.  It is a high-performance library, making use of Tcl objects for fast access to tree nodes.</para>
-      <para>On MS Windows, it is necessary to load all required packages separately.  For example:</para>
-      <informalexample>
-        <programlisting>
-package require xml
-package require xml::libxml2
-package require dom
-</programlisting>
-      </informalexample>
+      <para>The TclDOM/libxml2 implementation is a wrapper for the <d:link xmlns:d="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:tcl="http://tclxml.sourceforge.net/doc" xlink:href="http://xmlsoft.org/">Gnome libxml2 library</d:link>.  It is provided by the <tcl:package>dom::libxml2</tcl:package> package.  It is a high-performance library, making use of Tcl objects for fast access to tree nodes.</para>
       <refsect3>
         <d:info xmlns:d="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:tcl="http://tclxml.sourceforge.net/doc">
           <d:title>Limitations</d:title>

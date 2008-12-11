@@ -1,0 +1,13 @@
+body
+{
+    bgcolor: white;
+    color: black;
+    font-family: sans-serif;
+}
+
+div.note
+{
+    margin-left: 15px;
+    margin-right: 15px;
+}
+
