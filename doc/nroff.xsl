@@ -177,7 +177,7 @@
     <xsl:text>\fR</xsl:text>
   </xsl:template>
 
-  <xsl:template match="tcl:command|tcl:namespace">
+  <xsl:template match="tcl:command|tcl:namespace|tcl:method|tcl:package">
     <xsl:call-template name='inline.bold'/>
   </xsl:template>
   <xsl:template name='inline.bold'>
@@ -192,10 +192,10 @@
     <xsl:value-of select="translate(d:info/d:title,'abcdefghijklmnopqrstuvwxyz','ABCDEFGHIJKLMNOPQRSTUVWXYZ')"/>
     <xsl:text>
 </xsl:text>
-    <xsl:apply-templates select='*[not(self::info)]'/>
+    <xsl:apply-templates select='*[not(self::d:info)]'/>
   </xsl:template>
 
-  <xsl:template match="d:para">
+  <xsl:template match="d:para|d:note">
     <xsl:text>
 .PP
 </xsl:text>
@@ -215,8 +215,11 @@
   <xsl:template match="d:refsect2|d:refsect3">
     <xsl:apply-templates/>
   </xsl:template>
+  <xsl:template match="d:refsect2/d:info|d:refsect3/d:info">
+    <xsl:apply-templates select='d:title'/>
+  </xsl:template>
 
-  <xsl:template match="d:acronym">
+  <xsl:template match="d:acronym|d:link">
     <xsl:apply-templates/>
   </xsl:template>
 
@@ -227,7 +230,7 @@
 </xsl:text>
   </xsl:template>
 
-  <xsl:template match="d:segmentedlist|d:variablelist|d:itemizedlist">
+  <xsl:template match="d:segmentedlist|d:variablelist|d:itemizedlist|d:orderedlist">
     <xsl:text>
 .RS
 </xsl:text>
@@ -256,7 +259,7 @@
     <xsl:text>
 </xsl:text>
   </xsl:template>
-  <xsl:template match='d:term'>
+  <xsl:template match='d:term|d:classname|d:tag|d:application'>
     <xsl:call-template name='inline.bold'/>
   </xsl:template>
   <xsl:template match='d:listitem'>
@@ -272,8 +275,16 @@
 </xsl:text>
     <xsl:apply-templates/>
   </xsl:template>
+  <xsl:template match="d:example">
+    <xsl:text>.PP
+</xsl:text>
+<xsl:apply-templates select='d:title/node()|d:info/d:title/node()'/>
+    <xsl:text>.PP
+</xsl:text>
+    <xsl:apply-templates select='*[not(self::d:title|self::d:info)]'/>
+  </xsl:template>
 
-  <xsl:template match="d:programlisting">
+  <xsl:template match="d:programlisting|d:literallayout|d:computeroutput">
     <xsl:text>.CS
 </xsl:text>
     <xsl:apply-templates/>
