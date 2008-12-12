@@ -38,29 +38,30 @@
               <xsl:attribute name="name">
                 <xsl:call-template name="object.id"/>
               </xsl:attribute>
-              <xsl:apply-templates select="d:info/d:title"/>
+              <xsl:apply-templates select="d:info/d:title/node()"/>
             </a>
           </h1>
+          <xsl:apply-templates select='d:info/d:subtitle'/>
           <h2>Contents</h2>
           <ul>
             <xsl:if test="d:refsynopsisdiv">
               <li><a href="#synopsis">Synopsis</a></li>
             </xsl:if>
-            <xsl:for-each select="d:sect1">
+            <xsl:for-each select="d:sect1|d:section">
               <li>
                 <a href="#{generate-id()}">
                   <xsl:apply-templates select="d:info/d:title" mode='toc'/>
                 </a>
-                <xsl:if test="d:sect2">
+                <xsl:if test="d:sect2|d:section">
                   <ul>
-                    <xsl:for-each select="d:sect2">
+                    <xsl:for-each select="d:sect2|d:section">
                       <li>
                         <a href="#{generate-id()}">
                           <xsl:apply-templates select="d:info/d:title" mode='toc'/>
                         </a>
-                        <xsl:if test="d:sect3">
+                        <xsl:if test="d:sect3|d:section">
                           <ul>
-                            <xsl:for-each select="d:sect3">
+                            <xsl:for-each select="d:sect3|d:section">
                               <li>
                                 <a href="#{generate-id()}">
                                   <xsl:apply-templates select="d:info/d:title"
@@ -177,6 +178,14 @@
     </html>
   </xsl:template>
 
+  <xsl:template match='d:article/d:info/d:title'/>
+
+  <xsl:template match='d:subtitle'>
+    <h3>
+      <xsl:apply-templates/>
+    </h3>
+  </xsl:template>
+
   <xsl:template match='d:footnote' mode='footnote'>
     <div class='footnote'>
       <a name='fn_{generate-id()}'/>
@@ -210,7 +219,8 @@
     <xsl:apply-templates/>
   </xsl:template>
 
-  <xsl:template match='d:refsect1 |
+  <xsl:template match='d:section |
+                       d:refsect1 |
                        d:refsect2 |
                        d:refsect3 |
                        d:refnamediv'>
@@ -310,11 +320,11 @@
     <xsl:apply-templates/>
   </xsl:template>
 
-  <xsl:template match="tcl:command">
+  <xsl:template match="tcl:command|d:command">
     <xsl:call-template name="inline.boldseq"/>
   </xsl:template>
 
-  <xsl:template match='tcl:package|tcl:namespace|tcl:method|d:classname|d:application|d:tag'>
+  <xsl:template match='tcl:package|tcl:namespace|tcl:method|d:classname|d:application|d:tag|d:filename'>
     <xsl:call-template name='inline.monoseq'/>
   </xsl:template>
 
@@ -423,6 +433,12 @@
       <a name='{generate-id(../..)}'/>
       <xsl:apply-templates/>
     </h4>
+  </xsl:template>
+  <xsl:template match='d:section/d:info/d:title'>
+    <xsl:element name='h{count(ancestor::d:section) + 2}'>
+      <a name='{generate-id(../..)}'/>
+      <xsl:apply-templates/>
+    </xsl:element>
   </xsl:template>
 
   <xsl:template match='d:para'>
@@ -575,7 +591,7 @@
   </xsl:template>
 
   <xsl:template match='*'>
-    <xsl:message>unmatched element "<xsl:value-of select='name()'/>" in "<xsl:value-of select='name(..)'/>"</xsl:message>
+    <xsl:message>unmatched element "<xsl:value-of select='name()'/>" in "<xsl:value-of select='name(../..)'/>/<xsl:value-of select='name(..)'/>"</xsl:message>
   </xsl:template>
 
 </xsl:stylesheet>

@@ -30,46 +30,64 @@
     </d:author>
   </d:info>
 
-  <d:para>This package provides XML parsers for Tcl scripts.  There is a generic front-end interface with plugin parser implementations.  A number of parser implementations or wrappers are provided:</d:para>
-
-  <d:itemizedlist>
-    <d:listitem>
-      <d:para>James Clark's expat library.  This package is known as TclXML/expat.</d:para>
-    </d:listitem>
-    <d:listitem>
-      <d:para>Gnome libxml2 library.  This package is known as TclXML/libxml2.</d:para>
-    </d:listitem>
-    <d:listitem>
-      <d:para>A generic Tcl implementation (which does not require compilation).  This package is known as TclXML/tcl.</d:para>
-    </d:listitem>
-  </d:itemizedlist>
-
-  <d:para>The package defines commands in the <tcl:namespace>::xml</tcl:namespace> Tcl namespace:</d:para>
-  <d:variablelist>
-    <d:varlistentry>
-      <d:term><d:command>xml::parserclass <d:arg>info</d:arg> <d:arg>names</d:arg></d:command></d:term>
-      <d:para>lists the registered parser implementations</d:para>
-    </d:varlistentry>
-    <d:varlistentry>
-      <d:term><d:command>xml::parser</d:command></d:term>
-      <d:para>creates a parser instance object</d:para>
-    </d:varlistentry>
-  </d:variablelist>
-
-  <d:para>Other packages are also supplied to provide support for related standards.  In particular, work has commenced on the 'xpath' package for parsing XPath location paths.</d:para>
-
-  <d:para>See <d:link xlink:href='http://tclxml.sourceforge.net/'>the website</d:link> for more information on XML support for Tcl.</d:para>
+  <d:para>This package provides XML parsers, DOM scripting and XSL Transformations for <d:link xlink:href='http://www.tcl.tk'>Tcl</d:link>. In previous distributions, these features were supplied as separate packages. Now they have been combined into a single package to make installation easier.</d:para>
 
   <d:para>Contact <d:link xlink:href='mailto:Steve.Ball@explain.com.au'>Steve Ball</d:link> for information about this release.</d:para>
+
+  <d:section>
+    <d:info>
+      <d:title>TclXML</d:title>
+    </d:info>
+
+    <d:para>TclXML provides a streaming parser for XML documents. This is the lowest-level interface for processing XML documents in Tcl. The package has a generic front-end interface with plugin parser implementations.  A number of parser implementations or wrappers are provided:</d:para>
+
+    <d:itemizedlist>
+      <d:listitem>
+	<d:para>Gnome libxml2 library.  This package is known as TclXML/libxml2.</d:para>
+      </d:listitem>
+      <d:listitem>
+	<d:para>A generic Tcl implementation (which does not require compilation).  This package is known as TclXML/tcl.</d:para>
+      </d:listitem>
+    </d:itemizedlist>
+
+    <d:para>Both of these implementations may be installed at the same time. See <d:link xlink:href='doc/tclxml.html'>the manual page</d:link> for more information.</d:para>
+  </d:section>
+
+  <d:section>
+    <d:info>
+      <d:title>TclDOM</d:title>
+    </d:info>
+
+    <d:para>TclDOM provides a tree view for XML documents. This is usually the best interface for scripting XML documents using Tcl. The package has two implementations:</d:para>
+
+    <d:itemizedlist>
+      <d:listitem>
+	<d:para>Gnome libxml2 library.  This package is known as TclDOM/libxml2.</d:para>
+      </d:listitem>
+      <d:listitem>
+	<d:para>A generic Tcl implementation (which does not require compilation).  This package is known as TclDOM/tcl.</d:para>
+      </d:listitem>
+    </d:itemizedlist>
+
+    <d:para>Only one of these will be installed.</d:para>
+
+    <d:para>See <d:link xlink:href='doc/tcldom.html'>the manual page</d:link> for more information.</d:para>
+  </d:section>
+
+  <d:section>
+    <d:info>
+      <d:title>TclXSLT</d:title>
+    </d:info>
+
+    <d:para>TclXSLT provides a method to invoke XSL Transformations upon XML documents. This package is a wrapper for the libxslt library.</d:para>
+
+    <d:para>See <d:link xlink:href='doc/tclxslt.html'>the manual page</d:link> for more information.</d:para>
+  </d:section>
 
   <d:section xml:id='installation'>
     <d:info>
       <d:title>Installation</d:title>
     </d:info>
-
-    <d:para>TclXML v&version; features a pure-Tcl installer.</d:para>
-
-    <d:note>Future work on the installer will include an 'uninstall' capability, as well as the capability to build the binary libraries in the package from the source.</d:note>
 
     <d:section>
       <d:info>
@@ -84,13 +102,13 @@
 
 	    <d:para>In order for the Tcl-only parser to resolve external entities, the tcllib package must be installed.</d:para>
 
-	    <d:para>Be sure to get a version which includes the <tcl:package>uri</tcl:package> package.  Version 1.2 or better is recommended.</d:para>
+	    <d:para>Be sure to get a version which includes the <tcl:package>uri</tcl:package> package.  Version 1.11 or better is recommended.</d:para>
 	    <d:itemizedlist>
 	      <d:listitem>
-		<d:para><d:link xlink:href='ftp://prdownloads.sf.net/tcllib/tcllib-1.3.tar.gz'>GZip'd tarball</d:link></d:para>
+		<d:para><d:link xlink:href='ftp://prdownloads.sf.net/tcllib/tcllib-1.11.tar.gz'>GZip'd tarball</d:link></d:para>
 	      </d:listitem>
 	      <d:listitem>
-		<d:para><d:link xlink:href='ftp://prdownloads.sf.net/tcllib/tcllib-1.3.zip'>ZIP file</d:link></d:para>
+		<d:para><d:link xlink:href='ftp://prdownloads.sf.net/tcllib/tcllib-1.11.zip'>ZIP file</d:link></d:para>
 	      </d:listitem>
 	    </d:itemizedlist>
 	    <d:para>The latest CVS snapshot may be found at <d:link xlink:href='http://sourceforge.net/projects/tcllib'>the SourceForge project page</d:link>.</d:para>
@@ -99,7 +117,7 @@
 	<d:varlistentry>
 	  <d:term>libxml2</d:term>
 	  <d:listitem>
-	    <d:para>libxml2 is only required for the compiled version of the TclXML/libxml2 package.  libiconv may also be required.</d:para>
+	    <d:para>libxml2 is required for the compiled version of the TclXML/libxml2 package.  libiconv may also be required.</d:para>
 
 	    <d:para>The source code for libxml2 and libiconv is <d:emphasis>not</d:emphasis> supplied with this package.  Download libxml2 from <d:link xlink:href='http://xmlsoft.org/'>xmlsoft.org</d:link> separately. libiconv may also be required; download from a GNU mirror site.</d:para>
 
@@ -115,11 +133,10 @@
 	<d:subtitle>no compilation required</d:subtitle>
       </d:info>
 
-      <d:para>The <d:filename>install.tcl</d:filename> script will install the pure-Tcl parser.  Run it using <d:application>wish</d:application>, eg.</d:para>
-
-      <d:programlisting>wish install.tcl</d:programlisting>
-
-      <d:note>If Tcl/Tk has been configured correctly on your system, you should be able to simply double-click the script.</d:note>
+      <d:para>Run the configure script and invoke the command:</d:para>
+      <d:informalexample>
+	<d:command>make install</d:command>
+      </d:informalexample>
 
       <d:para>If the pure-Tcl parser is good enough for you, then read no further.</d:para>
     </d:section>
@@ -138,13 +155,13 @@
 
 	<d:orderedlist>
 	  <d:listitem>
-	    <d:para>Make sure you have Tcllib 1.2 (or better) installed.  Tcllib is still required, even for the compiled parser.</d:para>
+	    <d:para>Make sure you have Tcllib 1.11 (or better) installed.  Tcllib is still required, even for the compiled parser.</d:para>
 	  </d:listitem>
 	  <d:listitem>
 	    <d:para>If you wish to use TclXML/libxml2, make sure libxml2-2.7.2 (or better) is installed.</d:para>
 	  </d:listitem>
 	  <d:listitem>
-	    <d:para>Unpack the TclXML distribution and <d:command>cd</d:command> into the <filename>tclxml-&version;</filename> directory.</d:para>
+	    <d:para>Unpack the TclXML distribution and <d:command>cd</d:command> into the <d:filename>tclxml-&version;</d:filename> directory.</d:para>
 	  </d:listitem>
 	  <d:listitem>
 	    <d:para>Run the <d:filename>configure</d:filename> script, with the <d:arg>--prefix</d:arg> and <d:arg>--enable-threads</d:arg> switches (the latter only if Tcl has been built with threads enabled). Use the <d:arg>--with-xml2-config</d:arg> switch to specify the location of the libxml2 configuration script, <d:filename>xml2Conf.sh</d:filename>. Similarly, use the <d:arg>--with-xslt-config</d:arg> if necessary.</d:para>
@@ -166,6 +183,12 @@
 	  </d:listitem>
 	  <d:listitem>
 	    <d:programlisting>make test</d:programlisting>
+	  </d:listitem>
+	  <d:listitem>
+	    <d:programlisting>make doc</d:programlisting>
+	  </d:listitem>
+	  <d:listitem>
+	    <d:programlisting>make install-doc</d:programlisting>
 	  </d:listitem>
 	</d:orderedlist>
       </d:section>
@@ -241,7 +264,7 @@
       <d:title>Usage</d:title>
     </d:info>
 
-    <d:para>See the website for links to tutorials and the reference manual.</d:para>
+    <d:para>See <d:link xlink:href='http://tclxml.sourceforge.net/'>the website</d:link> for links to tutorials and the reference manual.</d:para>
 
     <d:para>In the meantime, here's a quick tutorial:</d:para>
 
