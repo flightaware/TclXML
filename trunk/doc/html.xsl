@@ -21,7 +21,76 @@
   <xsl:strip-space elements='*'/>
   <xsl:preserve-space elements='d:literallayout d:programlisting'/>
 
-  <!-- Provide a template which adds a TOC -->
+  <xsl:template match='d:article'>
+    <html>
+      <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+        <title>
+          <xsl:apply-templates select="d:info/d:title"
+            mode='html-title'/>
+        </title>
+        <link rel='stylesheet' href='tclxml.css'/>
+      </head>
+      <body>
+        <div class="{local-name(.)}">
+          <h1 class="title">
+            <a>
+              <xsl:attribute name="name">
+                <xsl:call-template name="object.id"/>
+              </xsl:attribute>
+              <xsl:apply-templates select="d:info/d:title"/>
+            </a>
+          </h1>
+          <h2>Contents</h2>
+          <ul>
+            <xsl:if test="d:refsynopsisdiv">
+              <li><a href="#synopsis">Synopsis</a></li>
+            </xsl:if>
+            <xsl:for-each select="d:sect1">
+              <li>
+                <a href="#{generate-id()}">
+                  <xsl:apply-templates select="d:info/d:title" mode='toc'/>
+                </a>
+                <xsl:if test="d:sect2">
+                  <ul>
+                    <xsl:for-each select="d:sect2">
+                      <li>
+                        <a href="#{generate-id()}">
+                          <xsl:apply-templates select="d:info/d:title" mode='toc'/>
+                        </a>
+                        <xsl:if test="d:sect3">
+                          <ul>
+                            <xsl:for-each select="d:sect3">
+                              <li>
+                                <a href="#{generate-id()}">
+                                  <xsl:apply-templates select="d:info/d:title"
+                                    mode='toc'/>
+                                </a>
+                              </li>
+                            </xsl:for-each>
+                          </ul>
+                        </xsl:if>
+                      </li>
+                    </xsl:for-each>
+                  </ul>
+                </xsl:if>
+              </li>
+            </xsl:for-each>
+          </ul>
+
+          <xsl:apply-templates/>
+
+          <xsl:variable name='footnotes' select='//d:footnote'/>
+          <xsl:if test='$footnotes'>
+            <div id='footnotes'>
+              <h2>Footnotes</h2>
+              <xsl:apply-templates select='$footnotes' mode='footnote'/>
+            </div>
+          </xsl:if>
+        </div>
+      </body>
+    </html>
+  </xsl:template>
 
   <xsl:template match="d:refentry">
     <xsl:variable name="refmeta" select=".//d:refmeta"/>
