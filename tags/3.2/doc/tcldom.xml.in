@@ -1,0 +1,2519 @@
+<!DOCTYPE refentry [
+  <!ENTITY version "@PACKAGE_VERSION@">
+]>
+<refentry xmlns="http://docbook.org/ns/docbook"
+	  xmlns:tcl='http://tclxml.sourceforge.net/doc'>
+  <d:info xmlns:d="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:tcl="http://tclxml.sourceforge.net/doc">
+    <author xmlns:xlink="http://www.w3.org/XLink" xlink:href="http://www.explain.com.au/staff/Steve.Ball/">
+      <firstname>Steve</firstname>
+      <surname>Ball</surname>
+    </author>
+    <copyright>
+      <year>2008</year>
+      <year>2007</year>
+      <holder xmlns:xlink="http://www.w3.org/XLink" xlink:href="http://www.explain.com.au/">Explain</holder>
+    </copyright>
+    <copyright>
+      <year>2004</year>
+      <year>2003</year>
+      <year>2002</year>
+      <holder xmlns:xlink="http://www.w3.org/XLink" xlink:href="http://www.zveno.com/">Zveno Pty Ltd</holder>
+    </copyright>
+    <legalnotice>
+      <para>See the file "LICENSE" for information on usage and redistribution of this file, and for a DISCLAIMER OF ALL WARRANTIES.</para>
+    </legalnotice>
+  </d:info>
+  <refmeta>
+    <refentrytitle>TclDOM</refentrytitle>
+    <manvolnum>n</manvolnum>
+  </refmeta>
+  <refnamediv>
+    <refname>::dom::DOMImplementation</refname>
+    <refname>::dom::hasfeature</refname>
+    <refname>::dom::create</refname>
+    <refname>::dom::destroy</refname>
+    <refname>::dom::parse</refname>
+    <refname>::dom::serialize</refname>
+    <refname>::dom::document</refname>
+    <refname>::dom::documenttype</refname>
+    <refname>::dom::node</refname>
+    <refname>::dom::element</refname>
+    <refname>::dom::event</refname>
+    <refname>::dom::selectNode</refname>
+    <refname>::dom::isNode</refname>
+    <refname>::dom::xinclude</refname>
+    <refname>::dom::prefix2namespaceURI</refname>
+    <refname>::dom::trim</refname>
+    <refpurpose>Tcl language binding for the W3C Document Object Model</refpurpose>
+  </refnamediv>
+  <refsynopsisdiv>
+    <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+      <command xmlns="http://docbook.org/ns/docbook">package require dom</command>
+    </cmdsynopsis>
+    <pkgsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+      <package xmlns="http://docbook.org/ns/docbook">dom</package>
+      <version xmlns="http://docbook.org/ns/docbook">&version;</version>
+    </pkgsynopsis>
+    <namespacesynopsis xmlns="http://tclxml.sourceforge.net/doc">
+      <namespace>::dom</namespace>
+      <namespace>::dom::tcl</namespace>
+      <namespace>::dom::libxml2</namespace>
+    </namespacesynopsis>
+    <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+      <command xmlns="http://docbook.org/ns/docbook">::dom::DOMImplementation</command>
+      <arg xmlns="http://docbook.org/ns/docbook">
+        <replaceable>method</replaceable>
+      </arg>
+      <group xmlns="http://docbook.org/ns/docbook" choice="opt" rep="repeat">
+        <arg>args</arg>
+      </group>
+    </cmdsynopsis>
+    <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+      <command xmlns="http://docbook.org/ns/docbook">::dom::hasfeature</command>
+      <arg xmlns="http://docbook.org/ns/docbook">
+        <replaceable>feature</replaceable>
+      </arg>
+      <arg xmlns="http://docbook.org/ns/docbook">
+        <replaceable>version</replaceable>
+      </arg>
+    </cmdsynopsis>
+    <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+      <command xmlns="http://docbook.org/ns/docbook">::dom::create</command>
+    </cmdsynopsis>
+    <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+      <command xmlns="http://docbook.org/ns/docbook">::dom::destroy</command>
+      <arg xmlns="http://docbook.org/ns/docbook">
+        <replaceable>token</replaceable>
+      </arg>
+    </cmdsynopsis>
+    <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+      <command xmlns="http://docbook.org/ns/docbook">::dom::parse</command>
+      <arg xmlns="http://docbook.org/ns/docbook">
+        <replaceable>xml</replaceable>
+      </arg>
+      <group xmlns="http://docbook.org/ns/docbook" choice="opt" rep="repeat">
+        <arg>option</arg>
+        <arg>value</arg>
+      </group>
+    </cmdsynopsis>
+    <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+      <command xmlns="http://docbook.org/ns/docbook">::dom::serialize</command>
+      <arg xmlns="http://docbook.org/ns/docbook">
+        <replaceable>token</replaceable>
+      </arg>
+      <group xmlns="http://docbook.org/ns/docbook" choice="opt" rep="repeat">
+        <arg>option</arg>
+        <arg>value</arg>
+      </group>
+    </cmdsynopsis>
+    <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+      <command xmlns="http://docbook.org/ns/docbook">::dom::document</command>
+      <arg xmlns="http://docbook.org/ns/docbook">
+        <replaceable>method</replaceable>
+      </arg>
+      <arg xmlns="http://docbook.org/ns/docbook">
+        <replaceable>token</replaceable>
+      </arg>
+      <group xmlns="http://docbook.org/ns/docbook" choice="opt" rep="repeat">
+        <arg>args</arg>
+      </group>
+    </cmdsynopsis>
+    <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+      <command xmlns="http://docbook.org/ns/docbook">::dom::documenttype</command>
+      <arg xmlns="http://docbook.org/ns/docbook">
+        <replaceable>method</replaceable>
+      </arg>
+      <arg xmlns="http://docbook.org/ns/docbook">
+        <replaceable>token</replaceable>
+      </arg>
+      <group xmlns="http://docbook.org/ns/docbook" choice="opt" rep="repeat">
+        <arg>args</arg>
+      </group>
+    </cmdsynopsis>
+    <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+      <command xmlns="http://docbook.org/ns/docbook">::dom::node</command>
+      <arg xmlns="http://docbook.org/ns/docbook">
+        <replaceable>method</replaceable>
+      </arg>
+      <arg xmlns="http://docbook.org/ns/docbook">
+        <replaceable>token</replaceable>
+      </arg>
+      <group xmlns="http://docbook.org/ns/docbook" choice="opt" rep="repeat">
+        <arg>args</arg>
+      </group>
+    </cmdsynopsis>
+    <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+      <command xmlns="http://docbook.org/ns/docbook">::dom::element</command>
+      <arg xmlns="http://docbook.org/ns/docbook">
+        <replaceable>method</replaceable>
+      </arg>
+      <arg xmlns="http://docbook.org/ns/docbook">
+        <replaceable>token</replaceable>
+      </arg>
+      <group xmlns="http://docbook.org/ns/docbook" choice="opt" rep="repeat">
+        <arg>args</arg>
+      </group>
+    </cmdsynopsis>
+    <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+      <command xmlns="http://docbook.org/ns/docbook">::dom::event</command>
+      <arg xmlns="http://docbook.org/ns/docbook">
+        <replaceable>method</replaceable>
+      </arg>
+      <arg xmlns="http://docbook.org/ns/docbook">
+        <replaceable>token</replaceable>
+      </arg>
+      <group xmlns="http://docbook.org/ns/docbook" choice="opt" rep="repeat">
+        <arg>args</arg>
+      </group>
+    </cmdsynopsis>
+    <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+      <command xmlns="http://docbook.org/ns/docbook">::dom::selectNode</command>
+      <arg xmlns="http://docbook.org/ns/docbook">
+        <replaceable>token</replaceable>
+      </arg>
+      <arg xmlns="http://docbook.org/ns/docbook">
+        <replaceable>xpath</replaceable>
+      </arg>
+      <group xmlns="http://docbook.org/ns/docbook" choice="opt" rep="repeat">
+        <arg>option value</arg>
+      </group>
+    </cmdsynopsis>
+    <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+      <command xmlns="http://docbook.org/ns/docbook">::dom::isNode</command>
+      <arg xmlns="http://docbook.org/ns/docbook">
+        <replaceable>token</replaceable>
+      </arg>
+    </cmdsynopsis>
+    <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+      <command xmlns="http://docbook.org/ns/docbook">::dom::xinclude</command>
+      <arg xmlns="http://docbook.org/ns/docbook">
+        <replaceable>doc</replaceable>
+      </arg>
+    </cmdsynopsis>
+    <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+      <command xmlns="http://docbook.org/ns/docbook">::dom::prefix2namespaceURI</command>
+      <arg xmlns="http://docbook.org/ns/docbook">
+        <replaceable>node</replaceable>
+      </arg>
+      <arg xmlns="http://docbook.org/ns/docbook">
+        <replaceable>prefix</replaceable>
+      </arg>
+    </cmdsynopsis>
+    <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+      <command xmlns="http://docbook.org/ns/docbook">::dom::trim</command>
+      <arg xmlns="http://docbook.org/ns/docbook">
+        <replaceable>doc</replaceable>
+      </arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+  <refsect1>
+    <d:info xmlns:d="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:tcl="http://tclxml.sourceforge.net/doc">
+      <d:title>Description</d:title>
+    </d:info>
+    <para>TclDOM is a Tcl language binding for the <d:link xmlns:d="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:tcl="http://tclxml.sourceforge.net/doc" xlink:href="http://www.w3c.org/DOM/">W3C Document Object Model</d:link> (DOM).  DOM provides a view of a XML (or HTML) document as a tree structure.  Currently, TclDOM only supports XML documents.</para>
+    <para>The package implements most of the DOM Level 1 interfaces and also some Level 2 and Level 3 interfaces.  There are also a number of non-standard commands and methods provided for the convenience of application developers (these are documented).</para>
+    <para>The DOM specification should be read in conjunction with this reference manual, as it explains the meaning and purpose of the various interfaces.  This manual is not a tutorial on how to use the DOM.</para>
+    <para>TclDOM also provides two implementations of the API:  a pure-Tcl implementation and a C implementation based on the Gnome libxml2 library.</para>
+  </refsect1>
+  <refsect1>
+    <d:info xmlns:d="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:tcl="http://tclxml.sourceforge.net/doc">
+      <d:title>Packages and Namespaces</d:title>
+    </d:info>
+    <para>TclDOM defines the <tcl:package>dom</tcl:package> package and also a Tcl namespace using that same name.</para>
+    <para>Implementations define their own package name and Tcl namespace within the <namespace xmlns="http://tclxml.sourceforge.net/doc">::dom</namespace> Tcl namespace:</para>
+    <variablelist>
+      <varlistentry>
+        <term>Tcl implementation</term>
+        <listitem>
+          <para>Package <tcl:package>dom::tcl</tcl:package>, Tcl namespace <namespace xmlns="http://tclxml.sourceforge.net/doc">::dom::tcl</namespace>.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>libxml2</term>
+        <listitem>
+          <para>Package <tcl:package>dom::libxml2</tcl:package>, Tcl namespace <namespace xmlns="http://tclxml.sourceforge.net/doc">::dom::libxml2</namespace>.</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <para>Each DOM Document is allocated a Tcl namespace within the <namespace xmlns="http://tclxml.sourceforge.net/doc">::dom</namespace> Tcl namespace.  All storage for the document and commands are defined within that Tcl namespace.</para>
+  </refsect1>
+  <refsect1>
+    <d:info xmlns:d="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:tcl="http://tclxml.sourceforge.net/doc">
+      <d:title>Tokens</d:title>
+    </d:info>
+    <para>The TclDOM API uses <emphasis>tokens</emphasis> as identifiers for nodes within the document tree.  This technique has been used to allow alternate implementations of TclDOM to be efficient, while retaining compatibility with the pure-Tcl implementation.</para>
+    <para>The format of the token itself as well as the data structure referred to by the token are <emphasis>not</emphasis> public and an application should not rely on these.  Instead, an application should use the accessor methods provided by the API.</para>
+    <para>There is no requirement to always use the same token for a node.  In fact, an important performance optimisation for some implementations is to create a new token when a node is accessed, regardless of whether a token has already been issued for that node.  This implies that in order to test whether two tokens refer to the same node it is not sufficient to test the string values of the tokens; the <tcl:method>isSameNode</tcl:method> method must be used for this purpose.  For example,</para>
+    <informalexample>
+      <programlisting>
+proc NodeCompare1 {A B} {
+    return [string equal $A $B]
+}
+proc NodeCompare2 {A B} {
+    return [$A isSameNode $B]
+}
+</programlisting>
+    </informalexample>
+    <para>In the above example, <literal>NodeCompare2</literal> correctly determines whether its two arguments refer to the same node.</para>
+  </refsect1>
+  <refsect1>
+    <d:info xmlns:d="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:tcl="http://tclxml.sourceforge.net/doc">
+      <d:title>Document and Node Commands</d:title>
+    </d:info>
+    <para>Each Document and Node has a Tcl command defined that may be used to control the object.  This command may be used to invoke the methods by the <command xmlns="http://tclxml.sourceforge.net/doc">::dom::document</command> command (for Documents) or the <command xmlns="http://tclxml.sourceforge.net/doc">::dom::node</command> command (for all other Nodes).  If a Document' or Node's Tcl command is destroyed then the Document or Node is also destroyed.</para>
+  </refsect1>
+  <refsect1>
+    <d:info xmlns:d="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:tcl="http://tclxml.sourceforge.net/doc">
+      <d:title>DOM Interfaces</d:title>
+    </d:info>
+    <para>Each <emphasis>Interface</emphasis> in the DOM specification is implemented with a Tcl command in the <namespace xmlns="http://tclxml.sourceforge.net/doc">dom</namespace> namespace.  A few interfaces have not been mapped to Tcl commands because Tcl already provides the required functionality, for example the <classname>CharacterData</classname> interface.</para>
+    <para><emphasis>method</emphasis>s for interfaces are methods (subcommands) of the corresponding Tcl command.</para>
+    <para>Each <emphasis>attribute</emphasis> of an interface is a configuration option for an object in the document tree.</para>
+  </refsect1>
+  <refsect1>
+    <d:info xmlns:d="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:tcl="http://tclxml.sourceforge.net/doc">
+      <d:title>Convenience Commands and Methods</d:title>
+    </d:info>
+    <para>DOM doesn't always provide an interface, method or attribute for every function required.  For example, until DOM Level 3 for was no standard for creating, parsing and serializing a document.  Sometimes using the standard DOM interface is awkward.  TclDOM provides a number of non-standard features to overcome these problems.</para>
+    <para>A major convenience is that each method of the <classname>DOMImplementation</classname> interface is also defined as a command.  For example, rather than using <command xmlns="http://tclxml.sourceforge.net/doc">dom::DOMImplementation create</command> to create a new document, the shorter command <command xmlns="http://tclxml.sourceforge.net/doc">dom::create</command> may be used.</para>
+    <para>Implementations may also provide direct access to specific features.  Refer to the documentation for a DOM implementation.</para>
+  </refsect1>
+  <refsect1>
+    <d:info xmlns:d="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:tcl="http://tclxml.sourceforge.net/doc">
+      <d:title>Commands</d:title>
+    </d:info>
+    <refsect2>
+      <d:info xmlns:d="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:tcl="http://tclxml.sourceforge.net/doc">
+        <d:title>
+          <command xmlns="http://tclxml.sourceforge.net/doc">::dom::DOMImplementation</command>
+        </d:title>
+      </d:info>
+      <para>The <command xmlns="http://tclxml.sourceforge.net/doc">::dom::DOMImplementation</command> command implements the <classname>DOMImplementation</classname> DOM interface.  It is used to provide implementation-specific features not explicitly defined in the DOM specification.</para>
+      <refsect3>
+        <d:info xmlns:d="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:tcl="http://tclxml.sourceforge.net/doc">
+          <d:title>Command Options</d:title>
+        </d:info>
+        <para>The following command options may be used.  These are also available as commands.</para>
+        <variablelist>
+          <varlistentry>
+            <term>
+              <methodname>hasFeature</methodname>
+            </term>
+            <listitem>
+              <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+                <arg xmlns="http://docbook.org/ns/docbook">hasFeature</arg>
+                <arg xmlns="http://docbook.org/ns/docbook">
+                  <replaceable class="parameter">feature</replaceable>
+                </arg>
+              </cmdsynopsis>
+              <para>Provides a test for existence of a feature.  Returns <literal>1</literal> if a feature is implemented, <literal>0</literal> otherwise.</para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>
+              <methodname>create</methodname>
+            </term>
+            <listitem>
+              <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+                <arg xmlns="http://docbook.org/ns/docbook">create</arg>
+                <arg xmlns="http://docbook.org/ns/docbook" choice="opt">
+                  <replaceable class="parameter">type</replaceable>
+                </arg>
+              </cmdsynopsis>
+              <para>Creates the root node of a new DOM document.  The document element type may be specified as an argument, in which case that element is created.  The return value is a token referring to the root node of the newly created document.  A Tcl command is also created with the same name as the document's token.  This command is a shortcut for the <command xmlns="http://tclxml.sourceforge.net/doc">::dom::document</command> command.</para>
+              <note>
+                <para>Non-standard method.  DOM Level 2 introduced the <methodname>createDocument</methodname> method.</para>
+              </note>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>
+              <methodname>createDocument</methodname>
+            </term>
+            <listitem>
+              <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+                <arg xmlns="http://docbook.org/ns/docbook">createDocument</arg>
+                <arg xmlns="http://docbook.org/ns/docbook">
+                  <replaceable>nsURI</replaceable>
+                </arg>
+                <arg xmlns="http://docbook.org/ns/docbook">
+                  <replaceable>type</replaceable>
+                </arg>
+                <arg xmlns="http://docbook.org/ns/docbook" choice="opt">
+                  <replaceable>doctype</replaceable>
+                </arg>
+              </cmdsynopsis>
+              <para>Creates the root node of a new DOM document.  The document element namespace URI and local-name (element type) may be specified as an argument, in which case that element is created.  If the document type is given then the newly created document is configured to use that document type.  The return value is a token referring to the root node of the newly created document.  A Tcl command is also created with the same name as the document's token.  This command is a shortcut for the <command xmlns="http://tclxml.sourceforge.net/doc">::dom::document</command> command.</para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>
+              <methodname>createDocumentType</methodname>
+            </term>
+            <listitem>
+              <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+                <arg xmlns="http://docbook.org/ns/docbook">createDocumentType</arg>
+                <arg xmlns="http://docbook.org/ns/docbook">
+                  <replaceable>name</replaceable>
+                </arg>
+                <arg xmlns="http://docbook.org/ns/docbook">
+                  <replaceable>publicid</replaceable>
+                </arg>
+                <arg xmlns="http://docbook.org/ns/docbook">
+                  <replaceable>systemid</replaceable>
+                </arg>
+                <arg xmlns="http://docbook.org/ns/docbook">
+                  <replaceable>internaldtd</replaceable>
+                </arg>
+              </cmdsynopsis>
+              <para>Creates a Document Type Declaration.  The return value is a token for the newly created document type declaration.  A Tcl command is also created with the same name as the document type's token.  This command is a shortcut for the <command xmlns="http://tclxml.sourceforge.net/doc">::dom::documenttype</command> command.</para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>
+              <methodname>createNode</methodname>
+            </term>
+            <listitem>
+              <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+                <arg xmlns="http://docbook.org/ns/docbook">createNode</arg>
+                <arg xmlns="http://docbook.org/ns/docbook">
+                  <replaceable>token</replaceable>
+                </arg>
+                <arg xmlns="http://docbook.org/ns/docbook">
+                  <replaceable>xpath</replaceable>
+                </arg>
+              </cmdsynopsis>
+              <para>May create a node in the document.  <option><replaceable>token</replaceable></option> specifies a context for the XPath expression given by <option><replaceable>xpath</replaceable></option>.  The expression must resolve to a node.  If the node exists then no further action is taken.  Otherwise the node is created.  The token of the matched or newly created node is returned.</para>
+              <note>
+                <para>Non-standard method.</para>
+              </note>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>
+              <methodname>destroy</methodname>
+            </term>
+            <listitem>
+              <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+                <arg xmlns="http://docbook.org/ns/docbook">destroy</arg>
+                <arg xmlns="http://docbook.org/ns/docbook">
+                  <replaceable class="parameter">token</replaceable>
+                </arg>
+              </cmdsynopsis>
+              <para>This method frees all data structures associated with a DOM document or node.  The <option><replaceable class="parameter">token</replaceable></option> argument must refer to a valid token for any document or any node in the tree of a document.</para>
+              <para>When the given token refers to a DOM document then the entire document is destroyed; the Tcl namespace for the document is deleted and all document and node commands are deleted.  All tokens for the document or nodes in the document become invalid.</para>
+              <para>When the token refers to a node the node is removed from the tree before it is destroyed.  If the node has children or attributes, they will also be destroyed.  The Tcl command for the node is deleted.</para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>
+              <methodname>isNode</methodname>
+            </term>
+            <listitem>
+              <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+                <arg xmlns="http://docbook.org/ns/docbook">isNode</arg>
+                <arg xmlns="http://docbook.org/ns/docbook">
+                  <replaceable>token</replaceable>
+                </arg>
+              </cmdsynopsis>
+              <para>Tests whether the given token is a valid token for some DOM node.</para>
+              <note>
+                <para>Non-standard method.</para>
+              </note>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>
+              <methodname>parse</methodname>
+            </term>
+            <listitem>
+              <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+                <arg xmlns="http://docbook.org/ns/docbook">parse</arg>
+                <arg xmlns="http://docbook.org/ns/docbook">
+                  <replaceable class="parameter">xml</replaceable>
+                </arg>
+                <group xmlns="http://docbook.org/ns/docbook">
+                  <arg>
+                    <replaceable>option</replaceable>
+                  </arg>
+                  <arg>
+                    <replaceable>value</replaceable>
+                  </arg>
+                </group>
+              </cmdsynopsis>
+              <para>This method parses XML formatted text given by the <option><replaceable class="parameter">xml</replaceable></option> argument and constructs a DOM tree for the document.  The return result is the token of the root node of the newly created document.  The document will also have a Tcl command associated with it, see the <tcl:method>createDocument</tcl:method> method.</para>
+              <para>This method uses the <d:link xmlns:d="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:tcl="http://tclxml.sourceforge.net/doc" xlink:href="http://tclxml.sourceforge.net/">TclXML</d:link> package to perform the parsing operation.  The <tcl:package>dom</tcl:package> package itself does not include an XML parser.  TclXML supports the use of multiple parser implementations.  The <option>-parser</option> may be used to specify which XML parser class to use.</para>
+              <para>All options not listed below are passed to the TclXML parser.</para>
+              <para>Valid configuration options are:</para>
+              <variablelist>
+                <varlistentry>
+                  <term>
+                    <arg>-parser</arg>
+                    <arg>
+                      <group>
+                        <arg>{}</arg>
+                        <arg>libxml2</arg>
+                        <arg>tcl</arg>
+                      </group>
+                    </arg>
+                  </term>
+                  <listitem>
+                    <para>This option specifies the name of a TclXML parser class to use to parse the XML data.  The given parser class must be registered with the TclXML package.  If an empty string is given then the default parser class is used.  If an explicit value is given and that parser class is not registered then the command will fail, despite the fact that another parser may be available.</para>
+                  </listitem>
+                </varlistentry>
+                <varlistentry>
+                  <term>
+                    <arg>-progresscommand</arg>
+                    <arg>
+                      <replaceable>script</replaceable>
+                    </arg>
+                  </term>
+                  <listitem>
+                    <para>This option specifies a Tcl command to be invoked from time to time while the DOM tree is being constructed.  The script will be invoked after a certain number of element start tags have been processed, given by the <option>-chunksize</option> option.</para>
+                  </listitem>
+                </varlistentry>
+                <varlistentry>
+                  <term>
+                    <arg>-chunksize</arg>
+                    <arg>
+                      <replaceable>integer</replaceable>
+                    </arg>
+                  </term>
+                  <listitem>
+                    <para>This option specifies how many element start tags to process before invoking the script given by the <option>-progresscommand</option> option.</para>
+                  </listitem>
+                </varlistentry>
+              </variablelist>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>
+              <methodname>selectNode</methodname>
+            </term>
+            <listitem>
+              <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+                <arg xmlns="http://docbook.org/ns/docbook">selectNode</arg>
+                <arg xmlns="http://docbook.org/ns/docbook">
+                  <replaceable>token</replaceable>
+                </arg>
+                <arg xmlns="http://docbook.org/ns/docbook">
+                  <replaceable>xpath</replaceable>
+                </arg>
+                <group xmlns="http://docbook.org/ns/docbook" choice="opt" rep="repeat">
+                  <arg>option value</arg>
+                </group>
+              </cmdsynopsis>
+              <para>Resolves the XPath location path given by <option><replaceable>xpath</replaceable></option>.  <option><replaceable>token</replaceable></option> is the initial context for the location path.  Returns the resulting nodeset as a (static) Tcl list.</para>
+              <para>The following options may be specified:</para>
+              <variablelist>
+                <varlistentry>
+                  <term>
+                    <option>-namespaces</option>
+                  </term>
+                  <listitem>
+                    <para>The value for this option is a list of prefix-URI pairs.  Each of these pairs defines an XML Namespace and its prefix for the purposes of evaluating the XPath expression.  The document itself may use a different prefix for the same XML Namespace.</para>
+                    <para>This option may be repeated, in which case the lists of namespace pairs are merged and all of the XML Namespaces registered.</para>
+                  </listitem>
+                </varlistentry>
+              </variablelist>
+              <note>
+                <para>Non-standard method.</para>
+              </note>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>
+              <methodname>serialize</methodname>
+            </term>
+            <listitem>
+              <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+                <arg xmlns="http://docbook.org/ns/docbook">serialize</arg>
+                <arg xmlns="http://docbook.org/ns/docbook">
+                  <replaceable>token</replaceable>
+                </arg>
+                <group xmlns="http://docbook.org/ns/docbook">
+                  <arg>
+                    <replaceable>option</replaceable>
+                  </arg>
+                  <arg>
+                    <replaceable>value</replaceable>
+                  </arg>
+                </group>
+              </cmdsynopsis>
+              <para>This method returns the XML formatted text corresponding to the node given by <option>token</option>.  The text is guaranteed to be a well-formed XML document, unless the <option>-method</option> option specifies a non-XML output method.</para>
+              <para>Valid configuration options are:</para>
+              <variablelist>
+                <varlistentry>
+                  <term>
+                    <arg>-method</arg>
+                    <arg>xml|html|text</arg>
+                  </term>
+                  <listitem>
+                    <para>Specifies how the document tree is to be serialized as text.  The allowed values correspond to the output methods defined by the XSLT v1.0 W3C Recommendation.  The <literal>xml</literal> method produces output that conforms to the XML syntax.  The <literal>html</literal> method produces output that conforms to HTML syntax.  The <literal>text</literal> method serializes only the text nodes of the document and disables all output escaping.</para>
+                  </listitem>
+                </varlistentry>
+                <varlistentry>
+                  <term>
+                    <arg>-indent</arg>
+                    <arg>
+                      <replaceable>boolean</replaceable>
+                    </arg>
+                  </term>
+                  <listitem>
+                    <para>Specifies that the output is to be "pretty-printed", ie. element content is indented to provide a visual indication of nesting levels.</para>
+                  </listitem>
+                </varlistentry>
+                <varlistentry>
+                  <term>
+                    <arg>-encoding</arg>
+                    <arg>
+                      <replaceable>encoding</replaceable>
+                    </arg>
+                  </term>
+                  <listitem>
+                    <para>Specifies that the output is to be encoded using the given character encoding.  If the encoding is <literal>utf-8</literal> (the default) then the output is treated as a string within Tcl.  If any other encoding is specified then the output is treated as a ByteArray object (ie. as binary).</para>
+                  </listitem>
+                </varlistentry>
+                <varlistentry>
+                  <term>
+                    <arg>-newline</arg>
+                    <arg>
+                      <replaceable>elementlist</replaceable>
+                    </arg>
+                  </term>
+                  <listitem>
+                    <para>This option specifies a list of element types for which newline characters will be added before and after the start and end tags for those elements upon serialization.  This option is deprecated: the <arg>-indent</arg> option should be used instead.</para>
+                    <para>White space is significant in XML, so the <tcl:package>dom</tcl:package> package never adds extra white space for purposes of "pretty-printing" the XML source document.  On some platforms, such as VMS, this can actually cause serious problems due to line length limitations.  This option provides the convenience of adding newlines to certain nominated element types for formatting the source into lines.</para>
+                    <para>Examples:</para>
+                    <para>Suppose the following DOM document is constructed:</para>
+                    <informalexample>
+                      <programlisting>
+set doc [::dom::DOMImplementation create]
+set top [::dom::document createElement $doc Root]
+set node [::dom::document createElement $top First]
+::dom::document createElement $node Second
+::dom::document createElement $top First
+</programlisting>
+                    </informalexample>
+                    <para>Without the <option>-newline</option> option the serialized document would be:</para>
+                    <informalexample>
+                      <programlisting>
+::dom::DOMImplementation serialize $doc
+<computeroutput>
+&lt;?xml version="1.0"?&gt;
+&lt;!DOCTYPE Root&gt;
+&lt;Root&gt;&lt;First&gt;&lt;Second/&gt;&lt;/First&gt;&lt;First/&gt;&lt;/Root&gt;
+
+</computeroutput>
+</programlisting>
+                    </informalexample>
+                    <para>With the <option>-newline</option> option the serialized document would be:</para>
+                    <informalexample>
+                      <programlisting>
+::dom::DOMImplementation serialize $doc -newline First
+<computeroutput>
+&lt;?xml version="1.0"?&gt;
+&lt;!DOCTYPE Root&gt;
+&lt;Root&gt;
+&lt;First&gt;
+&lt;Second/&gt;
+&lt;/First&gt;
+&lt;First/&gt;
+&lt;/Root&gt;
+
+</computeroutput>
+</programlisting>
+                    </informalexample>
+                  </listitem>
+                </varlistentry>
+              </variablelist>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>
+              <methodname>trim</methodname>
+            </term>
+            <listitem>
+              <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+                <arg xmlns="http://docbook.org/ns/docbook">trim</arg>
+                <arg xmlns="http://docbook.org/ns/docbook">
+                  <replaceable>token</replaceable>
+                </arg>
+              </cmdsynopsis>
+              <para>This method removes any node containing only white space from the document tree of the node given by <option><replaceable>token</replaceable></option>.</para>
+            </listitem>
+          </varlistentry>
+        </variablelist>
+      </refsect3>
+    </refsect2>
+    <refsect2>
+      <d:info xmlns:d="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:tcl="http://tclxml.sourceforge.net/doc">
+        <d:title>
+          <command xmlns="http://tclxml.sourceforge.net/doc">::dom::document</command>
+        </d:title>
+      </d:info>
+      <para>This command implements the Document interface in the DOM specification.  The most important aspect of this command are its factory methods for creating nodes.</para>
+      <para>The methods accepted by this command are as follows:</para>
+      <variablelist>
+        <varlistentry>
+          <term>
+            <methodname>cget</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">cget</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">-option</arg>
+            </cmdsynopsis>
+            <para>This method returns the value of the given configuration option.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>configure</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">configure</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <group xmlns="http://docbook.org/ns/docbook" rep="repeat">
+                <arg>
+                  <replaceable>option</replaceable>
+                </arg>
+                <arg>
+                  <replaceable>value</replaceable>
+                </arg>
+              </group>
+            </cmdsynopsis>
+            <para>This method sets the value of the given configuration options.</para>
+            <para>Valid configuration options are:</para>
+            <variablelist>
+              <varlistentry>
+                <term>
+                  <arg>-doctype</arg>
+                </term>
+                <listitem>
+                  <para>Specifies the token of the Document Type Declaration node.</para>
+                  <para>This is a read-only option.  Use the factory method to create a Document Type Declaration node.</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>
+                  <arg>-implementation</arg>
+                </term>
+                <listitem>
+                  <para>Specifies the token of the document's implementation.</para>
+                  <para>This is a read-only option.</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>
+                  <arg>-documentElement</arg>
+                </term>
+                <listitem>
+                  <para>Specifies the token of the document's document element node.  A document node may only have one document element, but may have other types of children (such as comments).</para>
+                  <para>This is a read-only option.  Use the factory method to create the document element node.</para>
+                </listitem>
+              </varlistentry>
+            </variablelist>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>createElement</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">createElement</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>type</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>This method creates an element node as a child of the given node specified by <option><replaceable>token</replaceable></option> and returns the new node's token as its result.  <option><replaceable>token</replaceable></option> must be a node of type element, document or documentFragment.  The new, child element is added as the last child of <option><replaceable>token</replaceable></option>'s list of children.  The new element's type is given by the <option><replaceable>type</replaceable></option> argument.  The new element is created with an empty attribute list.</para>
+            <para>A Tcl command is created with the same name as the new node's token.  This command is a shortcut for the <command xmlns="http://tclxml.sourceforge.net/doc">::dom::node</command> command.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>createElementNS</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">createElementNS</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>nsuri</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>qualname</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>This method creates an element node in an XML Namespace as a child of the given node specified by <option><replaceable>token</replaceable></option> and returns the new node's token as its result.  <option><replaceable>token</replaceable></option> must be a node of type element, document or documentFragment.  The new, child element is added as the last child of <option><replaceable>token</replaceable></option>'s list of children.  The new element is created in the XML Namespace given by the namespace URI <option><replaceable>nsuri</replaceable></option>.  The new element's qualifed name (QName) is given by the <option><replaceable>qualname</replaceable></option> argument.  Qualified names have the form <literal>prefix:local-part</literal>.  The new element is created with an empty attribute list.</para>
+            <para>A Tcl command is created with the same name as the new node's token.  This command is a shortcut for the <command xmlns="http://tclxml.sourceforge.net/doc">::dom::node</command> command.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>createDocumentFragment</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">createDocumentFragment</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>This method creates a documentFragment node as a child of the given node specified by <option><replaceable>token</replaceable></option> and returns the new node's token as its result.  <option><replaceable>token</replaceable></option> must be a node of type element, document or documentFragment.</para>
+            <para>A Tcl command is created with the same name as the new node's token.  This command is a shortcut for the <command xmlns="http://tclxml.sourceforge.net/doc">::dom::node</command> command.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>createTextNode</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">createTextNode</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>text</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>This method creates a textNode node as a child of the given node specified by <option><replaceable>token</replaceable></option> and returns the new node's token as its result.  <option><replaceable>token</replaceable></option> must be a node of type element, document or documentFragment.  The new, child textNode is added as the last child of <option><replaceable>token</replaceable></option>'s list of children.  The new textNode is created with its value set to <option><replaceable>text</replaceable></option>.</para>
+            <para>A Tcl command is created with the same name as the new node's token.  This command is a shortcut for the <command xmlns="http://tclxml.sourceforge.net/doc">::dom::node</command> command.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>createComment</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">createComment</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>data</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>This method creates a comment node as a child of the given node specified by <option><replaceable>token</replaceable></option> and returns the new node's token as its result.  <option><replaceable>token</replaceable></option> must be a node of type element, document or documentFragment.  The new, child comment is added as the last child of <option><replaceable>token</replaceable></option>'s list of children.  The new comment is created with its value set to <option><replaceable>data</replaceable></option>.</para>
+            <para>A Tcl command is created with the same name as the new node's token.  This command is a shortcut for the <command xmlns="http://tclxml.sourceforge.net/doc">::dom::node</command> command.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>createCDATASection</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">createCDATASection</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>text</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>TclDOM does not distinguish between textNodes and CDATASection nodes.  Accordingly, this method creates a textNode node as a child of the given node specified by <option><replaceable>token</replaceable></option> and returns the new node's token as its result.  <option><replaceable>token</replaceable></option> must be a node of type element, document or documentFragment.  The new, child textNode is added as the last child of <option><replaceable>token</replaceable></option>'s list of children.  The new node is created with its value set to <option><replaceable>text</replaceable></option> and has the attribute <option>-cdatasection</option> set to the value <literal>1</literal>.</para>
+            <para>A Tcl command is created with the same name as the new node's token.  This command is a shortcut for the <command xmlns="http://tclxml.sourceforge.net/doc">::dom::node</command> command.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>createProcessingInstruction</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">createProcessingInstruction</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>target</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>data</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>This method creates a processingInstruction node as a child of the given node specified by <option><replaceable>token</replaceable></option> and returns the new node's token as its result.  <option><replaceable>token</replaceable></option> must be a node of type element, document or documentFragment.  The new, child processingInstruction is added as the last child of <option><replaceable>token</replaceable></option>'s list of children.  The new node is created with its name set to <option><replaceable>target</replaceable></option> and its value set to <option><replaceable>data</replaceable></option>.</para>
+            <para>A Tcl command is created with the same name as the new node's token.  This command is a shortcut for the <command xmlns="http://tclxml.sourceforge.net/doc">::dom::node</command> command.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>createAttribute</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">createAttribute</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>name</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>This method creates an attribute node for the given element specified by <option><replaceable>token</replaceable></option> and returns the new node's token as its result.  <option><replaceable>token</replaceable></option> must be a node of type element.  The new attribute is created with its name set to <option><replaceable>name</replaceable></option> and an empty value.</para>
+            <para>A Tcl command is created with the same name as the new node's token.  This command is a shortcut for the <command xmlns="http://tclxml.sourceforge.net/doc">::dom::node</command> command.</para>
+            <note>
+              <para>This method is included for completeness with respect to the DOM specification.  The preferred method for setting element attributes is to use the <command xmlns="http://tclxml.sourceforge.net/doc">::dom::element</command> command.</para>
+            </note>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>createEntity</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">createEntity</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>Not currently implemented.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>createEntityReference</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">createEntityReference</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>name</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>Not currently implemented.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>createEvent</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">createEvent</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>name</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>This method creates an event node in the document specified by <option><replaceable>token</replaceable></option> and returns the new node's token as its result.  <option><replaceable>token</replaceable></option> must be a node of type document.  The event type is specified by <option><replaceable>name</replaceable></option>.</para>
+            <para>A Tcl command is created with the same name as the new node's token.  This command is a shortcut for the <command xmlns="http://tclxml.sourceforge.net/doc">::dom::event</command> command.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>getElementsByTagName</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">getElementsByTagName</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>name</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>This method searches the node given by the argument <option><replaceable>token</replaceable></option> for child elements with a type matching the argument <option><replaceable>name</replaceable></option>.  The name <literal>*</literal> matches all elements.  All descendants of <option><replaceable>token</replaceable></option> are searched.  This method returns a "live-list"; the return result of this method is the name of a Tcl variable, the content of which is a Tcl list containing tokens for all elements that match.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>dtd</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">dtd</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">validate</arg>
+            </cmdsynopsis>
+            <para>This method performs DTD validation upon the document.  If the method returns successfully, then the document is valid.  Otherwise the document is invalid and the error returned contains the reason.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>schema</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">
+                <replaceable>submethod</replaceable>
+              </methodname>
+              <group xmlns="http://docbook.org/ns/docbook" choice="opt" rep="repeat">
+                <arg>
+                  <replaceable>args</replaceable>
+                </arg>
+              </group>
+            </cmdsynopsis>
+            <para>This method performs XML Schema validation upon the document.  Schema validation is performed in two steps.  First the document is compiled into a schema document.  Second, the schema document is used to schema-validate an instance document.</para>
+            <para>Example:</para>
+            <informalexample>
+              <programlisting>
+set schema [dom::parse $XML]
+$schema schema compile
+set instance [dom::parse $XML2]
+$schema schema validate $instance
+</programlisting>
+            </informalexample>
+            <para>If the document is changed after compiling, then schema document must be recompiled.</para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+    </refsect2>
+    <refsect2>
+      <d:info xmlns:d="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:tcl="http://tclxml.sourceforge.net/doc">
+        <d:title>
+          <command xmlns="http://tclxml.sourceforge.net/doc">dom::node</command>
+        </d:title>
+      </d:info>
+      <para>This command implements generic functions for DOM nodes.</para>
+      <para>The methods accepted by this command are as follows:</para>
+      <variablelist>
+        <varlistentry>
+          <term>
+            <methodname>cget</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">cget</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">option</arg>
+            </cmdsynopsis>
+            <para>This method returns the value of the given configuration option for the node given by <option><replaceable>token</replaceable></option>.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>configure</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">configure</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <group xmlns="http://docbook.org/ns/docbook" rep="repeat">
+                <arg>
+                  <replaceable>option</replaceable>
+                </arg>
+                <arg>
+                  <replaceable>value</replaceable>
+                </arg>
+              </group>
+            </cmdsynopsis>
+            <para>This method sets the value of the given configuration option for the node given by <option><replaceable>token</replaceable></option>.</para>
+            <para>Valid configuration options are as follows:</para>
+            <variablelist>
+              <varlistentry>
+                <term>
+                  <arg>-nodeName</arg>
+                </term>
+                <listitem>
+                  <para>Returns the node name.  This is a read-only option.</para>
+                  <para>The DOM specification gives the meaning of names for different types of nodes.  For example, the <option>-nodeName</option> option of an element node is the element type.</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>
+                  <arg>-nodeType</arg>
+                </term>
+                <listitem>
+                  <para>Returns the type of the node given by <option><replaceable>token</replaceable></option>.  This is a read-only option.</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>
+                  <option>-parentNode</option>
+                </term>
+                <listitem>
+                  <para>Returns the parent node of the node given by <option><replaceable>token</replaceable></option>.  This is a read-only option.</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>
+                  <option>-childNodes</option>
+                </term>
+                <listitem>
+                  <para>Returns the name of a Tcl variable which contains a list of the children of the node given by <option><replaceable>token</replaceable></option>.  The variable contains the "live" list of children.  This is a read-only option.</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>
+                  <option>-firstChild</option>
+                </term>
+                <listitem>
+                  <para>Returns the first child node of the node given by <option><replaceable>token</replaceable></option>.  This is a read-only option.</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>
+                  <option>-lastChild</option>
+                </term>
+                <listitem>
+                  <para>Returns the last child node of the node given by <option><replaceable>token</replaceable></option>.  This is a read-only option.</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>
+                  <option>-previousSibling</option>
+                </term>
+                <listitem>
+                  <para>Returns the parent's child node which appears before this node.  If this child is the first child of its parent then returns an empty string.  This is a read-only option.</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>
+                  <option>-nextSibling</option>
+                </term>
+                <listitem>
+                  <para>Returns the parent's child node which appears after this node.  If this child is the last child of its parent then returns an empty string.  This is a read-only option.</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>
+                  <option>-attributes</option>
+                </term>
+                <listitem>
+                  <para>Returns the name of a Tcl array variable which contains the attribute list for an element node.  If the node is not an element type node then returns an empty string.  The indices of the array are attribute names, and the values of the array elements are their corresponding attribute values.  This is a read-only option.</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>
+                  <option>-nodeValue</option>
+                  <arg>
+                    <replaceable>data</replaceable>
+                  </arg>
+                </term>
+                <listitem>
+                  <para>Specifies the value of a node.  The DOM specification gives the meaning of values for different types of nodes.  For example, the <option>-nodeValue</option> option of a textNode node is the node's text.</para>
+                </listitem>
+              </varlistentry>
+            </variablelist>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>insertBefore</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">insertBefore</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>newchild</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook" choice="opt">
+                <replaceable>refchild</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>This method removes the node given by <option><replaceable>newchild</replaceable></option> from its parent.  If no <option><replaceable>refchild</replaceable></option> argument is given then <option><replaceable>newchild</replaceable></option> is appended to <option><replaceable>token</replaceable></option>'s list of children.  If the <option><replaceable>refchild</replaceable></option> argument is given then this method adds <option><replaceable>newchild</replaceable></option> as a child of <option><replaceable>token</replaceable></option>.  The new child node is positioned before the node <option><replaceable>refchild</replaceable></option> in <option><replaceable>token</replaceable></option>'s list of children.  Returns an empty string.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>replaceChild</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">replaceChild</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>newchild</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>oldchild</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>This method removes the node given by <option><replaceable>newchild</replaceable></option> from its parent.  It then also removes the node given by <option><replaceable>oldchild</replaceable></option> from <option><replaceable>token</replaceable></option>.  <option><replaceable>newchild</replaceable></option> is then added as a child of <option><replaceable>token</replaceable></option> in <option><replaceable>oldchild</replaceable></option>'s original position in the list of children.  The method returns the token <option><replaceable>oldchild</replaceable></option>, which will now have no parent.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>removeChild</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">removeChild</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>oldchild</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>This method removes the node given by <option><replaceable>oldchild</replaceable></option> from its parent, <option><replaceable>token</replaceable></option>.  The method returns the token <option><replaceable>oldchild</replaceable></option>, which will now have no parent.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>appendChild</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">appendChild</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>newchild</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>This method removes the node given by <option><replaceable>newchild</replaceable></option> from its parent.  <option><replaceable>newchild</replaceable></option> is then appended to the end of the list of children for node <option><replaceable>token</replaceable></option>.  The method returns the token <option><replaceable>newchild</replaceable></option>.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>hasChildNodes</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">hasChildNodes</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>Returns <literal>1</literal> if the given node has any child nodes, <literal>0</literal> otherwise.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>isSameNode</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">isSameNode</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>ref</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>Returns <literal>1</literal> if the given node is the same node as the node given by the <arg><literal>ref</literal></arg> token, <literal>0</literal> otherwise.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>cloneNode</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">cloneNode</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook" choice="opt">
+                <replaceable>deep</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>This method makes a copy the node given by <option><replaceable>token</replaceable></option>.  If the argument <option><replaceable>deep</replaceable></option> is not specified or has the value <literal>0</literal> then only the node itself is copied, not its children.  If the argument <option><replaceable>deep</replaceable></option> has the value <literal>1</literal> then <option><replaceable>token</replaceable></option>'s children are also copied recursively.  This method returns the token of the newly created node.  This new node will have no parent.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>children</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">children</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>This is a convenience method which returns the list of child nodes for the given node as a (static) Tcl list.</para>
+            <para>This is not a standard DOM method for this interface.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>parent</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">parent</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>This is a convenience method which returns the parent node for the given node.</para>
+            <para>This is not a standard DOM method for this interface.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>path</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">path</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>Returns a Tcl list of the ancestor nodes of the given node, starting with the root node.</para>
+            <para>This is not a standard DOM method for this interface.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>createNode</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">createNode</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>xpath</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>May create nodes in order to satisfy the given XPath location path.  The initial context for the location path is the node <arg><replaceable>token</replaceable></arg>.  For more detail, see the <command xmlns="http://tclxml.sourceforge.net/doc">::dom::createNode</command> command.</para>
+            <para>This is not a standard DOM method for this interface.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>selectNode</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">selectNode</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>xpath</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>Returns a (static) Tcl list of nodes selected by the XPath location path <arg><replaceable>xpath</replaceable></arg>.  The initial context for the location path is the node <arg><replaceable>token</replaceable></arg>.  For more detail, see the <command xmlns="http://tclxml.sourceforge.net/doc">::dom::selectNode</command> command.</para>
+            <para>This is not a standard DOM method for this interface.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>stringValue</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">stringValue</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>Returns the string value of the node given by <arg><replaceable>token</replaceable></arg>.  The string value of a node is defined by the XPath specification: for element nodes it is the concatenation of the string values of all descendant text nodes, for text nodes it is the node's character data value, for attribute nodes it is the attribute value, for comment nodes it is the comment data and for processing instruction nodes it is the PI data.</para>
+            <para>This is not a standard DOM method for this interface.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>addEventListener</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">addEventListener</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>type</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook" choice="opt">
+                <replaceable>listener</replaceable>
+              </arg>
+              <group xmlns="http://docbook.org/ns/docbook" choice="opt" rep="repeat">
+                <arg>option</arg>
+                <arg>value</arg>
+              </group>
+            </cmdsynopsis>
+            <para>Register an event listener for the node given by <arg><replaceable>token</replaceable></arg> listening for events of type <arg><replaceable>type</replaceable></arg>.  The event mechanism functions as described in the W3C DOM Level 2 Event module.</para>
+            <para>When an event of type <arg><replaceable>type</replaceable></arg> occurs the script <arg><replaceable>listener</replaceable></arg> is evaluated, in the global context.  The token of the event node is appended to the script.</para>
+            <para>If the <arg><replaceable>listener</replaceable></arg> argument is omitted then the listener for the given event type is returned.</para>
+            <para>Valid options are:</para>
+            <variablelist>
+              <varlistentry>
+                <term>
+                  <arg>-usecapture</arg>
+                  <arg>
+                    <replaceable>boolean</replaceable>
+                  </arg>
+                </term>
+                <listitem>
+                  <para>If true the listener is triggered in the event capturing phase.  If false the listener is triggered in the event bubbling phase.</para>
+                </listitem>
+              </varlistentry>
+            </variablelist>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>removeEventListener</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">removeEventListener</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>type</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>listener</replaceable>
+              </arg>
+              <group xmlns="http://docbook.org/ns/docbook" choice="opt" rep="repeat">
+                <arg>option</arg>
+                <arg>value</arg>
+              </group>
+            </cmdsynopsis>
+            <para>Removes an event listener previously registered for the node given by <arg><replaceable>token</replaceable></arg> listening for events of type <arg><replaceable>type</replaceable></arg>.</para>
+            <para>Valid options are:</para>
+            <variablelist>
+              <varlistentry>
+                <term>
+                  <arg>-usecapture</arg>
+                  <arg>
+                    <replaceable>boolean</replaceable>
+                  </arg>
+                </term>
+                <listitem>
+                  <para>If true the capturing listener is removed.  If false the bubbling listener is removed.</para>
+                </listitem>
+              </varlistentry>
+            </variablelist>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>dispatchEvent</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">dispatchEvent</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>event</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>Dispatches the event given by <arg><replaceable>event</replaceable></arg> with target node <arg><replaceable>token</replaceable></arg>.  The event mechanism functions as described in the W3C DOM Level 2 Event module.  The event enters the capturing phase first, followed by the bubbling phase.  During each phase any event listeners registered for the same event type as the event <arg><replaceable>event</replaceable></arg> are triggered; their script is evaluated.  Unless the script invokes the <tcl:method>stopPropagation</tcl:method> method of the <command xmlns="http://tclxml.sourceforge.net/doc">dom::event</command> command, all registered event listeners will be triggered.  The order in which listeners registered at a particular node for a particular phase are triggered is undefined.</para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+    </refsect2>
+    <refsect2>
+      <d:info xmlns:d="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:tcl="http://tclxml.sourceforge.net/doc">
+        <d:title>
+          <command xmlns="http://tclxml.sourceforge.net/doc">dom::element</command>
+        </d:title>
+      </d:info>
+      <para>This command provides functions for element type nodes.</para>
+      <para>Valid methods for this command are as follows:</para>
+      <variablelist>
+        <varlistentry>
+          <term>
+            <methodname>cget</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">cget</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>option</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>This method returns the current setting of configuration options for an element.  See the <methodname>configure</methodname> method for the list of valid configuration options.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>configure</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">configure</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <group xmlns="http://docbook.org/ns/docbook" rep="repeat">
+                <arg>
+                  <replaceable>option</replaceable>
+                </arg>
+                <arg>
+                  <replaceable>value</replaceable>
+                </arg>
+              </group>
+            </cmdsynopsis>
+            <para>This method sets configuration options for an element.  Note that element type nodes only have read-only options.</para>
+            <para>Valid configuration options are as follows:</para>
+            <variablelist>
+              <varlistentry>
+                <term>
+                  <option>-tagName</option>
+                  <arg>
+                    <replaceable>name</replaceable>
+                  </arg>
+                </term>
+                <listitem>The tag name, or element type, of this element.</listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>
+                  <option>-empty</option>
+                  <arg>
+                    <replaceable>boolean</replaceable>
+                  </arg>
+                </term>
+                <listitem>
+                  <para>Sets whether this element was specified as an empty element when the document was parsed.  That is, XML empty element syntax such as <literal>&lt;Empty/&gt;</literal> was used.</para>
+                  <para>This option has no effect upon output (serialization) of the XML document.  Empty element syntax is automatically used where appropriate.</para>
+                </listitem>
+              </varlistentry>
+            </variablelist>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>getAttribute</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">getAttribute</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>name</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>This method returns the attribute value of the attribute given by <option><replaceable>name</replaceable></option>.  If the attribute does not exist, then an empty string is returned.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>setAttribute</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">setAttribute</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>name</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>value</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>This method sets the attribute value of the attribute given by <option><replaceable>name</replaceable></option>.  If the attribute already exists then its value is replaced, otherwise the attribute is created.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>removeAttribute</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">removeAttribute</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>name</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>This method deletes the attribute given by <option><replaceable>name</replaceable></option>.  If the attribute does not exist then the method has no effect.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>getAttributeNode</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">getAttributeNode</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>name</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>Not implemented.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>setAttributeNode</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">setAttributeNode</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>name</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>Not implemented.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>removeAttributeNode</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">removeAttributeNode</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>name</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>Not implemented.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>getAttributeNS</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">getAttributeNS</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>ns</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>name</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>This method returns the attribute value of the attribute given by <option><replaceable>name</replaceable></option> in the XML namespace <arg><replaceable>ns</replaceable></arg>.  If the attribute does not exist, then an empty string is returned.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>setAttributeNS</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">setAttributeNS</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>ns</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>name</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>value</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>This method sets the attribute value of the attribute given by <option><replaceable>name</replaceable></option> in the XML namespace <arg><replaceable>ns</replaceable></arg>.  If the attribute already exists then its value is replaced, otherwise the attribute is created.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>removeAttributeNS</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">removeAttributeNS</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>ns</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>name</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>This method deletes the attribute given by <option><replaceable>name</replaceable></option> in the XML namespace <arg><replaceable>ns</replaceable></arg>.  If the attribute does not exist then the method has no effect.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>getElementsByTagName</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">getElementsByTagName</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>name</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>This method searches the node given by the argument <option><replaceable>token</replaceable></option> for descendant child elements with a type matching the argument <option><replaceable>name</replaceable></option>.  The wildcard character <literal>*</literal> matches any element type.  The return result is a "live-list" which is represented by a Tcl variable.  This method returns the name of the Tcl variable that contains the list of tokens that match.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>normalize</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">normalize</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>This method recursively coalesces textNodes within the children of the given node.  textNodes which are adjacent in the DOM tree cannot be distinguished in the serialized XML document.</para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+    </refsect2>
+    <refsect2>
+      <d:info xmlns:d="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:tcl="http://tclxml.sourceforge.net/doc">
+        <d:title>
+          <command xmlns="http://tclxml.sourceforge.net/doc">dom::processinginstruction</command>
+        </d:title>
+      </d:info>
+      <para>This command provides functions for processingInstruction type nodes.</para>
+      <para>Valid methods for this command are as follows:</para>
+      <variablelist>
+        <varlistentry>
+          <term>
+            <methodname>cget</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">cget</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>option</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>This method returns the current setting of configuration options for an element.  See the <methodname>configure</methodname> method for the list of valid configuration options.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>configure</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">configure</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <group xmlns="http://docbook.org/ns/docbook" rep="repeat">
+                <arg>
+                  <replaceable>option</replaceable>
+                </arg>
+                <arg>
+                  <replaceable>value</replaceable>
+                </arg>
+              </group>
+            </cmdsynopsis>
+            <para>This method sets configuration options for a processing instruction.</para>
+            <para>Valid configuration options are as follows:</para>
+            <variablelist>
+              <varlistentry>
+                <term>
+                  <option>-target</option>
+                  <arg>
+                    <replaceable>name</replaceable>
+                  </arg>
+                </term>
+                <listitem>This option sets the target of the processing instruction.  This is a read-only configuration option.</listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>
+                  <option>-data</option>
+                  <arg>
+                    <replaceable>data</replaceable>
+                  </arg>
+                </term>
+                <listitem>
+                  <para>This option sets the data of the processing instruction.</para>
+                </listitem>
+              </varlistentry>
+            </variablelist>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+    </refsect2>
+    <refsect2>
+      <d:info xmlns:d="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:tcl="http://tclxml.sourceforge.net/doc">
+        <d:title>
+          <command xmlns="http://tclxml.sourceforge.net/doc">dom::event</command>
+        </d:title>
+      </d:info>
+      <para>This command provides functions for event type nodes.</para>
+      <para>Valid methods for this command are as follows:</para>
+      <variablelist>
+        <varlistentry>
+          <term>
+            <methodname>cget</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">cget</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>This method retrieves configuration options for an event.</para>
+            <para>Valid configuration options are as follows:</para>
+            <variablelist>
+              <varlistentry>
+                <term>
+                  <option>-altKey</option>
+                </term>
+                <listitem>This option determines whether the ALT modifier key has been specified for this event.</listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>
+                  <option>-attrName</option>
+                </term>
+                <listitem>This option gives the name of the attribute associated with this event.</listitem>
+                <varlistentry>
+                  <varlistentry>
+                    <term>
+                      <option>-bubbles</option>
+                    </term>
+                    <listitem>This option determines whether the event uses the bubbling phase.</listitem>
+                  </varlistentry>
+                  <varlistentry>
+                    <term>
+                      <option>-button</option>
+                    </term>
+                    <listitem>This option gives the button pressed for this event.</listitem>
+                  </varlistentry>
+                  <varlistentry>
+                    <term>
+                      <option>-cancelable</option>
+                    </term>
+                    <listitem>This option determines whether the event may be cancelled.</listitem>
+                  </varlistentry>
+                  <varlistentry>
+                    <term>
+                      <option>-clientX</option>
+                    </term>
+                    <listitem>This option gives the window X coordinate for this event.</listitem>
+                  </varlistentry>
+                  <varlistentry>
+                    <term>
+                      <option>-clientY</option>
+                    </term>
+                    <listitem>This option gives the window Y coordinate for this event.</listitem>
+                  </varlistentry>
+                  <varlistentry>
+                    <term>
+                      <option>-ctrlKey</option>
+                    </term>
+                    <listitem>This option determines whether the control modifier key has been specified for this event.</listitem>
+                  </varlistentry>
+                  <varlistentry>
+                    <term>
+                      <option>-currentNode</option>
+                    </term>
+                    <listitem>The current node of the capturing or bubbling phase.</listitem>
+                  </varlistentry>
+                  <varlistentry>
+                    <term>
+                      <option>-detail</option>
+                    </term>
+                    <listitem>This option gives an additional information item for the event, for example the key that was pressed or the button number.</listitem>
+                  </varlistentry>
+                  <varlistentry>
+                    <term>
+                      <option>-eventPhase</option>
+                    </term>
+                    <listitem>The current phase of the event.</listitem>
+                  </varlistentry>
+                  <varlistentry>
+                    <term>
+                      <option>-metaKey</option>
+                    </term>
+                    <listitem>This option determines whether the META modifier key has been specified for this event.</listitem>
+                  </varlistentry>
+                  <varlistentry>
+                    <term>
+                      <option>-newValue</option>
+                    </term>
+                    <listitem>This option gives the new value of a node.</listitem>
+                  </varlistentry>
+                  <varlistentry>
+                    <term>
+                      <option>-prevValue</option>
+                    </term>
+                    <listitem>This option gives the previous value of a node.</listitem>
+                  </varlistentry>
+                  <varlistentry>
+                    <term>
+                      <option>-relatedNode</option>
+                    </term>
+                    <listitem>This option gives a related node for this event.  See the W3C DOM Level 2 Event module specification for further details.</listitem>
+                  </varlistentry>
+                  <varlistentry>
+                    <term>
+                      <option>-screenX</option>
+                    </term>
+                    <listitem>This option gives the screen X coordinate for this event.</listitem>
+                  </varlistentry>
+                  <varlistentry>
+                    <term>
+                      <option>-screenY</option>
+                    </term>
+                    <listitem>This option gives the screen Y coordinate for this event.</listitem>
+                  </varlistentry>
+                  <varlistentry>
+                    <term>
+                      <option>-shiftKey</option>
+                    </term>
+                    <listitem>This option determines whether the shift modifier key has been specified for this event.</listitem>
+                  </varlistentry>
+                  <varlistentry>
+                    <term>
+                      <option>-target</option>
+                    </term>
+                    <listitem>The node that is the target of this event.</listitem>
+                  </varlistentry>
+                </varlistentry>
+                <term>
+                  <option>-timeStamp</option>
+                </term>
+                <listitem>
+                  <para>This option gives the time at which the event was posted.  The value is the number of milliseconds since the epoch, which is compatible with the Tcl <tcl:command>clock</tcl:command> command.  </para>
+                  <note>The implementation of this method depends on the <methodname>Tcl_GetTime</methodname> function.This function only became publically available in Tcl 8.4.  If a version of Tcl prior to 8.4 is being used, then this option will have the value <literal>0</literal>.</note>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>
+                  <option>-type</option>
+                </term>
+                <listitem>The type of this event.</listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>
+                  <option>-view</option>
+                </term>
+                <listitem>This option gives whether the view of the event.</listitem>
+              </varlistentry>
+            </variablelist>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>configure</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">configure</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <group xmlns="http://docbook.org/ns/docbook" rep="repeat">
+                <arg>
+                  <replaceable>option</replaceable>
+                </arg>
+                <arg>
+                  <replaceable>value</replaceable>
+                </arg>
+              </group>
+            </cmdsynopsis>
+            <para>This method sets the configuration options for an event.  However, all event options are read-only.  See the <methodname>cget</methodname> method for the list of valid configuration options.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>stopPropagation</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">stopPropagation</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>This method cancels further propagation of the event.</para>
+            <note>Invoking this method does not prevent event listeners at the current node from being triggered.</note>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>preventDefault</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">preventDefault</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>This method stops the default action for this event from occurring.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>initEvent</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">initEvent</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>type</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>bubbles</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>cancelable</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>Initialise the event.</para>
+            <para><arg><replaceable>type</replaceable></arg> gives the type of the event.  Any of the event types defined by the W3C DOM Level 2 Event module may be specified, or a user-defined event type may be used instead.</para>
+            <para><arg><replaceable>bubbles</replaceable></arg> indicates whether the event will enter the bubbling phase after the capturing phase.  <arg><replaceable>cancelable</replaceable></arg> indicates whether the event may be cancelled.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>initUIEvent</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">initUIEvent</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>type</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>bubbles</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>cancelable</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>view</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>detail</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>Initialise a user interface event.  See <tcl:method>initEvent</tcl:method> for further information.</para>
+            <para><arg><replaceable>view</replaceable></arg> gives the view for the event (not supported by TclDOM).  <arg><replaceable>detail</replaceable></arg> provides extra data for the event.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>initMouseEvent</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">initMouseEvent</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>type</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>bubbles</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>cancelable</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>view</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>detail</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>screenX</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>screenY</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>clientX</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>clientY</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>ctrlKey</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>altKey</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>shiftKey</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>metaKey</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>button</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>relatedNode</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>Initialise a mouse event.  See <tcl:method>initUIEvent</tcl:method> for further information.</para>
+            <para><arg><replaceable>screenX</replaceable></arg> and <arg><replaceable>screenY</replaceable></arg> give the coordinates at which the event occurred relative to the screen.  <arg><replaceable>screenX</replaceable></arg> and <arg><replaceable>screenY</replaceable></arg> give the coordinates at which the event occurred relative to the window.</para>
+            <para><arg><replaceable>ctrlKey</replaceable></arg>, <arg><replaceable>altKey</replaceable></arg>, <arg><replaceable>shiftKey</replaceable></arg>, <arg><replaceable>metaKey</replaceable></arg> indicate whether the respective modifier key was pressed when the event occurred.</para>
+            <para><arg><replaceable>button</replaceable></arg> indicates which button, if any, was pressed when the event occurred.</para>
+            <para><arg><replaceable>relatedNode</replaceable></arg> specifies that a DOM node is associated with the event.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>initMutationEvent</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">initMutationEvent</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>type</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>bubbles</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>cancelable</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>relatedNode</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>prevValue</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>newValue</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>attrName</replaceable>
+              </arg>
+            </cmdsynopsis>
+            <para>Initialise a tree mutation event event.  See <tcl:method>initEvent</tcl:method> for further information.</para>
+            <para><arg><replaceable>relatedNode</replaceable></arg> specifies a DOM node to associate with the event.  <arg><replaceable>prevValue</replaceable></arg> gives the previous value of the node.  <arg><replaceable>newValue</replaceable></arg> gives the new value of the node.  <arg><replaceable>attrName</replaceable></arg> gives the name of the attribute where the event is modifying an attribute value.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>postUIEvent</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">postUIEvent</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>type</replaceable>
+              </arg>
+              <group xmlns="http://docbook.org/ns/docbook" choice="opt" rep="repeat">
+                <arg>option</arg>
+                <arg>
+                  <replaceable>value</replaceable>
+                </arg>
+              </group>
+            </cmdsynopsis>
+            <para>Non-standard convenience method that handles posting an user interface event with <arg><replaceable>token</replaceable></arg> as the target node.  This method performs the following functions:</para>
+            <orderedlist>
+              <listitem>
+                <para>Create an event node,</para>
+              </listitem>
+              <listitem>
+                <para>Initialise the event node (using default values where required),</para>
+              </listitem>
+              <listitem>
+                <para>Dispatch the event,</para>
+              </listitem>
+              <listitem>
+                <para>Destroy the event node.</para>
+              </listitem>
+            </orderedlist>
+            <para><arg><replaceable>type</replaceable></arg> gives the event type.</para>
+            <para>The following options are valid:</para>
+            <variablelist>
+              <varlistentry>
+                <term>
+                  <option>-bubbles</option>
+                </term>
+                <listitem>
+                  <para>Indicates whether the event bubbles.</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>
+                  <option>-cancelable</option>
+                </term>
+                <listitem>
+                  <para>Indicates whether the event can be cancelled.</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>
+                  <option>-view</option>
+                </term>
+                <listitem>
+                  <para>The view.</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>
+                  <option>-detail</option>
+                </term>
+                <listitem>
+                  <para>Extra data for the event.</para>
+                </listitem>
+              </varlistentry>
+            </variablelist>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>postMouseEvent</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">postMouseEvent</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>type</replaceable>
+              </arg>
+              <group xmlns="http://docbook.org/ns/docbook" choice="opt" rep="repeat">
+                <arg>option</arg>
+                <arg>
+                  <replaceable>value</replaceable>
+                </arg>
+              </group>
+            </cmdsynopsis>
+            <para>Non-standard convenience method that handles posting a mouse event with <arg><replaceable>token</replaceable></arg> as the target node.  This method performs the following functions:</para>
+            <orderedlist>
+              <listitem>
+                <para>Create an event node,</para>
+              </listitem>
+              <listitem>
+                <para>Initialise the event node (using default values where required),</para>
+              </listitem>
+              <listitem>
+                <para>Dispatch the event,</para>
+              </listitem>
+              <listitem>
+                <para>Destroy the event node.</para>
+              </listitem>
+            </orderedlist>
+            <para><arg><replaceable>type</replaceable></arg> gives the event type.</para>
+            <para>The following options are valid:</para>
+            <variablelist>
+              <varlistentry>
+                <term>
+                  <option>-bubbles</option>
+                </term>
+                <listitem>
+                  <para>Indicates whether the event bubbles.</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>
+                  <option>-cancelable</option>
+                </term>
+                <listitem>
+                  <para>Indicates whether the event can be cancelled.</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>
+                  <option>-view</option>
+                </term>
+                <listitem>
+                  <para>The view.</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>
+                  <option>-detail</option>
+                </term>
+                <listitem>
+                  <para>Extra data for the event.</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>
+                  <option>-screenX</option>
+                </term>
+                <listitem>
+                  <para>Gives the screen X coordinate.</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>
+                  <option>-screenY</option>
+                </term>
+                <listitem>
+                  <para>Gives the screen Y coordinate.</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>
+                  <option>-clientX</option>
+                </term>
+                <listitem>
+                  <para>Gives the window X coordinate.</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>
+                  <option>-clientY</option>
+                </term>
+                <listitem>
+                  <para>Gives the window Y coordinate.</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>
+                  <option>-ctrlKey</option>
+                </term>
+                <listitem>
+                  <para>Indicates whether the control modifier key was pressed.</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>
+                  <option>-altKey</option>
+                </term>
+                <listitem>
+                  <para>Indicates whether the ALT modifier key was pressed.</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>
+                  <option>-shiftKey</option>
+                </term>
+                <listitem>
+                  <para>Indicates whether the shift modifier key was pressed.</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>
+                  <option>-metaKey</option>
+                </term>
+                <listitem>
+                  <para>Indicates whether the meta modifier key was pressed.</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>
+                  <option>-button</option>
+                </term>
+                <listitem>
+                  <para>Gives the button pressed.</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>
+                  <option>-relatedNode</option>
+                </term>
+                <listitem>
+                  <para>Gives a node to associate with the event.</para>
+                </listitem>
+              </varlistentry>
+            </variablelist>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <methodname>postMutationEvent</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">postMutationEvent</methodname>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>token</replaceable>
+              </arg>
+              <arg xmlns="http://docbook.org/ns/docbook">
+                <replaceable>type</replaceable>
+              </arg>
+              <group xmlns="http://docbook.org/ns/docbook" choice="opt" rep="repeat">
+                <arg>option</arg>
+                <arg>
+                  <replaceable>value</replaceable>
+                </arg>
+              </group>
+            </cmdsynopsis>
+            <para>Non-standard convenience method that handles posting a mutation event with <arg><replaceable>token</replaceable></arg> as the target node.  This method performs the following functions:</para>
+            <orderedlist>
+              <listitem>
+                <para>Create an event node,</para>
+              </listitem>
+              <listitem>
+                <para>Initialise the event node (using default values where required),</para>
+              </listitem>
+              <listitem>
+                <para>Dispatch the event,</para>
+              </listitem>
+              <listitem>
+                <para>Destroy the event node.</para>
+              </listitem>
+            </orderedlist>
+            <para><arg><replaceable>type</replaceable></arg> gives the event type.</para>
+            <para>The following options are valid:</para>
+            <variablelist>
+              <varlistentry>
+                <term>
+                  <option>-bubbles</option>
+                </term>
+                <listitem>
+                  <para>Indicates whether the event bubbles.</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>
+                  <option>-cancelable</option>
+                </term>
+                <listitem>
+                  <para>Indicates whether the event can be cancelled.</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>
+                  <option>-relatedNode</option>
+                </term>
+                <listitem>
+                  <para>Gives a node to associate with the event.</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>
+                  <option>-prevValue</option>
+                </term>
+                <listitem>
+                  <para>Gives the previous value of the target node.</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>
+                  <option>-newValue</option>
+                </term>
+                <listitem>
+                  <para>Gives the new value of the target node.</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>
+                  <option>-attrName</option>
+                </term>
+                <listitem>
+                  <para>Gives the name of the attribute modified.</para>
+                </listitem>
+              </varlistentry>
+            </variablelist>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+    </refsect2>
+  </refsect1>
+  <refsect1>
+    <d:info xmlns:d="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:tcl="http://tclxml.sourceforge.net/doc">
+      <d:title>Errors</d:title>
+    </d:info>
+    <para>If an operation results in an error condition, an error message is returned as a structured Tcl list.  The list has members as follows:</para>
+    <informalexample>
+      <programlisting>{domain level code node line message int1 int2 string1 string2 string3}</programlisting>
+    </informalexample>
+    <para>The format of the list is described in the TclXML manual page.</para>
+  </refsect1>
+  <refsect1>
+    <d:info xmlns:d="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:tcl="http://tclxml.sourceforge.net/doc">
+      <d:title>Implementations</d:title>
+    </d:info>
+    <para>This section documents the various implmentations of the TclDOM API.</para>
+    <refsect2>
+      <d:info xmlns:d="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:tcl="http://tclxml.sourceforge.net/doc">
+        <d:title>Tcl Implementation</d:title>
+      </d:info>
+      <para>The Tcl implementation is provided by the <tcl:package>dom::tcl</tcl:package> package.</para>
+      <refsect3>
+        <d:info xmlns:d="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:tcl="http://tclxml.sourceforge.net/doc">
+          <d:title>Limitations</d:title>
+        </d:info>
+        <para>This implementation is not able to preform the following functions:</para>
+        <itemizedlist>
+          <listitem>
+            <para>Validation: DTD, XML Schema or RelaxNG validation are not supported.</para>
+          </listitem>
+          <listitem>
+            <para>Character encodings: The TclDOM/tcl implementation itself does not handle character encodings other than utf-8.  Character encodings are handled by Tcl itself.</para>
+          </listitem>
+        </itemizedlist>
+      </refsect3>
+    </refsect2>
+    <refsect2>
+      <d:info xmlns:d="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:tcl="http://tclxml.sourceforge.net/doc">
+        <d:title>libxml2 Implementation</d:title>
+      </d:info>
+      <para>The TclDOM/libxml2 implementation is a wrapper for the <d:link xmlns:d="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:tcl="http://tclxml.sourceforge.net/doc" xlink:href="http://xmlsoft.org/">Gnome libxml2 library</d:link>.  It is provided by the <tcl:package>dom::libxml2</tcl:package> package.  It is a high-performance library, making use of Tcl objects for fast access to tree nodes.</para>
+      <refsect3>
+        <d:info xmlns:d="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:tcl="http://tclxml.sourceforge.net/doc">
+          <d:title>Limitations</d:title>
+        </d:info>
+        <itemizedlist>
+          <listitem>
+            <para>The TclXML/libxml2 parser must be used to parse an XML document.  It is not possible to use any other parser class.</para>
+          </listitem>
+          <listitem>
+            <para>RELAX-NG validation is not yet supported.</para>
+          </listitem>
+          <listitem>
+            <para>The importNode method has not been implemented.</para>
+          </listitem>
+        </itemizedlist>
+      </refsect3>
+    </refsect2>
+  </refsect1>
+</refentry>

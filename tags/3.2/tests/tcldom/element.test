@@ -1,0 +1,138 @@
+# Commands covered:  ::dom::element
+#
+# This file contains a collection of tests for one or more of the 
+# TclDOM commands.  Sourcing this file into Tcl runs the tests and
+# generates output for errors.  No output means no errors were found.
+#
+# Copyright (c) 2008 Explain
+# http://www.explain.com.au/
+# Copyright (c) 1998-2004 Zveno Pty Ltd.
+#
+# $Id: element.test,v 1.9 2004/02/24 20:16:10 balls Exp $
+
+package require tcltest
+source [file join [tcltest::workingDirectory] tcldomutils.tcl]
+
+testPackage dom
+
+namespace eval ::dom::elementTest {
+    namespace import -force ::tcltest::*
+
+    variable SETUP {
+	set doc [dom::create]
+	set top [$doc createElement Test]
+	dom::node appendChild $doc $top
+	set e1 [$doc createElement Element]
+	$top appendChild $e1
+    }
+    variable CLEANUP {
+	dom::destroy $doc
+    }
+
+    test element-1.1 {cget -tagName} -setup $SETUP -body {
+	dom::element cget $top -tagName
+    } -cleanup $CLEANUP -result Test
+    test element-1.2 {cget -tagName} -setup $SETUP -body {
+	dom::element cget $e1 -tagName
+    } -cleanup $CLEANUP -result Element
+    test element-1.3 {error: cget -tagName on non-element node} -setup $SETUP -match glob -body {
+	expectError {
+	    dom::element cget $doc -tagName
+	}
+    } -cleanup $CLEANUP -result {malformed node token*}
+    test element-1.4 {error: cget} -setup $SETUP -match glob -body {
+	expectError {
+	    dom::element cget
+	}
+    } -cleanup $CLEANUP -result {wrong # args*}
+    test element-1.5 {error:cget} -setup $SETUP -match glob -body {
+	expectError {
+	    dom::element cget $e1
+	}
+    } -cleanup $CLEANUP -result {wrong # args*}
+
+    test element-2.1 {error: configure -tagName, read-only option} -setup $SETUP -match glob -body {
+	expectError {
+	    dom::element configure $e1 -tagName Error
+	}
+    } -cleanup $CLEANUP -result {option * cannot be modified}
+
+    test element-3.1 {setAttribute} -constraints {dom_c} -setup $SETUP -body {
+	dom::element setAttribute $e1 class success
+    } -cleanup $CLEANUP -result {}
+    test element-3.1 {setAttribute} -constraints {dom_tcl || dom_libxml2} -setup $SETUP -body {
+	dom::element setAttribute $e1 class success
+    } -cleanup $CLEANUP -result success
+    test element-3.2 {error: setAttribute, wrong number args} -setup $SETUP -match glob -body {
+	expectError {
+	    dom::element setAttribute $e1 href
+	}
+    } -cleanup $CLEANUP -result {wrong # args*}
+    # TODO: test that illegal attribute names are rejected
+
+    test element-4.1 {getAttribute} -setup {
+	eval $SETUP
+	dom::element setAttribute $e1 class success
+    } -body {
+	dom::element getAttribute $e1 class
+    } -cleanup $CLEANUP -result success
+    test element-4.2 {error: getAttribute, wrong number args} -setup $SETUP -match glob -body {
+	expectError {
+	    dom::element getAttribute $e1
+	}
+    } -cleanup $CLEANUP -result {wrong # args*}
+    test element-4.3 {getAttribute, undefined attribute} -setup $SETUP -body {
+	# According to DOM spec this should not raise an exception
+	set rc [catch {dom::element getAttribute $e1 unknown} ans]
+	list $rc $ans
+    } -cleanup $CLEANUP -result [list 0 {}]
+
+    # TODO: check that attribute values are escaped correctly
+
+    test element-5.1 {removeAttribute} -setup {
+	eval $SETUP
+	dom::element setAttribute $e1 class success
+    } -body {
+	dom::element removeAttribute $e1 class
+    } -cleanup $CLEANUP -result {}
+
+    test element-5.2 {removeAttribute a nonexistent attribute} -setup $SETUP -body {
+	dom::element removeAttribute $e1 class
+	# this should be a no-op.
+    } -cleanup $CLEANUP -result {}
+
+    # Attribute nodes are not yet implemented
+    test element-6.1 {getAttributeNode} -constraints {not_implemented} -setup $SETUP -body {
+    } -cleanup $CLEANUP -result {}
+
+    test element-7.1 {setAttributeNode} -constraints {not_implemented} -setup $SETUP -body {
+    } -cleanup $CLEANUP -result {}
+
+    test element-8.1 {removeAttributeNode} -constraints {not_implemented} -setup $SETUP -body {
+    } -cleanup $CLEANUP -result {}
+
+    test element-9.1 {getElementsByTagName} -constraints {emptyTest} -setup $SETUP -body {
+    } -cleanup $CLEANUP -result {}
+
+    test element-10.1 {normalize} -constraints {emptyTest} -setup {
+	set doc [dom::create]
+	set top [dom::document createElement $doc test]
+	dom::document createTextNode $top {First text}
+	dom::document createTextNode $top {Second text}
+    } -body {
+	$top normalize
+	list [llength [$top children]] [$top stringValue]
+    } -cleanup $CLEANUP -result [list 1 {First textSecond text}]
+
+    test element-11.1 {error: method} -setup $SETUP -match glob -body {
+	expectError {
+    	    dom::element foo $e1
+	}
+    } -cleanup $CLEANUP -result {bad method "foo": *}
+
+    cleanupTests
+}
+
+namespace delete ::dom::elementTest
+
+return

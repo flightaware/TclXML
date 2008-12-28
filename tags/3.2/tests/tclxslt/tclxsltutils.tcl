@@ -1,0 +1,16 @@
+# tclxmlutils.tcl --
+#
+# This script prepares the testing environment for TclXML.
+#
+# Copyright (c) 2008 Explain
+# http://www.explain.com.au/
+# Copyright (c) 2003 Zveno Pty Ltd.
+#
+# $Id: tclxmlutils.tcl,v 1.2 2003/12/03 20:06:37 balls Exp $
+
+package require tcltest
+
+source [file join [tcltest::workingDirectory] .. testutils.tcl]
+
+eval tcltest::configure $argv
+

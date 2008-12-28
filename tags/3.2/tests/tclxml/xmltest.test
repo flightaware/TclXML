@@ -1,0 +1,126 @@
+# Features covered:  Conformance
+#
+# This file contains a collection of tests for the TclXML parser.
+# This file tests the parser's performance against the W3C/OASIS/NIST
+# XML Conformance Test Suite.
+#
+# NB. These tests only check acceptance/rejection of whole XML documents.
+# As such it is crude and does not test callback features.
+#
+# Sourcing this file into Tcl runs the tests and generates output
+# for errors.  No output means no errors were found.
+#
+# Copyright (c) 1999-2003 Zveno Pty Ltd.
+#
+# $Id: xmltest.test,v 1.6 2003/12/03 20:06:37 balls Exp $
+
+package require tcltest
+source [file join [tcltest::workingDirectory] tclxmlutils.tcl]
+
+testPackage $::tcltest::parser
+
+namespace eval ::xml::xmltestTest {
+    namespace import -force ::tcltest::*
+
+    set testDir [file join [workingDirectory] XML-Test-Suite]
+    testConstraint xmltests [file exists $testDir]
+
+    variable SETUP {
+	proc ConfEStart {type attlist args} {
+	    variable base attrs pcdata
+
+	    catch {unset attrs}
+	    array set attr $attlist
+
+	    set pcdata {}
+
+	    switch -- $type {
+		TESTSUITE {
+		    puts $attr(PROFILE)
+		}
+		TESTCASES {
+		    puts $attr(PROFILE)
+		    lappend base $attr(xml:base)
+		}
+		TEST {
+		}
+	    }
+	}
+
+	proc ConfEEnd {name args} {
+	    variable base attrs pcdata
+
+	    switch -- $name {
+		TESTCASES {
+		    set base [lreplace $base end end]
+		}
+		TEST {
+
+		    switch -- $attr(TYPE) {
+			error -
+			not-wf {
+			    set expect error
+			}
+			default {
+			    # Skip validity tests - not yet supported
+			    return
+			}
+		    }
+
+		    set f [file join $base $attr(URI)]
+
+		    set ch [open $f]
+		    set data [read $ch]
+		    close $ch
+
+		    regsub -all [format {[ %s%s%s]+} \t \n \r] [string trim $pcdata] { } pcdata
+
+		    test xmltest-[lindex $base end]-$attr(ID) $pcdata -body {
+			set parser [xml::parser $attr(ID)]
+			if {[catch {$parser parse $data}]} {
+			    # Need to distinguish between not-wf, error and invalid
+			    set code error
+			} else {
+			    set code valid
+			}
+			$parser free
+			set $code
+		    } $expect
+		}
+	    }
+	}
+
+	proc ConfCDATA text {
+	    variable pcdata
+	    append pcdata $text
+	}
+    }
+
+    # Need a framework to test against each file: it's too time-
+    # consuming to setup a test proc for each one.
+
+    if {[testConstraint xmltests]} {
+	if {[catch {open [file join $testDir xmlconf xmlconf.xml]} ch]} {
+	    puts stderr "unable to open XML Test Suite configuration file: skipping tests"
+	    return
+	} else {
+
+	    set confXML [read $ch]
+	    close $ch
+
+	    set base [file join [pwd] XML-Test-Suite xmlconf]
+
+	    set confParser [::xml::parser \
+		-elementstartcommand [namespace code ConfEStart] \
+		-elementendcommand [namespace code ConfEEnd] \
+		-characterdatacommand [namespace code ConfPCDATA] \
+		-validate 1]
+	    $confParser parse $confXML
+	}
+    }
+
+    cleanupTests
+}
+
+namespace delete ::xml::xmltestTest
+return

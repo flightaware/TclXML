@@ -1,0 +1,21 @@
+examples/README --
+
+These directories contain various example scripts to demonstrate
+the use of TclXML, TclDOM and TclXSLT.
+
+---------------------------------------------------------------------------
+See the file "LICENSE" for information on usage and
+redistribution of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+---------------------------------------------------------------------------
+
+tclxml
+	Examples of streaming parsing using TclXML.
+
+tcldom
+	Examples of tree-based scripting using TclDOM.
+
+tclxslt
+	Examples of invoking XSL stylesheets using TclXSLT.
+
+
+

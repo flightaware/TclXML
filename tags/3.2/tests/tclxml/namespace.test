@@ -1,0 +1,110 @@
+# Features covered:  XML Namespaces
+#
+# This file contains a collection of tests for the TclXML parser.
+# This file tests the parser's performance on XML namespaces.
+# Sourcing this file into Tcl runs the tests and generates output
+# for errors.  No output means no errors were found.
+#
+# Copyright (c) 2008 Explain
+# http://www.explain.com.au/
+# Copyright (c) 2000-2004 Zveno Pty Ltd.
+#
+# $Id: namespace.test,v 1.4 2004/02/20 09:15:52 balls Exp $
+
+package require tcltest
+source [file join [tcltest::workingDirectory] tclxmlutils.tcl]
+
+testPackage $::tcltest::parser
+
+namespace eval ::xml::namespaceTest {
+    namespace import -force ::tcltest::*
+
+    variable SETUP {
+	variable result {}
+	variable nsdecls {}
+
+	proc keysort args {
+	    array set keyvalue $args
+	    set result {}
+	    foreach key [lsort [array names keyvalue]] {
+		lappend result $key $keyvalue($key)
+	    }
+	    return $result
+	}
+
+	proc EStart {tag attlist args} {
+	    variable result
+	    variable nsdecls
+
+	    array set extra $args
+
+	    catch {eval lappend nsdecls $extra(-namespacedecls)}
+
+	    if {[info exists extra(-namespace)]} {
+		lappend result $extra(-namespace)^$tag
+	    } else {
+		lappend result $tag
+	    }
+	}
+
+	set parser [xml::parser \
+		-elementstartcommand [namespace code EStart]]
+    }
+    variable CLEANUP {
+	catch {unset result}
+	catch {unset nsdecls}
+	rename keysort {}
+	rename EStart {}
+	$parser free
+    }
+
+    test ns-1.1 {Namespace declaration} -setup $SETUP -constraints {!xml_libxml2} -body {
+	$parser parse {<?xml version="1.0"?>
+<Test xmlns:test="http://tclxml.sf.net/Schemas"></Test>
+}
+	list $result $nsdecls
+    } -cleanup $CLEANUP -result {Test {http://tclxml.sf.net/Schemas test}}
+
+    test ns-1.2 {Multiple namespace declarations} -setup $SETUP -constraints {!xml_libxml2} -body {
+	$parser parse {<?xml version="1.0"?>
+<Test xmlns:test="http://tclxml.sf.net/Schemas"
+xmlns:x='urn:schema'></Test>
+}
+	list $result [eval keysort $nsdecls]
+    } -cleanup $CLEANUP -result {Test {http://tclxml.sf.net/Schemas test urn:schema x}}
+
+    test ns-1.3 {Default namespace declaration} -setup $SETUP -constraints {!xml_libxml2} -body {
+	$parser parse {<?xml version="1.0"?>
+<Test xmlns="http://tclxml.sf.net/Schemas"
+xmlns:x='urn:schema'></Test>
+}
+	list $result [eval keysort $nsdecls]
+    } -cleanup $CLEANUP -result {http://tclxml.sf.net/Schemas^Test {http://tclxml.sf.net/Schemas {} urn:schema x}}
+
+    test ns-1.4 {Default namespace declaration w/- separate usage} -setup $SETUP -constraints {!xml_libxml2} -body {
+	$parser parse {<?xml version="1.0"?>
+<x:Test xmlns="http://tclxml.sf.net/Schemas"
+xmlns:x='urn:schema'><Test/></x:Test>
+}
+	list $result [eval keysort $nsdecls]
+    } -cleanup $CLEANUP -result {{urn:schema^Test http://tclxml.sf.net/Schemas^Test} {http://tclxml.sf.net/Schemas {} urn:schema x}}
+
+    test ns-2.0 {Multiple namespace declarations, same prefix} -setup $SETUP -constraints {!xml_libxml2} -body {
+	$parser parse {<?xml version="1.0"?>
+<Test>
+  <x:Test xmlns:x="http://tclxml.sf.net/Schemas">
+    <x:y/>
+  </x:Test>
+  <x:Test xmlns:x='urn:schema'>
+    <x:z/>
+  </x:Test>
+</Test>
+}
+	list $result [eval keysort $nsdecls]
+    } -cleanup $CLEANUP -result {{Test http://tclxml.sf.net/Schemas^Test http://tclxml.sf.net/Schemas^y urn:schema^Test urn:schema^z} {http://tclxml.sf.net/Schemas x urn:schema x}}
+
+    cleanupTests
+}
+
+namespace delete ::xml::namespaceTest
+return

@@ -1,0 +1,131 @@
+# Commands covered:  ::dom::validate
+#
+# This file contains a collection of tests for one or more of the 
+# TclDOM commands.  Sourcing this file into Tcl runs the tests and
+# generates output for errors.  No output means no errors were found.
+#
+# Copyright (c) 2008 Explain
+# Copyright (c) 2003-2004 Zveno Pty Ltd.
+#
+# $Id: validate.test,v 1.4 2004/01/19 21:37:41 balls Exp $
+
+package require tcltest
+source [file join [tcltest::workingDirectory] tcldomutils.tcl]
+
+testPackage dom
+
+namespace eval ::dom::validateTest {
+    namespace import -force ::tcltest::*
+
+    variable SETUP {
+	set inst [dom::parse {<!DOCTYPE Test [
+  <!ELEMENT Test (#PCDATA)>
+]>
+<Test>This is a valid document</Test>
+}]
+    }
+    variable CLEANUP {
+	dom::destroy $inst
+    }
+
+    variable SCHEMASETUP {
+	set inst [dom::parse {<Test>a simple test document</Test>}]
+
+	set schema [dom::parse {<xsd:schema xmlns:xsd='http://www.w3.org/2001/XMLSchema'
+            elementFormDefault='unqualified'
+            attributeFormDefault='unqualified'>
+
+  <xsd:element name='Test' type='xsd:string'/>
+
+</xsd:schema>
+}]
+    }
+    variable SCHEMACLEANUP {
+	dom::destroy $inst
+	dom::destroy $schema
+    }
+
+    ### DTD validation
+
+    test validate-1.1 {validate too few args} -setup $SETUP -constraints {dom_libxml2} -match glob -body {
+	expectError {
+	    $inst dtd
+	}
+    } -cleanup $CLEANUP -result {wrong # args*}
+    test validate-1.2 {validate too many args} -setup $SETUP -constraints {dom_libxml2} -match glob -body {
+	expectError {
+	    $inst dtd validate another
+	}
+    } -cleanup $CLEANUP -result {wrong # args*}
+
+    test validate-1.3 {validate correct doc} -setup $SETUP -constraints {dom_libxml2} -body {
+	$inst dtd validate
+    } -cleanup $CLEANUP -result {}
+
+    test validate-1.4 {validate invalid doc} -constraints {dom_libxml2} -setup {
+	set bad [dom::parse {<!DOCTYPE Test [
+  <!ELEMENT Test (#PCDATA)>
+]>
+<Test>This is <emphasis>not</emphasis> a valid document</Test>}]
+    } -match glob -body {
+	expectError {
+	    $bad dtd validate
+	}
+    } -cleanup {
+	dom::destroy $bad
+    } -result {*unknown-element-type*}
+
+    ### WXS Schema-validation
+
+    test validate-2.1 {schema compile} -setup $SCHEMASETUP -constraints {dom_libxml2} -match glob -body {
+	$schema schema compile
+    } -cleanup $SCHEMACLEANUP -result {}
+    test validate-2.2 {schema method too few args} -setup $SCHEMASETUP -constraints {dom_libxml2} -match glob -body {
+	expectError {
+	    $schema schema
+	}
+    } -cleanup $SCHEMACLEANUP -result {wrong # args*}
+    test validate-2.3 {schema compile too many args} -setup $SCHEMASETUP -constraints {dom_libxml2} -match glob -body {
+	expectError {
+	    $schema schema compile another
+	}
+    } -cleanup $SCHEMACLEANUP -result {wrong # args*}
+
+    test validate-2.4 {schema validate valid doc} -constraints {dom_libxml2} -setup {
+	eval $SCHEMASETUP
+	$schema schema compile
+    } -body {
+	$schema schema validate $inst
+    } -cleanup $SCHEMACLEANUP -result {}
+
+    test validate-2.5 {schema validate invalid doc} -match regexp -constraints {dom_libxml2} -setup {
+	eval $SCHEMASETUP
+	$schema schema compile
+	set bad [dom::parse {<Test>a <emphasis>simple</emphasis> test document</Test>}]
+    } -body {
+	expectError {
+	    $schema schema validate $bad
+	}
+    } -cleanup {
+	eval $SCHEMACLEANUP
+    } -result {.*invalid-element.*|.*Element content is not allowed.*}
+
+    test validate-2.6 {schema compile invalid schema} -constraints {dom_libxml2} -match glob -setup {
+	eval $SCHEMASETUP
+	set badschema [dom::parse {<schema>this is not a schema</schema>}]
+    } -body {
+	expectError {
+	    $badschema schema compile
+	}
+    } -cleanup {
+	eval $SCHEMACLEANUP
+    } -result {* is not a schema*}
+
+    ### TODO: Relax NG validation
+
+    cleanupTests
+}
+
+namespace delete ::dom::validateTest
+
+return

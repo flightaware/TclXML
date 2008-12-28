@@ -1,0 +1,297 @@
+# Commands covered:  ::dom::DOMImplementation
+#
+# This file contains a collection of tests for one or more of the 
+# TclDOM commands.  Sourcing this file into Tcl runs the tests and
+# generates output for errors.  No output means no errors were found.
+#
+# Copyright (c) 2008 Explain
+# Copyright (c) 1998-2004 Zveno Pty Ltd.
+#
+# $Id: DOMImplementation.test,v 1.10 2004/07/11 11:48:58 balls Exp $
+
+package require tcltest
+source [file join [tcltest::workingDirectory] tcldomutils.tcl]
+
+testPackage dom
+
+namespace eval ::dom::DOMImplementationTest {
+    namespace import -force ::tcltest::*
+
+    test DOMImplementation-1.1 {hasFeature create} -body {
+	::dom::DOMImplementation hasFeature create 1.0
+    } -result 1
+    test DOMImplementation-1.2 {hasFeature create wrong version} -body {
+	::dom::DOMImplementation hasFeature create 2.0
+    } -result 0
+    test DOMImplementation-1.3 {hasFeature destroy} -body {
+	::dom::DOMImplementation hasFeature destroy 1.0
+    } -result 1
+    test DOMImplementation-1.4 {hasFeature parse} -body {
+	::dom::DOMImplementation hasFeature parse 1.0
+    } -result 1
+    test DOMImplementation-1.5 {hasFeature serialize} -body {
+	::dom::DOMImplementation hasFeature serialize 1.0
+    } -result 1
+    test DOMImplementation-1.6 {hasFeature unknown feature} -body {
+	::dom::DOMImplementation hasFeature unknown 1.0
+    } -result 0
+    test DOMImplementation-1.7 {error: hasFeature too few arguments} -body {
+	catch {::dom::DOMImplementation hasFeature error}
+    } -result 1
+    test DOMImplementation-1.8 {error: hasFeature too many arguments} -body {
+	catch {::dom::DOMImplementation hasFeature error 1.0 foo}
+    } -result 1
+
+    test DOMImplementation-2.1 {create document} -body {
+	set doc [::dom::DOMImplementation create]
+	ok;
+    } -cleanup {
+	dom::destroy $doc
+    } -result {}
+    test DOMImplementation-2.1.1 {create document} -body {
+	set doc [::dom::create]
+	ok;
+    } -cleanup {
+	dom::destroy $doc
+    } -result {}
+    # test DOMImplementation-2.2 {create named document} is obsolete
+    test DOMImplementation-2.3 {error: create too many arguments} -match glob -body {
+	expectError {
+	    ::dom::DOMImplementation create Foo Bar
+	}
+    } -result *
+    test DOMImplementation-2.3.1 {error: create too many arguments} -match glob -body {
+	expectError {
+	    ::dom::create Foo Bar
+	}
+    } -result *
+
+    test DOMImplementation-3.1 {destroy document} -constraints {dom_tcl} -setup {
+	set doc [dom::DOMImplementation create]
+    } -body {
+	::dom::DOMImplementation destroy $doc
+	namespace exists [namespace qualifiers $doc]
+    } -result 0
+    test DOMImplementation-3.1.0 {destroy document} -constraints {dom_tcl} -setup {
+	set doc [dom::create]
+    } -body {
+	::dom::DOMImplementation destroy $doc
+	namespace exists [namespace qualifiers $doc]
+    } -result 0
+    test DOMImplementation-3.1.1 {destroy document} -match glob -setup {
+	set doc [dom::create]
+    } -body {
+	::dom::destroy $doc
+	expectError {
+	    dom::serialize $doc
+	}
+    } -result *
+    test DOMImplementation-3.2 {error: destroy unknown document} -match glob -body {
+	expectError {
+	    ::dom::DOMImplementation destroy {::Bar node1}
+	}
+    } -result *
+    test DOMImplementation-3.2.1 {error: destroy unknown document} -match glob -body {
+	expectError {
+	    ::dom::destroy {::Bar node1}
+	}
+    } -result *
+    test DOMImplementation-3.3 {destroy too few arguments} -match glob -body {
+	expectError {
+	    ::dom::DOMImplementation destroy
+	}
+    } -result *
+    test DOMImplementation-3.3.1 {destroy too few arguments} -match glob -body {
+	expectError {
+	    ::dom::destroy
+	}
+    } -result *
+    test DOMImplementation-3.4 {destroy too many arguments} -match glob -body {
+	expectError {
+	    ::dom::DOMImplementation destroy {::Bar node1} Extra
+	}
+    } -result *
+    test DOMImplementation-3.4.1 {destroy too many arguments} -match glob -body {
+	expectError {
+	    ::dom::destroy {::Bar node1} Extra
+	}
+    } -result *
+
+    # Bug fix #453741
+    test DOMImplementation-3.5 {destroy an element node} -match regexp -setup {
+	set doc [dom::DOMImplementation create]
+	set root [dom::document createElement $doc top]
+	set node1 [dom::document createElement $root node]
+	set node2 [dom::document createElement $root node]
+	dom::node removeChild $root $node1
+    } -body {
+	dom::DOMImplementation destroy $node1
+	dom::DOMImplementation serialize $doc
+    } -cleanup {
+	dom::DOMImplementation destroy $doc
+    } -result {<\?xml version=("|')1\.0("|')([ 	]*encoding=("|')[^"']*("|'))?\?>
+(<!DOCTYPE top>
+)?<top><node/></top>}
+    test DOMImplementation-3.5.1 {destroy an element node} -match regexp -setup {
+	set doc [dom::create]
+	set root [dom::document createElement $doc top]
+	set node1 [dom::document createElement $root node]
+	set node2 [dom::document createElement $root node]
+	dom::node removeChild $root $node1
+    } -body {
+	dom::destroy $node1
+	dom::serialize $doc
+    } -cleanup {
+	dom::DOMImplementation destroy $doc
+    } -result {<\?xml version=("|')1\.0("|')([ 	]*encoding=("|')[^"']*("|'))?\?>
+(<!DOCTYPE top>
+)?<top><node/></top>}
+    test DOMImplementation-3.6 {destroy document} -setup {
+	set doc [dom::create]
+    } -body {
+	dom::destroy $doc
+    } -result {}
+    test DOMImplementation-3.7 {destroy document - cleanup document command} -match glob -setup {
+	set doc [dom::create]
+	dom::destroy $doc
+    } -body {
+	expectError {
+	    $doc cget -implementation
+	}
+    } -result *
+    test DOMImplementation-3.8 {destroy document - cleanup resources} -setup {
+	set doc [dom::create]
+	set top [$doc createElement Top]
+	dom::node appendChild $doc $top
+    } -body {
+	dom::DOMImplementation destroy $doc
+	list [expr [namespace exists ::dom::$doc] || [namespace exists ::dom::tcl::$doc]] \
+	    [string equal {} [info commands $top]] \
+	    [catch {$doc cget -implementation}] \
+	    [catch {dom::node cget $top -nodeType}]
+    } -result [list 0 1 1 1]
+    test DOMImplementation-3.8.1 {destroy document - cleanup resources} -setup {
+	set doc [dom::create]
+	set top [$doc createElement Top]
+	dom::node appendChild $doc $top
+    } -body {
+	dom::destroy $doc
+	list [expr [namespace exists ::dom::$doc] || [namespace exists ::dom::tcl::$doc]] \
+	    [string equal {} [info commands $top]] \
+	    [catch {$doc cget -implementation}] \
+	    [catch {dom::node cget $top -nodeType}]
+    } -result [list 0 1 1 1]
+
+    # This will fail when using dom_tcl with Tcl < 8.4 due to lack of command tracing
+    test DOMImplementation-3.9 {destroy document - delete document command - cleanup resources} -setup {
+	set doc [dom::create]
+	set top [$doc createElement Top]
+	dom::node appendChild $doc $top
+    } -body {
+	rename $doc {}
+	list [expr [namespace exists ::dom::$doc] || [namespace exists ::dom::tcl::$doc]] \
+	    [string equal {} [info commands $top]] \
+	    [catch {$doc cget -implementation}] \
+	    [catch {dom::node cget $top -nodeType}]
+    } -result [list 0 1 1 1]
+    test DOMImplementation-3.10 {destroy node - cleanup resources} -setup {
+	set doc [dom::create]
+	set top [dom::document createElement $doc Test]
+	set node [$doc createTextNode {to be destroyed}]
+	$top appendChild $node
+    } -body {
+	dom::destroy $node
+	list [$top children] \
+	    [dom::isNode $node] \
+	    [info commands $node]
+    } -result [list {} 0 {}] -cleanup {
+	dom::destroy $doc
+    }
+    test DOMImplementation-3.11 {destroy node - delete node command} -setup {
+	set doc [dom::create]
+	set top [dom::document createElement $doc Test]
+	set node [dom::document createTextNode $top {delete me}]
+    } -body {
+	rename $node {}
+	list [$top children] \
+	    [dom::isNode $node] \
+	    [info commands $node]
+    } -result [list {} 0 {}] -cleanup {
+	dom::destroy $doc
+    }
+
+    # Bug #974323
+    test DOMImplementation-3.12 {destroy document - invalidate document token} -match glob -setup {
+	set doc [dom::create]
+	dom::document createElement $doc Test
+    } -body {
+	dom::destroy $doc
+	set result $doc
+	set doc {}
+	set result
+    } -result *
+
+    variable xml {<?xml version="1.0"?>
+<!DOCTYPE Test>
+<Test>This is test DOMImplementation-4.X</Test>}
+
+    test DOMImplementation-4.1 {parse document} -constraints {doParse} -body {
+	set doc [::dom::DOMImplementation parse $xml]
+	ok
+    } -cleanup {
+	dom::destroy $doc
+    } -result {}
+    test DOMImplementation-4.2 {error: parse too few arguments} -constraints {doParse} -match glob -body {
+	expectError {
+	    ::dom::DOMImplementation parse
+	}
+    } -result *
+    test DOMImplementation-4.3 {error: parse too many arguments} -constraints {doParse} -match glob -body {
+	expectError {
+	    ::dom::DOMImplementation parse $xml Extra
+	}
+    } -result *
+
+    test DOMImplementation-5.1 {isNode: document} -setup {
+	set doc [dom::create]
+    } -body {
+	dom::DOMImplementation isNode $doc
+    } -cleanup {
+	dom::destroy $doc
+    } -result 1
+    test DOMImplementation-5.1.1 {isNode: document} -setup {
+	set doc [dom::create]
+    } -body {
+	dom::isNode $doc
+    } -cleanup {
+	dom::destroy $doc
+    } -result 1
+    test DOMImplementation-5.2 {isNode: node} -setup {
+	set doc [dom::create]
+	set top [dom::document createElement $doc Top]
+    } -body {
+	dom::DOMImplementation isNode $top
+    } -cleanup {
+	dom::destroy $doc
+    } -result 1
+    test DOMImplementation-5.2.1 {isNode: node} -setup {
+	set doc [dom::create]
+	set top [dom::document createElement $doc Top]
+    } -body {
+	dom::isNode $top
+    } -cleanup {
+	dom::destroy $doc
+    } -result 1
+    test DOMImplementation-5.3 {isNode: not a node} -body {
+	dom::DOMImplementation isNode {an arbitrary string}
+    } -result 0
+    test DOMImplementation-5.3.1 {isNode: not a node} -body {
+	dom::isNode whatever
+    } -result 0
+
+    # cleanup
+    ::tcltest::cleanupTests
+}
+namespace delete ::dom::DOMImplementationTest
+
+return

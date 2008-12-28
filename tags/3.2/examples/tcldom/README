@@ -1,0 +1,45 @@
+examples/tcldom/README --
+
+This directory contains some small example scripts to demonstrate
+the use of TclDOM.
+
+---------------------------------------------------------------------------
+See the file "LICENSE" for information on usage and
+redistribution of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+---------------------------------------------------------------------------
+
+cgi2dom.tcl
+	Not an application, but a package.  Provides the
+	'cgi2dom::createdocument' command which accepts a number
+	of name-value parameters and returns a DOM tree.
+
+	All parameters whose name starts with '/' are
+	interpreted as XPath location paths.  The 'createNode'
+	method is used to construct a DOM tree.  The parameter
+	values are inserted into the tree as text nodes.
+
+domtree.tcl
+	A BWidget mega-widget.  Displays a DOM documents as a
+	tree of nodes.  The BWidgets Tree widget provides the
+	display.  DOM events are used to maintain the tree view,
+	and DOM events are posted in response to Tk events.
+
+domtree-treectrl.tcl
+	Similar to above, but uses a treectrl widget.
+
+domtext.tcl
+	A Tk mega-widget.  Displays a DOM document in a Tk
+	text widget.  Control of the widget's contents is
+	at the level of DOM nodes, not lines and characters.
+	DOM events are used to maintain the text view and
+	DOM events are posted in response to Tk events.
+	Character data in the widget is editable.
+
+browser.tcl
+	A mini XML browser.  Uses above mega-widgets.
+
+tkxmllint
+	An XML document analyzer.  Performs well-formedness check,
+	DTD validation or XML Schema validation on a XML document.
+	Basically, the GUI version of xmllint.
+
