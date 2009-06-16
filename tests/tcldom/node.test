@@ -4,7 +4,7 @@
 # TclDOM commands.  Sourcing this file into Tcl runs the tests and
 # generates output for errors.  No output means no errors were found.
 #
-# Copyright (c) 2008 Explain
+# Copyright (c) 2008-2009 Explain
 # Copyright (c) 1998-2004 Zveno Pty Ltd.
 #
 # $Id: node.test,v 1.12 2004/02/25 20:10:30 balls Exp $
@@ -1093,6 +1093,16 @@ namespace eval ::dom::nodeTest {
 	dom::destroy $doc
     } -result {filename.xml}
     # TODO: test multiple text nodes, attribute nodes, comments, PIs
+
+    test node-21.1 {id generation} -setup {
+	eval $SETUP
+	set idtop [$top cget -id]
+	set id1 [$child1 cget -id]
+	set id2 [$child2 cget -id]
+	set id3 [$child3 cget -id]
+    } -body {
+	list [expr {$idtop == ""}] [expr {$child1 == ""}] [expr {$child2 == ""}] [expr {$child3 == ""}] [expr {$idtop != $child1}] [expr {$child1 != $child2}] [expr {$child2 != $child3}]
+    } -cleanup $CLEANUP -result {0 0 0 0 1 1 1}
 
     cleanupTests
 }

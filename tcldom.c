@@ -7,7 +7,7 @@
  *	directly.  This module now provides common definitions
  *	for method/option tables, etc.
  *
- * Copyright (c) 2006-2007 Explain
+ * Copyright (c) 2006-2009 Explain
  * http://www.explain.com.au/
  * Copyright (c) 2002-2004 Steve Ball, Zveno Pty Ltd
  *
@@ -64,12 +64,15 @@ CONST84 char *TclDOM_DocumentCommandMethods[] = {
   "getElementsByTagName",
   "dtd",
   "schema",
+  "relaxng",
   (char *) NULL
 };
 CONST84 char *TclDOM_DocumentCommandOptions[] = {
   "-doctype",
   "-implementation",
   "-documentElement",
+  "-keep",
+  "-baseuri",
   (char *) NULL
 };
 CONST84 char *TclDOM_DocumentDTDSubmethods[] = {
@@ -123,6 +126,7 @@ CONST84 char *TclDOM_NodeCommandOptions[] = {
   "-cdatasection",
   "-nodeName",
   "-ownerDocument",
+  "-id",
   (char *) NULL
 };
 CONST84 char *TclDOM_NodeCommandAddEventListenerOptions[] = {

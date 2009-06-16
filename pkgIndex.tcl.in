@@ -18,6 +18,34 @@ namespace eval ::xslt {
     variable _init 0
 }
 
+# From http://wiki.tcl.tk/9427
+proc ::xml::_platform {} {
+    global tcl_platform
+
+    set plat [lindex $tcl_platform(os) 0]
+    set mach $tcl_platform(machine)
+    switch -glob -- $mach {
+	sun4* {
+	    set mach sparc
+	}
+	intel -
+	i*86* {
+	    set mach x86
+	}
+	{Power Macintosh} {
+	    set mach ppc
+	}
+    }
+    return "$plat-$mach"
+}
+
+proc ::xml::_loadlib {dir package version} {
+    global tcl_platform
+
+    set lib $package[info sharedlibextension]
+    return [file join $dir [_platform] $lib]
+}
+
 namespace eval ::xml {
     variable pkginit
 
@@ -25,35 +53,50 @@ namespace eval ::xml {
 	set pkginit 0
     }
 
-    proc pkgload {dir {binary 0}} {
+    # Try to locate the binary library:
+    # 1) Using TEA conventions
+    # 2) Using StarKit conventions
+    # 3) Using platform-specific conventions
+
+    proc pkgload {dir {binary 0} {cmd {}}} {
 	variable pkginit
 
 	if {$pkginit} {return {}}
 
-	namespace eval :: "
+	namespace eval :: [format {
 	    package require xmldefs @PACKAGE_VERSION@
 	    package require xml::tcl @PACKAGE_VERSION@
-	    if {\[catch {load \[file join $dir @PKG_LIB_FILE@\] Tclxml}\]} {
-	        # Mac OS X frameworks are different
-	        if {\[catch {load \[file join $dir .. .. Tclxml\] Tclxml}\]} {
-		    # Unable to load binary implmentation,
-		    # just use pure-Tcl implmentation instead
-		    if {$binary} {
-			return -code error \"unable to load shared library\"
-		    }
+	    # TEA style
+	    if {[catch {load [file join [list %s] @PKG_LIB_FILE@] Tclxml}]} {
+		# StarKit style
+		if {[catch {load [::xml::_loadlib [list %s] Tclxml @PACKAGE_VERSION@]}]} {
+		    # Mac OS X frameworks are different
+	            if {[catch {load [file join [list %s] .. .. Tclxml] Tclxml}]} {
+		        # Unable to load binary implmentation,
+		        # just use pure-Tcl implmentation instead
+		        if {$binary} {
+			    return -code error "unable to load shared library"
+		        }
+	            } else {
+		        set ::xml::libxml2::_init 1
+		        set ::dom::libxml2::_init 1
+		        set ::xslt::_init 1
+		        source [file join [list %s] tcldom-libxml2.tcl]
+		        source [file join [list %s] tclxslt-libxslt.tcl]
+	            }
 	        } else {
 		    set ::xml::libxml2::_init 1
 		    set ::dom::libxml2::_init 1
 		    set ::xslt::_init 1
-		    source \[file join $dir tcldom-libxml2.tcl\]
-		    source \[file join $dir tclxslt-libxslt.tcl\]
+		    source [file join [list %s] tcldom-libxml2.tcl]
+		    source [file join [list %s] tclxslt-libxslt.tcl]
 	        }
 	    } else {
 		set ::xml::libxml2::_init 1
 		set ::dom::libxml2::_init 1
 		set ::xslt::_init 1
-		source \[file join $dir tcldom-libxml2.tcl\]
-		source \[file join $dir tclxslt-libxslt.tcl\]
+		source [file join [list %s] tcldom-libxml2.tcl]
+		source [file join [list %s] tclxslt-libxslt.tcl]
 	    }
 	    package require xml::tclparser @PACKAGE_VERSION@
 	    package provide tclparser @PACKAGE_VERSION@
@@ -65,7 +108,9 @@ namespace eval ::xml {
 	    package provide xslt::libxslt @PACKAGE_VERSION@
 
 	    set pkginit 1
-	"
+	} $dir $dir $dir $dir $dir $dir $dir $dir $dir $dir]
+
+	eval $cmd
     }
 }
 
@@ -76,17 +121,13 @@ package ifneeded xmldep       1.0       [list source [file join $dir xmldep.tcl]
 
 # Requesting a specific package means we want it to be the default parser class.
 
-package ifneeded xml::libxml2 @PACKAGE_VERSION@ "
-    ::xml::pkgload $dir 1
-    ::xml::parser default libxml2
-"
+package ifneeded xml::libxml2 @PACKAGE_VERSION@ [list ::xml::pkgload $dir 1 {::xml::parser default libxml2}]
 
 # tclparser works with either xml::c or xml::tcl
-package ifneeded tclparser @PACKAGE_VERSION@ "
-    ::xml::pkgload $dir 0
+package ifneeded tclparser @PACKAGE_VERSION@ [list ::xml::pkgload $dir 0 {
     ::xml::parser default tclparser
     package provide tclparser @PACKAGE_VERSION@
-"
+}]
 
 # use tcl only (mainly for testing)
 package ifneeded puretclparser @PACKAGE_VERSION@ "
@@ -98,26 +139,16 @@ package ifneeded puretclparser @PACKAGE_VERSION@ "
 
 # Requesting the generic package leaves the choice of default parser automatic
 
-package ifneeded xml @PACKAGE_VERSION@ "
-    ::xml::pkgload $dir 0
-"
-package ifneeded dom @PACKAGE_VERSION@ "
-    ::xml::pkgload $dir 0
-"
-package ifneeded dom::libxml2 @PACKAGE_VERSION@ "
-    ::xml::pkgload $dir 1
-"
-package ifneeded xslt @PACKAGE_VERSION@ "
-    ::xml::pkgload $dir 1
-"
-package ifneeded xslt::libxslt @PACKAGE_VERSION@ "
-    ::xml::pkgload $dir 1
-"
+package ifneeded xml @PACKAGE_VERSION@ [list ::xml::pkgload $dir 0]
+package ifneeded dom @PACKAGE_VERSION@ [list ::xml::pkgload $dir 0]
+package ifneeded dom::libxml2 @PACKAGE_VERSION@ [list ::xml::pkgload $dir 1]
+package ifneeded xslt @PACKAGE_VERSION@ [list ::xml::pkgload $dir 1]
+package ifneeded xslt::libxslt @PACKAGE_VERSION@ [list ::xml::pkgload $dir 1]
 
 package ifneeded xmlswitch @PACKAGE_VERSION@ [list source [file join $dir xmlswitch.tcl]]
 
 package ifneeded xslt::cache @PACKAGE_VERSION@ [list source [file join $dir xsltcache.tcl]]
-package ifneeded xslt::utilities @PACKAGE_VERSION@ [list source [file join $dir utilities.tcl]]
+package ifneeded xslt::utilities 1.2 [list source [file join $dir utilities.tcl]]
 package ifneeded xslt::process 1.1 [list source [file join $dir process.tcl]]
 package ifneeded xslt::resources 1.3 [list source [file join $dir resources.tcl]]
 

@@ -66,6 +66,18 @@ EXTERN Tcl_Obj *	TclXML_libxml2_GetErrorObj _ANSI_ARGS_((
 EXTERN void		TclXML_libxml2_SetErrorNodeFunc _ANSI_ARGS_((
 				Tcl_Interp * interp, 
 				TclXML_ErrorNodeHandlerProc * proc));
+/* 14 */
+EXTERN int		TclXML_libxml2_GetTclDocFromDoc _ANSI_ARGS_((
+				Tcl_Interp * interp, xmlDocPtr docPtr, 
+				TclXML_libxml2_Document ** tDocPtrPtr));
+/* 15 */
+EXTERN Tcl_Obj *	TclXML_libxml2_GetBaseURIFromDoc _ANSI_ARGS_((
+				xmlDocPtr docPtr));
+/* 16 */
+EXTERN int		TclXML_libxml2_SetBaseURI _ANSI_ARGS_((
+							       Tcl_Interp * interp,
+							       xmlDocPtr docPtr,
+							       Tcl_Obj * uriObj));
 
 typedef struct Tclxml_libxml2Stubs {
     int magic;

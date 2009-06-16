@@ -105,7 +105,7 @@
 		AA68C60B0C90340D00D12438 /* resources.tcl */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; name = resources.tcl; path = ../tclxslt/resources.tcl; sourceTree = SOURCE_ROOT; };
 		AA68C60C0C90340D00D12438 /* utilities.tcl */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; name = utilities.tcl; path = ../tclxslt/utilities.tcl; sourceTree = SOURCE_ROOT; };
 		AA68C60D0C90340D00D12438 /* xsltcache.tcl */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; name = xsltcache.tcl; path = ../tclxslt/xsltcache.tcl; sourceTree = SOURCE_ROOT; };
-		AA68C6F50C91035400D12438 /* Tclxml-Info.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; path = "Tclxml-Info.plist"; sourceTree = SOURCE_ROOT; };
+		AA68C6F50C91035400D12438 /* Tclxml-Info.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.plist.xml; path = "Tclxml-Info.plist"; sourceTree = SOURCE_ROOT; };
 		AAE9DF4D0DBFE1EB00A29434 /* Tcl.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Tcl.framework; path = ../../../Library/Frameworks/Tcl.framework; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
@@ -498,7 +498,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd ${SRCROOT}/..; ./configure --with-xml2-config=${BUILD_DIR}/libxml.framework/Resources/Scripts/xml2-config --with-xslt-config=${BUILD_DIR}/libxslt.framework/Resources/Scripts/xslt-config --enable-framework";
+			shellScript = "cd ${SRCROOT}/..; ./configure --with-xml2-config=${BUILT_PRODUCTS_DIR}/libxml.framework/Resources/Scripts/xml2-config --with-xslt-config=${BUILT_PRODUCTS_DIR}/libxslt.framework/Resources/Scripts/xslt-config --enable-framework";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -539,7 +539,7 @@
 					"$(FRAMEWORK_SEARCH_PATHS_QUOTED_FOR_TARGET_1)",
 				);
 				FRAMEWORK_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../../../Library/Frameworks\"";
-				FRAMEWORK_VERSION = 3.2;
+				FRAMEWORK_VERSION = 3.3;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				GCC_MODEL_TUNING = G5;
@@ -549,9 +549,10 @@
 				HEADER_SEARCH_PATHS = "$(SRCROOT)/../include";
 				INFOPLIST_FILE = "Tclxml-Info.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LIBXML2_VERSION = 2.6.30;
-				LIBXSLT_VERSION = 1.1.22;
-				PACKAGE_VERSION = 3.2;
+				LIBXML2_VERSION = 2.7.2;
+				LIBXSLT_VERSION = 1.1.24;
+				MACH_O_TYPE = mh_dylib;
+				PACKAGE_VERSION = 3.3;
 				PRECOMPS_INCLUDE_HEADERS_FROM_BUILT_PRODUCTS_DIR = NO;
 				PRODUCT_NAME = Tclxml;
 				WRAPPER_EXTENSION = framework;
@@ -571,7 +572,7 @@
 					"$(FRAMEWORK_SEARCH_PATHS_QUOTED_FOR_TARGET_1)",
 				);
 				FRAMEWORK_SEARCH_PATHS_QUOTED_FOR_TARGET_1 = "\"$(SRCROOT)/../../../Library/Frameworks\"";
-				FRAMEWORK_VERSION = 3.2;
+				FRAMEWORK_VERSION = 3.3;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
 				GCC_MODEL_TUNING = G5;
 				GCC_PRECOMPILE_PREFIX_HEADER = NO;
@@ -579,9 +580,10 @@
 				HEADER_SEARCH_PATHS = "$(SRCROOT)/../include";
 				INFOPLIST_FILE = "Tclxml-Info.plist";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				LIBXML2_VERSION = 2.6.30;
-				LIBXSLT_VERSION = 1.1.22;
-				PACKAGE_VERSION = 3.2;
+				LIBXML2_VERSION = 2.7.2;
+				LIBXSLT_VERSION = 1.1.24;
+				MACH_O_TYPE = mh_dylib;
+				PACKAGE_VERSION = 3.3;
 				PRECOMPS_INCLUDE_HEADERS_FROM_BUILT_PRODUCTS_DIR = NO;
 				PRODUCT_NAME = Tclxml;
 				WRAPPER_EXTENSION = framework;
@@ -591,11 +593,8 @@
 		1DEB91B208733DA50010E9CD /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = (
-					ppc,
-					i386,
-				);
-				FRAMEWORK_VERSION = 3.2;
+				ARCHS = "$(NATIVE_ARCH)";
+				FRAMEWORK_VERSION = 3.3;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				PREBINDING = NO;
@@ -608,7 +607,7 @@
 			buildSettings = {
 				ARCHS = i386;
 				DEPLOYMENT_POSTPROCESSING = YES;
-				FRAMEWORK_VERSION = 3.2;
+				FRAMEWORK_VERSION = 3.3;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
@@ -621,6 +620,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
+				FRAMEWORK_VERSION = 3.3;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
@@ -632,6 +632,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COPY_PHASE_STRIP = YES;
+				FRAMEWORK_VERSION = 3.3;
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
 				PRODUCT_NAME = configure;

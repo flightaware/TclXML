@@ -4,7 +4,7 @@
 #
 #	This widget both generates and reacts to DOM Events.
 #
-# Copyright (c) 2008 Explain
+# Copyright (c) 2008-2009 Explain
 # http://www.explain.com.au/
 # Copyright (c) 1999-2003 Zveno Pty Ltd
 # http://www.zveno.com/
@@ -14,16 +14,12 @@
 #
 # $Id: domtext.tcl,v 1.5 2003/12/09 04:56:40 balls Exp $
 
-package provide domtext 2.5
-
-# We need BWidgets
-
-package require BWidget 1.4
+package provide domtext 3.3
 
 # We need the DOM
 # V2.0 gives us Level 2 Events
 
-package require dom 3.2
+package require dom 3.3
 
 # Configuration options:
 #
@@ -38,31 +34,28 @@ package require dom 3.2
 #		denotes that start and end tags are not shown.
 
 namespace eval domtext {
-    Widget::tkinclude domtext text .text \
-	    remove {-command -state}
+#    Widget::tkinclude domtext text .text \
+#	    remove {-command -state}
 
-    Widget::declare domtext {
-	{-highlightcolor	String	"#d9ffff"	0}
-	{-rootnode		String	""		0}
-	{-state			String	"normal"	0}
-	{-tagcolor		String	"#18605a"	0}
-	{-commentcolor		String	"#660f91"	0}
-	{-entityrefcolor	String	"#0080c0"	0}
-	{-elementbgcolorlist	String	""		0}
-	{-showxmldecl		Boolean	1		0}
-	{-showdoctypedecl	Boolean	1		0}
-	{-showtag		String	"text"		0}
-    }
+#    Widget::declare domtext {
+#	{-highlightcolor	String	"#d9ffff"	0}
+#	{-rootnode		String	""		0}
+#	{-state			String	"normal"	0}
+#	{-tagcolor		String	"#18605a"	0}
+#	{-commentcolor		String	"#660f91"	0}
+#	{-entityrefcolor	String	"#0080c0"	0}
+#	{-elementbgcolorlist	String	""		0}
+#	{-showtag		String	"text"		0}
+#    }
 
-    proc ::domtext { path args } { return [eval domtext::create $path $args] }
-    proc use {} {}
+    proc ::domtext { path args } { return [domtext::create $path {*}$args] }
 
     # Define bindings for domtext widget class
 
     # Certain mouse event bindings for the Text widget class must be overridden
 
-    bind domtext <Button-1> [namespace code [list _tkevent_override %W %x %y]]
-    bind domtext <Double-Button-1> [namespace code [list _tkevent_override %W %x %y]]
+    bind domtext <Button-1> [namespace code [list TkeventOverride %W %x %y]]
+    bind domtext <Double-Button-1> [namespace code [list TkeventOverride %W %x %y]]
 
     # All of these bindings for the Text widget class cause characters
     # to be inserted or deleted.  These must be caught and prevented if the
@@ -77,12 +70,12 @@ namespace eval domtext {
 	<<Cut>> <<Paste>> <<PasteSelection>> <<Clear>>
 	<Key-BackSpace> <Key-Delete> <Key-Return>
     } {
-	bind domtext $spec [list domtext::_tkevent_filter_$spec %W %A]
+	bind domtext $spec [list domtext::TkeventFilter_$spec %W %A]
     }
     foreach spec {
 	<Key-Up> <Key-Down> <Key-Left> <Key-Right>
     } {
-	bind domtext $spec [list domtext::_key_select %W $spec]
+	bind domtext $spec [list domtext::KeySelect %W $spec]
     }
     foreach spec {
 	<Meta-Key> <Control-Key>
@@ -114,51 +107,50 @@ namespace eval domtext {
 #	Widget created, returns path
 
 proc domtext::create {path args} {
-    upvar #0 [namespace current]::$path data
+    variable state
+
     array set maps [list Text {} :text {} .text {}]
 
-    eval frame $path $maps(:text) -bd 0 -relief flat -takefocus 0 \
-	    -class domtext -highlightthickness 0
+    text $path -wrap none -takefocus 1
+    set cmd [namespace current]::_cmd$path
+    rename ::$path $cmd
+    dict set state $path cmd $cmd
+    proc ::$path {args} "[namespace current]::Cmd $path {*}\$args"
 
-    Widget::initFromODB domtext $path $maps(Text)
+    $cmd tag configure starttab -elide 1
+    $cmd tag configure endtab -elide 1
+    $cmd tag configure sel -borderwidth 2
+    $cmd tag configure sel -relief raised
 
-    # Setup event bindings for generating DOM events
-    bindtags $path [list $path Bwdomtext [winfo toplevel $path] all]
+    bindtags $path [list $path Domtext [winfo toplevel $path] all]
 
-    set text [eval text $path.text $maps(.text) \
-	    -state [Widget::getMegawidgetOption $path -state] -wrap none \
-	    -takefocus 1]
-    $text tag configure starttab -elide 1
-    $text tag configure endtab -elide 1
-    $text tag configure xmldecl -elide 1
-    $text tag configure doctypedecl -elide 1
-
-    bindtags $path [list $path domtext [winfo toplevel $path] all]
-
-    grid $text -sticky news
-    grid rowconfigure $path 0 -weight 1
-    grid columnconfigure $path 0 -weight 1
-
-    # Certain class bindings must be overridden
-    bindtags $text [list $path domtext [winfo class $text] [winfo toplevel $path] all]
-
-    rename $path ::$path:cmd
-    proc ::$path { cmd args } "return \[eval domtext::\$cmd $path \$args\]"
-
-    set root [Widget::getMegawidgetOption $path -rootnode]
-    if {[string length $root]} {
-	_refresh $path $root
+    dict set state $path rootnode {}
+    dict set state $path nextColor 0
+    dict set state $path tag_backgrounds {
+	#fdd5bd #bdfdd5 #bdd5fd #999ab9
     }
+    dict set state $path insert end
+    dict set state $path showtag 0
 
-    set data(insert) end
-    set data(nextElemBgColor) 0
-
-    configure $path \
-	    -showtag [Widget::getMegawidgetOption $path -showtag] \
-	    -showxmldecl [Widget::getMegawidgetOption $path -showxmldecl] \
-	    -showdoctypedecl [Widget::getMegawidgetOption $path -showdoctypedecl]
+    configure $path {*}$args
 
     return $path
+}
+
+# domtext::Cmd --
+#
+#	Implements widget command
+#
+# Arguments:
+#	path	widget path
+#	cmd	subcommand
+#	args	options
+#
+# Results:
+#	Depends on subcommand
+
+proc domtext::Cmd {path cmd args} {
+    [namespace current]::$cmd $path {*}$args
 }
 
 # domtext::cget --
@@ -173,7 +165,10 @@ proc domtext::create {path args} {
 #	Returns value of option
 
 proc domtext::cget {path option} {
-    return [Widget::getoption $path $option]
+    variable state
+
+    regexp {^-(.*)} $option discard opt
+    return [dict get $state $path $opt]
 }
 
 # domtext::configure --
@@ -188,93 +183,107 @@ proc domtext::cget {path option} {
 #	Sets values of options
 
 proc domtext::configure {path args} {
-    upvar #0 [namespace current]::$path data
+    variable state
 
-    set res [Widget::configure $path $args]
+    switch [llength $args] {
+	0 {
+	    return {}
+	}
+	1 {
+	    return [cget $path [lindex $args 0]]
+	}
+	default {
+	    set cmd [dict get $state $path cmd]
+	    foreach {option value} $args {
+		regexp {^-(.*)} $option discard opt
 
-    set rn [Widget::hasChanged $path -rootnode root]
-    if {$rn} {
+		switch -- $opt {
+		    rootnode {
+			dict set state $path rootnode $value
 
-	$path.text delete 1.0 end
-	# Delete all marks and tags
-	# This doesn't delete the standard marks and tags
-	eval $path.text tag delete [$path.text tag names]
-	eval $path.text mark unset [$path.text mark names]
-	# Remove event listeners from previous DOM tree
+			$cmd delete 1.0 end
+			# Delete all marks and tags
+			# This doesn't delete the standard marks and tags
+			$cmd tag delete {*}[$cmd tag names]
+			$cmd mark unset {*}[$cmd mark names]
+			# Remove event listeners from previous DOM tree
 
-	set data(insert) 1.0
+			dict set state $path insert 1.0
 
-	if {[string length $root]} {
-	    set docel [dom::document cget $root -documentElement]
+			if {[string length $value]} {
+			    set docel [$value cget -documentElement]
 
-	    if {[string length $docel]} {
-		# Listen for UI events
-		dom::node addEventListener $root DOMActivate [namespace code [list _node_selected $path]] -usecapture 1
+			    if {[string length $docel]} {
+				# Listen for UI events
+				dom::node addEventListener $value DOMActivate [namespace code [list NodeSelected $path]] -usecapture 1
 
-		# Listen for mutation events
-		dom::node addEventListener $root DOMNodeInserted [namespace code [list _node_inserted $path]] -usecapture 1
-		dom::node addEventListener $root DOMNodeRemoved [namespace code [list _node_removed $path]] -usecapture 1
-		dom::node addEventListener $root DOMCharacterDataModified [namespace code [list _node_pcdata_modified $path]] -usecapture 1
-		dom::node addEventListener $root DOMAttrModified [namespace code [list _node_attr_modified $path]] -usecapture 1
-		dom::node addEventListener $root DOMAttrRemoved [namespace code [list _node_attr_removed $path]] -usecapture 1
+				# Listen for mutation events
+				#dom::node addEventListener $value DOMNodeInserted [namespace code [list NodeInserted $path]] -usecapture 1
+				#dom::node addEventListener $value DOMNodeRemoved [namespace code [list NodeRemoved $path]] -usecapture 1
+				#dom::node addEventListener $value DOMCharacterDataModified [namespace code [list NodePCDATAModified $path]] -usecapture 1
+				#dom::node addEventListener $value DOMAttrModified [namespace code [list NodeAttrModified $path]] -usecapture 1
+				#dom::node addEventListener $value DOMAttrRemoved [namespace code [list NodeAttrRemoved $path]] -usecapture 1
 
-		_refresh $path $root
+				Refresh $path
+			    }
+			}
+		    }
+
+		    tagcolor {
+			$cmd tag configure tags -foreground $value
+		    }
+		    highlightcolor {
+			$cmd tag configure highlight -background $value
+		    }
+		    commentcolor {
+			$cmd tag configure comment -foreground $value
+		    }
+		    entityrefcolor {
+			$cmd tag configure entityreference -foreground $value
+		    }
+		    elementbgcolorlist {
+			dict set state $path nextColor 0
+			dict set state $path tag_backgrounds $value
+			ElementBackgroundSetAll $path [dict get $state $path rootnode]
+		    }
+
+		    showtag {
+			switch -- $value {
+			    text {
+				$cmd tag configure starttab -elide 1
+				$cmd tag configure endtab -elide 1
+				$cmd tag configure tags -elide 0
+			    }
+			    tab {
+				$cmd tag configure tags -elide 1
+				$cmd tag configure starttab -elide 0
+				$cmd tag configure endtab -elide 0
+			    }
+			    {} {
+				$cmd tag configure tags -elide 1
+				$cmd tag configure starttab -elide 1
+				$cmd tag configure endtab -elide 1
+			    }
+			    default {
+				return -code error "invalid mode \"$value\""
+			    }
+			}
+		    }
+
+		    xscrollcommand -
+		    yscrollcommand {
+			$cmd configure $option $value
+		    }
+
+		    default {
+			return -code error "unknown option \"$option\""
+		    }
+		}
 	    }
 	}
     }
 
-    set tc [Widget::hasChanged $path -tagcolor tagcolor]
-    set hc [Widget::hasChanged $path -highlightcolor hlcolor]
-    set cc [Widget::hasChanged $path -commentcolor commcolor]
-    set ec [Widget::hasChanged $path -entityrefcolor ercolor]
-    set ebg [Widget::hasChanged $path -elementbgcolorlist ebgcolor]
-    if {($rn && [string length $root]) || $tc} {
-	$path.text tag configure tags -foreground $tagcolor
-    }
-    if {($rn && [string length $root]) || $cc} {
-	$path.text tag configure comment -foreground $commcolor
-    }
-    if {($rn && [string length $root]) || $ec} {
-	$path.text tag configure entityreference -foreground $ercolor
-    }
-    if {($rn && [string length $root]) || $hc} {
-	$path.text tag configure highlight -background $hlcolor
-    }
-    if {($rn && [string length $root]) || $ebg} {
-	set data(nextElemBgColor) 0
-	_elementbg_setall $path $root
-    }
-
-    if {[Widget::hasChanged $path -showtag showtag]} {
-	switch -- $showtag {
-	    text {
-		$path.text tag configure starttab -elide 1
-		$path.text tag configure endtab -elide 1
-		$path.text tag configure tags -elide 0
-	    }
-	    tab {
-		$path.text tag configure tags -elide 1
-		$path.text tag configure starttab -elide 0
-		$path.text tag configure endtab -elide 0
-	    }
-	    {} {
-		$path.text tag configure tags -elide 1
-		$path.text tag configure starttab -elide 1
-		$path.text tag configure endtab -elide 1
-	    }
-	    default {
-		return -code error "invalid value \"$showtag\""
-	    }
-	}
-    }
-
-    if {[Widget::hasChanged $path -showxmldecl showxmldecl]} {
-	$path.text tag configure xmldecl -elide [expr !$showxmldecl]
-    }
-    if {[Widget::hasChanged $path -showdoctypedecl showdoctypedecl]} {
-	$path.text tag configure doctypedecl -elide [expr !$showdoctypedecl]
-    }
-    return $res
+    return {}
 }
 
 # domtext::xview --
@@ -289,7 +298,9 @@ proc domtext::configure {path args} {
 #	Depends on Text's xview method
 
 proc domtext::xview {path args} {
-    eval $path.text xview $args
+    variable state
+
+    [dict get $state $path cmd] xview {*}$args
 }
 
 # domtext::yview --
@@ -304,10 +315,29 @@ proc domtext::xview {path args} {
 #	Depends on Text's yview method
 
 proc domtext::yview {path args} {
-    eval $path.text yview $args
+    variable state
+
+    [dict get $state $path cmd] yview {*}$args
 }
 
-# domtext::_refresh --
+# domtext::instate --
+#
+#	Implements instate method
+#
+# Arguments:
+#	path	widget path
+#	args	additional arguments
+#
+# Results:
+#	Depends on Text's instate method
+
+proc domtext::instate {path args} {
+    variable state
+
+    [dict get $state $path cmd] instate {*}$args
+}
+
+# domtext::Refresh --
 #
 #	Inserts serialized nodes into the Text widget,
 #	while at the same time marking up the text to support
@@ -321,143 +351,132 @@ proc domtext::yview {path args} {
 #
 # Arguments:
 #	path	widget path
-#	node	DOM node
 #
 # Results:
 #	Text widget populated with serialized text.
 
-proc domtext::_refresh {path node} {
-    upvar #0 [namespace current]::$path data
+proc domtext::Refresh {path} {
+    variable state
 
-    $path.text mark set $node $data(insert)
-    $path.text mark gravity $node left
+    set rootnode [dict get $state $path rootnode]
+    if {$rootnode == {}} {
+	return {}
+    }
 
-    set end $data(insert)
+    RefreshNode $path [dict get $state $path cmd] [$rootnode cget -documentElement]
+
+    return {}
+}
+
+proc domtext::RefreshNode {path cmd node} {
+    variable state
+
+    set id [$node cget -id]
+
+    set insert [dict get $state $path insert]
+
+    $cmd mark set $id $insert
+    $cmd mark gravity $id left
+
+    set end $insert
 
     # For all nodes we bind Tk events to be able to generate DOM events
-    $path.text tag bind $node <1> [namespace code [list _tkevent_select $path $node %x %y]]
-    $path.text tag bind $node <Double-1> [namespace code [list _tkevent_open $path $node]]
+    $cmd tag bind $id <1> [namespace code [list TkeventSelect $path $node %x %y]]
+    $cmd tag bind $id <Double-1> [namespace code [list TkeventOpen $path $node]]
 
-    $path.text tag configure $node -background [_elementbg_cycle $path]
+    $cmd tag configure $id -background [ElementBackgroundCycle $path]
 
-    switch [::dom::node cget $node -nodeType] {
+    switch [$node cget -nodeType] {
 	document -
 	documentFragment {
 
-	    # Display the XML declaration
-	    if {0} {
-	    # OUCH!  Need an interface in the DOM package for this data
-	    array set nodeInfo [set $node]
-	    # XML Declaration attributes have a defined order, so can't use array directly
-	    array set xmldecl $nodeInfo(document:xmldecl)
-	    set xmldecllist [list version $xmldecl(version)]
-	    catch {lappend xmldecllist standalone $xmldecl(standalone)}
-	    catch {lappend xmldecllist encoding $xmldecl(encoding)}
-	    $path.text insert $data(insert) "<?xml[dom::Serialize:attributeList $xmldecllist]?>\n" [list $node xmldecl]
-	    set data(insert) [lindex [$path.text tag ranges $node] end]
-	}
-	    foreach childToken [::dom::node children $node] {
-		set end [_refresh $path $childToken]
-		set data(insert) $end
+	    foreach childToken [$node children] {
+		set end [RefreshNode $path $cmd $childToken]
+		dict set state $path insert $end
 	    }
 
-	    $path.text tag add $node $node $end
-	    $path.text tag configure xmldecl -elide [expr ![Widget::cget $path -showxmldecl]]
-	    $path.text tag raise xmldecl
+	    $cmd tag add $id $id $end
 	}
 
 	element {
 
 	    # Serialize the start tag
-	    $path.text insert $data(insert) <[::dom::node cget $node -nodeName] [list tags tag:start:$node] [_serialize:attributeList [array get [::dom::node cget $node -attributes]]] [list tags attrs:$node] > [list tags tag:start:$node]
+	    $cmd insert $insert <[$node cget -prefix][expr {[$node cget -prefix] != "" ? ":" : ""}][$node cget -nodeName] [list tags tag:start:$id] [SerializeAttributeList [array get [$node cget -attributes]]] [list tags attrs:$id] > [list tags tag:start:$id]
+
+	    set insert [lindex [$cmd tag ranges tag:start:$id] end]
 
 	    # Add the start tab icon
-	    $path.text image create $data(insert) -image ::domtext::starttab -align center -name tab:start:$node
-	    foreach t [list starttab tags tag:start:$node] {
-		$path.text tag add $t tab:start:$node
+	    $cmd image create $insert -image ::domtext::starttab -align center -name tab:start:$id
+	    foreach t [list starttab tags tag:start:$id] {
+		$cmd tag add $t tab:start:$id
 	    }
 
-	    set data(insert) [lindex [$path.text tag ranges tag:start:$node] end]
+	    set insert [lindex [$cmd tag ranges tag:start:$id] end]
+	    dict set state $path insert $insert
 
 	    # Serialize the content
-	    $path.text mark set content:$node $data(insert)
-	    $path.text mark gravity content:$node left
-	    foreach childToken [::dom::node children $node] {
-		set end [_refresh $path $childToken]
-		set data(insert) $end
+	    $cmd mark set content:$id $insert
+	    $cmd mark gravity content:$id left
+	    foreach childToken [$node children] {
+		set end [RefreshNode $path $cmd $childToken]
+		dict set state $path insert $end
+		set insert $end
 	    }
-	    $path.text tag add content:$node content:$node $end
+	    $cmd tag add content:$id content:$id $end
 
 	    # Serialize the end tag
-	    $path.text insert $data(insert) </[::dom::node cget $node -nodeName]> [list tags tag:end:$node]
-	    set end [lindex [$path.text tag ranges tag:end:$node] end]
+	    $cmd insert $insert </[$node cget -prefix][expr {[$node cget -prefix] != "" ? ":" : ""}][$node cget -nodeName]> [list tags tag:end:$id]
+	    set end [lindex [$cmd tag ranges tag:end:$id] end]
 	    # Add the end tab icon
-	    $path.text image create $end -image ::domtext::endtab -align center -name tab:end:$node
-	    foreach t [list endtab tags tag:end:$node] {
-		$path.text tag add $t tab:end:$node
+	    $cmd image create $end -image ::domtext::endtab -align center -name tab:end:$id
+	    foreach t [list endtab tags tag:end:$id] {
+		$cmd tag add $t tab:end:$id
 	    }
-	    set end [lindex [$path.text tag ranges tag:end:$node] end]
+	    set end [lindex [$cmd tag ranges tag:end:$id] end]
 
-	    set data(insert) $end
-	    $path.text tag add $node $node $end
+	    dict set state $path insert $end
+	    $cmd tag add $id $id $end
 
-	    $path.text tag raise starttab
-	    $path.text tag raise endtab
-	    $path.text tag configure starttab -elide [expr {[Widget::cget $path -showtag] != "tab"}]
-	    $path.text tag configure endtab -elide [expr {[Widget::cget $path -showtag] != "tab"}]
+	    $cmd tag raise starttab
+	    $cmd tag raise endtab
+	    $cmd tag configure starttab -elide [expr {[dict get $state $path showtag] != "tab"}]
+	    $cmd tag configure endtab -elide [expr {[dict get $state $path showtag] != "tab"}]
 
 	}
 
 	textNode {
-	    set text [_encode [dom::node cget $node -nodeValue]]
+	    set text [Encode [$node cget -nodeValue]]
 	    if {[string length $text]} {
-		$path.text insert $data(insert) $text $node
-		set end [lindex [$path.text tag ranges $node] 1]
-		set data(insert) $end
+		$cmd insert $insert $text $id
+		set end [lindex [$cmd tag ranges $id] 1]
+		dict set state $path insert $end
 	    } else {
-		set end $data(insert)
+		dict set state $path end $insert
 	    }
-	}
-
-	docType {
-	    array set nodeInfo [set $node]
-	    $path.text insert $data(insert) "<!DOCTYPE $nodeInfo(doctype:name)" [list $node doctypedecl]
-	    set data(insert) [lindex [$path.text tag ranges $node] end]
-
-	    if {[string length $nodeInfo(doctype:internaldtd)]} {
-		$path.text insert $data(insert) " \[$nodeInfo(doctype:internaldtd)\]" [list $node doctypedecl]
-		set data(insert) [lindex [$path.text tag ranges $node] end]
-	    }
-
-	    $path.text insert $data(insert) >\n [list $node doctypedecl]
-	    set end [lindex [$path.text tag ranges $node] end]
-	    set data(insert) $end
-	    $path.text tag configure doctypedecl -elide [expr ![Widget::cget $path -showdoctypedecl]]
-	    $path.text tag raise doctypedecl
 	}
 
 	comment {
-	    set text [::dom::node cget $node -nodeValue]
-	    $path.text insert $data(insert) <!-- [list comment markup $node] $text [list comment $node] --> [list comment markup $node]
-	    set end [lindex [$path.text tag ranges $node] 1]
-	    set data(insert) $end
+	    set text [$node cget -nodeValue]
+	    $cmd insert $insert <!-- [list comment markup $id] $text [list comment $id] --> [list comment markup $id]
+	    set end [lindex [$cmd tag ranges $id] 1]
+	    dict set state $path insert $end
 	}
 
 	entityReference {
-	    set text [::dom::node cget $node -nodeName]
-	    $path.text insert $data(insert) & [list entityreference markup $node] $text [list entityreference $node] \; [list entityreference markup $node]
-	    set end [lindex [$path.text tag ranges $node] 1]
-	    set data(insert) $end
+	    set text [$node cget -nodeName]
+	    $cmd insert $insert & [list entityreference markup $id] $text [list entityreference $id] \; [list entityreference markup $id]
+	    set end [lindex [$cmd tag ranges $id] 1]
+	    dict set state $path insert $end
 	}
 
 	processingInstruction {
-	    set text [::dom::node cget $node -nodeValue]
+	    set text [$node cget -nodeValue]
 	    if {[string length $text]} {
 		set text " $text"
 	    }
-	    $path.text insert $data(insert) "<?[::dom::node cget $node -nodeName]$text?>" $node
-	    set end [lindex [$path.text tag ranges $node] 1]
-	    set data(insert) $end
+	    $cmd insert $insert "<?[$node cget -nodeName]$text?>" $id
+	    set end [lindex [$cmd tag ranges $id] 1]
+	    dict set state $path insert $end
 	}
 
 	default {
@@ -469,7 +488,7 @@ proc domtext::_refresh {path node} {
     return $end
 }
 
-# domtext::_serialize:attributeList --
+# domtext::SerializeAttributeList --
 #
 #	Produce textual representation of an attribute list.
 #
@@ -482,7 +501,7 @@ proc domtext::_refresh {path node} {
 # Results:
 #	Returns string
 
-proc domtext::_serialize:attributeList atlist {
+proc domtext::SerializeAttributeList atlist {
 
     set result {}
     foreach {name value} $atlist {
@@ -507,7 +526,7 @@ proc domtext::_serialize:attributeList atlist {
     return $result
 }
 
-# domtext::_encode --
+# domtext::Encode --
 #
 #	Protect XML special characters
 #
@@ -519,7 +538,7 @@ proc domtext::_serialize:attributeList atlist {
 # Results:
 #	Returns string
 
-proc domtext::_encode value {
+proc domtext::Encode value {
     array set Entity {
 	$ $
 	< &lt;
@@ -529,12 +548,12 @@ proc domtext::_encode value {
 	' &apos;
     }
 
-    regsub -all {([$<>&"'])} $value {$Entity(\1)} value
+    regsub -all {([$<>&"'])} $value {$Entity(\1)} value ;# " for emacs
 
     return [subst -nocommand -nobackslash $value]
 }
 
-# domtext::_elementbg_setall --
+# domtext::ElementBackgroundSetAll --
 #
 #	Recurse node hierarchy setting element background color property
 #
@@ -545,16 +564,28 @@ proc domtext::_encode value {
 # Results:
 #	Text widget tag configured
 
-proc domtext::_elementbg_setall {path node} {
+proc domtext::ElementBackgroundSetAll {path node} {
+    variable state
 
-    $path.text tag configure $node -background [_elementbg_cycle $path]
+    if {$node == {}} {
+	return {}
+    }
 
-    switch [dom::node cget $node -nodeType] {
+    set cmd [dict get $state $path cmd]
+    if {[catch {set id [$node cget -id]}]} {
+	# node is the document
+	set node [$node cget -documentElement]
+	set id [$node cget -id]
+    }
+
+    $cmd tag configure $id -background [ElementBackgroundCycle $path]
+
+    switch [$node cget -nodeType] {
 	document -
 	documentFragment -
 	element {
-	    foreach child [dom::node children $node] {
-		_elementbg_setall $path $child
+	    foreach child [$node children] {
+		ElementBackgroundSetAll $path $child
 	    }
 	}
 	default {
@@ -564,18 +595,18 @@ proc domtext::_elementbg_setall {path node} {
 
     return {}
 }
-proc domtext::_elementbg_cycle path {
-    upvar #0 [namespace current]::$path data
+proc domtext::ElementBackgroundCycle path {
+    variable state
 
-    set list [Widget::cget $path -elementbgcolorlist]
-    set colour [lindex $list $data(nextElemBgColor)]
+    set list [dict get $state $path tag_backgrounds]
+    set colour [lindex $list [dict get $state $path nextColor]]
 
-    set data(nextElemBgColor) [expr [incr data(nextElemBgColor)] % [llength $$list]]
+    dict set state $path nextColor [expr ([dict get $state $path nextColor] + 1) % [llength $$list]]
 
     return $colour
 }
 
-# domtext::_node_inserted --
+# domtext::NodeInserted --
 #
 #	React to addition of a node
 #
@@ -586,45 +617,48 @@ proc domtext::_elementbg_cycle path {
 # Results:
 #	Display updated to reflect change to DOM structure
 
-proc domtext::_node_inserted {path evid} {
-    upvar #0 [namespace current]::$path data
+proc domtext::NodeInserted {path evid} {
+    variable state
 
     set node [dom::event cget $evid -target]
+    set id [$node cget -id]
+
+    set cmd [dict get $state $path cmd]
 
     # Remove parent's content and then render new content
-    set parent [dom::node parent $node]
-    set tags [$path.text tag ranges $parent]
+    set parent [$node parent]
+    set tags [$cmd tag ranges [$parent cget -id]]
     set start [lindex $tags 0]
     set end [lindex $tags end]
     if {[string length $start]} {
-	$path.text delete $start $end
+	$cmd delete $start $end
     } else {
 	set start end
     }
 
-    set data(insert) $start
-    set end [_refresh $path $parent]
+    dict set state $path insert $start
+    set end [Refresh $path $parent]
 
     # Restore grandparent element tags
-    set parent [::dom::node parent $parent]
+    set parent [$parent parent]
     while {[string length $parent]} {
-	set ranges [$path.text tag ranges $parent]
-	catch {eval [list $path.text] tag remove [list $parent] $ranges}
-	catch {$path.text tag add $parent [lindex $ranges 0] [lindex $ranges end]}
+	set ranges [$cmd tag ranges [$parent cget -id]]
+	catch {$cmd tag remove [$parent cget -id] {*}$ranges}
+	catch {$cmd tag add [$parent cget -id] [lindex $ranges 0] [lindex $ranges end]}
 	# Also do content tag for elements
-	if {![string compare [::dom::node cget $parent -nodeType] "element"]} {
-	    set ranges [$path.text tag ranges content:$parent]
-	    catch {eval [list $path.text] tag remove [list $parent] $ranges}
-	    catch {$path.text tag add content:$parent [lindex $ranges 0] [lindex $ranges end]}
+	if {![string compare [$parent cget -nodeType] "element"]} {
+	    set ranges [$cmd tag ranges content:[$parent cget -id]]
+	    catch {$cmd tag remove [$parent cget -id] {*}$ranges}
+	    catch {$cmd tag add content:[$parent cget -id] [lindex $ranges 0] [lindex $ranges end]}
 	}
 
-	set parent [::dom::node parent $parent]
+	set parent [$parent parent]
     }
 
     return {}
 }
 
-# domtext::_node_removed --
+# domtext::NodeRemoved --
 #
 #	React to removal of a node.
 #	This is almost identical to node insertion,
@@ -637,49 +671,51 @@ proc domtext::_node_inserted {path evid} {
 # Results:
 #	Display updated to reflect change to DOM structure
 
-proc domtext::_node_removed {path evid} {
-    upvar #0 [namespace current]::selected$path selected
+proc domtext::NodeRemoved {path evid} {
+    variable state
 
     set node [dom::event cget $evid -target]
 
-    if {[info exists selected] && ![string compare $node $selected]} {
-	unset selected
+    set cmd [dict get $state $path cmd]
+
+    if {[dict exists $state $path selected]} {
+	dict unset $state $path selected
     }
 
     # Remove parent's content and then render new content
     set parent [dom::event cget $evid -relatedNode]
-    set tags [$path.text tag ranges $parent]
+    set tags [$cmd tag ranges [$parent cget -id]]
     set start [lindex $tags 0]
     set end [lindex $tags end]
     if {[string length $start]} {
-	$path.text delete $start $end
+	$cmd delete $start $end
     } else {
 	set start end
     }
 
-    set data(insert) $start
-    set end [_refresh $path $parent]
+    dict set state $path insert $start
+    set end [Refresh $path $parent]
 
     # Restore grandparent element tags
-    set parent [::dom::node parent $parent]
+    set parent [$parent parent]
     while {[string length $parent]} {
-	set ranges [$path.text tag ranges $parent]
-	catch {eval [list $path.text] tag remove [list $parent] $ranges}
-	catch {$path.text tag add $parent [lindex $ranges 0] [lindex $ranges end]}
+	set ranges [$cmd tag ranges [$parent cget -id]]
+	catch {$cmd tag remove [$parent cget -id] {*}$ranges}
+	catch {$cmd tag add [$parent cget -id] [lindex $ranges 0] [lindex $ranges end]}
 	# Also do content tag for elements
 	if {![string compare [::dom::node cget $parent -nodeType] "element"]} {
-	    set ranges [$path.text tag ranges content:$parent]
-	    catch {eval [list $path.text] tag remove [list $parent] $ranges}
-	    catch {$path.text tag add content:$parent [lindex $ranges 0] [lindex $ranges end]}
+	    set ranges [$cmd tag ranges content:[$parent cget -id]]
+	    catch {$cmd tag remove [$parent cget -id] {*}$ranges}
+	    catch {$cmd tag add content:[$parent cget -id] [lindex $ranges 0] [lindex $ranges end]}
 	}
 
-	set parent [::dom::node parent $parent]
+	set parent [$parent parent]
     }
 
     return {}
 }
 
-# domtext::_node_attr_modified --
+# domtext::NodeAttrModified --
 #
 #	React to a change in the attribute list for a node
 #
@@ -690,35 +726,40 @@ proc domtext::_node_removed {path evid} {
 # Results:
 #	Display updated to reflect change to DOM structure
 
-proc domtext::_node_attr_modified {path evid} {
+proc domtext::NodeAttrModified {path evid} {
+    variable state
 
     set node [dom::event cget $evid -target]
+    set id [$node cget -id]
 
-    set tags [$path.text tag ranges attrs:$node]
+    set cmd [dict get $state $path cmd]
+
+    set tags [$cmd tag ranges attrs:$id]
     if {[llength $tags]} {
 
 	# Remove previously defined attributes
 
 	foreach {start end} $tags break
-	set existingTags [$path.text tag names $start]
-	$path.text delete $start $end
-	$path.text tag delete attrs:$node
+	set existingTags [$cmd tag names $start]
+	$cmd delete $start $end
+	$cmd tag delete attrs:$id
 
     } else {
-	set tagStartEnd [lindex [$path.text tag ranges tag:start:$node] end]
-	set start [$path.text index "$tagStartEnd - 1 char"]
-	set existingTags [$path.text tag names $start]
+	set tagStartEnd [lindex [$cmd tag ranges tag:start:$id] end]
+	set start [$cmd index "$tagStartEnd - 1 char"]
+	set existingTags [$cmd tag names $start]
     }
 
     # Replace with current attributes
 
-    lappend existingTags attrs:$node
-    $path.text insert $start [::dom::Serialize:attributeList [array get [::dom::node cget $node -attributes]]] $existingTags
+    lappend existingTags attrs:$id
+    # TODO: make sure this works with TclDOM/libxml2
+    $cmd insert $start [SerializeAttributeList [array get [::dom::node cget $node -attributes]]] $existingTags
 
     return {}
 }
 
-# domtext::_node_attr_removed --
+# domtext::NodeAttrRemoved --
 #
 #	React to a change in the attribute list for a node
 #
@@ -729,11 +770,11 @@ proc domtext::_node_attr_modified {path evid} {
 # Results:
 #	Display updated to reflect change to DOM structure
 
-proc domtext::_node_attr_removed {path evid} {
-    _node_attr_modified $path $evid
+proc domtext::NodeAttrRemoved {path evid} {
+    NodeAttrModified $path $evid
 }
 
-# domtext::_node_pcdata_modified --
+# domtext::NodePCDATAModified --
 #
 #	React to a change in character data
 #
@@ -744,32 +785,36 @@ proc domtext::_node_attr_removed {path evid} {
 # Results:
 #	Display updated to reflect change to DOM structure
 
-proc domtext::_node_pcdata_modified {path evid} {
+proc domtext::NodePCDATAModified {path evid} {
+    variable state
 
     set node [dom::event cget $evid -target]
+    set id [$node cget -id]
 
-    if {[string compare [dom::node cget $node -nodeType] "textNode"]} {
+    set cmd [dict get $state $path cmd]
+
+    if {[string compare [$node cget -nodeType] "textNode"]} {
 	return -code error "node is not a text node"
     }
 
     # Remember where the insertion point is
-    set insert [$path.text index insert]
+    set insert [$cmd index insert]
 
     # Remove previous text
-    set ranges [$path.text tag ranges $node]
-    set tags [$path.text tag names [lindex $ranges 0]]
-    eval [list $path.text] delete $ranges
+    set ranges [$cmd tag ranges $id]
+    set tags [$cmd tag names [lindex $ranges 0]]
+    $cmd delete {*}$ranges
 
     # Replace with new text
-    $path.text insert [lindex $ranges 0] [dom::event cget $evid -newValue] $tags
+    $cmd insert [lindex $ranges 0] [dom::event cget $evid -newValue] $tags
 
     # Restore insertion point
-    $path.text mark set insert $insert
+    $cmd mark set insert $insert
 
     return {}
 }
 
-# domtext::_node_selected --
+# domtext::NodeSelected --
 #
 #	A node has been selected.
 #
@@ -780,25 +825,28 @@ proc domtext::_node_pcdata_modified {path evid} {
 # Results:
 #	Node's text is selected
 
-proc domtext::_node_selected {path evid} {
-    upvar #0 [namespace current]::selected$path selected
+proc domtext::NodeSelected {path evid} {
+    variable state
 
     set node [dom::event cget $evid -target]
-    set selected $node
+    set id [$node cget -id]
+    dict set state $path selected $node
 
-    catch {eval [list $path.text] tag remove sel [$path.text tag ranges sel]}
+    set cmd [dict get $state $path cmd]
 
-    set ranges [$path.text tag ranges $node]
+    catch {$cmd tag remove sel {*}[$cmd tag ranges sel]}
+
+    set ranges [$cmd tag ranges $id]
     if {[llength $ranges]} {
-	eval [list $path.text] tag add sel $ranges
+	$cmd tag add sel {*}$ranges
+	$cmd mark set insert [lindex $ranges end]
+	$cmd see [lindex $ranges 0]
     }
-
-    $path.text mark set insert [lindex $ranges end]
 
     return {}
 }
 
-# domtext::_tkevent_override --
+# domtext::TkeventOverride --
 #
 #	Certain Text widget class bindings must be prevented from firing
 #
@@ -810,11 +858,11 @@ proc domtext::_node_selected {path evid} {
 # Results:
 #	Return break error code
 
-proc domtext::_tkevent_override {w x y} {
+proc domtext::TkeventOverride {w x y} {
     return -code break
 }
 
-# domtext::_tkevent_select --
+# domtext::TkeventSelect --
 #
 #	Single click.  We only want the highest priority tag to fire.
 #
@@ -827,22 +875,30 @@ proc domtext::_tkevent_override {w x y} {
 # Results:
 #	DOM event posted
 
-proc domtext::_tkevent_select {path node x y} {
+proc domtext::TkeventSelect {path node x y} {
+    variable state
     variable tkeventid
+
+    set cmd [dict get $state $path cmd]
 
     catch {after cancel $tkeventid}
     set tkeventid [after idle "
     dom::event postUIEvent [list $node] DOMActivate -detail 1
     dom::event postMouseEvent [list $node] click -detail 1
-    [namespace current]::_tkevent_select_setinsert [list $path] [list $node] [::tk::TextClosestGap $path.text $x $y]
+    [namespace current]::TkeventSelectSetinsert [list $path] [list $node] [tk::TextClosestGap $cmd $x $y]
 "]
     return {}
 }
 
 # Helper routine for above proc
 
-proc domtext::_tkevent_select_setinsert {path node idx} {
-    switch [::dom::node cget $node -nodeType] {
+proc domtext::TkeventSelectSetinsert {path node idx} {
+    variable state
+
+    set cmd [dict get $state $path cmd]
+    set id [$node cget -id]
+
+    switch [$node cget -nodeType] {
 	textNode {
 	    # No need to change where the insertion point is going
 	}
@@ -850,27 +906,28 @@ proc domtext::_tkevent_select_setinsert {path node idx} {
 	    # Set the insertion point to the end of the first
 	    # child textNode, or if none to immediately following
 	    # the start tag.
-	    set fc [::dom::node cget $node -firstChild]
-	    if {[string length $fc] && [::dom::node cget $fc -nodeType] == "textNode"} {
-		set idx [lindex [$path.text tag ranges $fc] end]
+	    set fc [$node cget -firstChild]
+	    if {[string length $fc] && [$fc cget -nodeType] == "textNode"} {
+		set idx [lindex [$cmd tag ranges [$fc cget -id]] end]
 	    } else {
-		set idx [lindex [$path.text tag ranges tag:start:$node] end]
+		set idx [lindex [$cmd tag ranges tag:start:$id] end]
 	    }
 	}
 	default {
 	    # Set the insertion point following the node
-	    set idx [lindex [$path.text tag ranges $node] end]
+	    set idx [lindex [$cmd tag ranges $id] end]
 	}
     }
 
-    $path.text mark set insert $idx
-    $path.text mark set anchor insert
-    focus $path.text
+    $cmd mark set insert $idx
+    dict set state $path insert $idx
+    $cmd mark set anchor insert
+    focus $path
 
     return {}
 }
 
-# domtext::_tkevent_open --
+# domtext::TkeventOpen --
 #
 #	Double click
 #
@@ -881,7 +938,7 @@ proc domtext::_tkevent_select_setinsert {path node idx} {
 # Results:
 #	DOM event posted
 
-proc domtext::_tkevent_open {path node} {
+proc domtext::TkeventOpen {path node} {
     variable tkeventid
 
     catch {after cancel $tkeventid}
@@ -892,7 +949,7 @@ proc domtext::_tkevent_open {path node} {
     return {}
 }
 
-# domtext::_key_select --
+# domtext::KeySelect --
 #
 #	Select a node in which a key event has occurred.
 #
@@ -903,32 +960,30 @@ proc domtext::_tkevent_open {path node} {
 # Results:
 #	Appropriate node is selected.  Returns node id.
 
-proc domtext::_key_select {path spec} {
-    # Once the Text widget gets the focus, it receives the event.
-    # We compensate for this here
-    if {[winfo class $path] == "Text"} {
-	set path [winfo parent $path]
-    }
-    upvar #0 [namespace current]::selected$path selected
+proc domtext::KeySelect {path spec} {
+    variable state
 
-    set root [Widget::cget $path -rootnode]
+    set root [dict get $state $path rootnode]
+    set cmd [dict get $state $path cmd]
+    set selected $root
+    catch {set selected [dict get $state $path selected]}
 
     # If selected node is a textNode move around the text itself
     # Otherwise markup has been selected.
     # Move around the nodes
 
-    switch -glob [dom::node cget $selected -nodeType],$spec {
+    switch -glob [$selected cget -nodeType],$spec {
 	textNode,<Key-Up> {
-	    set ranges [$path.text tag ranges $selected]
+	    set ranges [$cmd tag ranges $selected]
 	    foreach {line char} [split [lindex $ranges 0] .] break
-	    set index [$path.text index insert]
+	    set index [$cmd index insert]
 	    foreach {iline ichar} [split [lindex $index 0] .] break
 	    if {$line == $iline} {
 		set new [dom::node parent $selected]
 	    } else {
-		::tk::TextSetCursor $path.text [::tk::TextUpDownLine $path.text -1]
+		::tk::TextSetCursor $cmd [::tk::TextUpDownLine $cmd -1]
 		# The insertion point may now be in another node
-		set newnode [_insert_to_node $path]
+		set newnode [InsertToNode $path]
 		if {[string compare $newnode $selected]} {
 		    dom::event postUIEvent $newnode DOMActivate -detail 1
 		}
@@ -936,17 +991,17 @@ proc domtext::_key_select {path spec} {
 	    }
 	}
 	textNode,<Key-Down> {
-	    set ranges [$path.text tag ranges $selected]
+	    set ranges [$cmd tag ranges $selected]
 	    foreach {line char} [split [lindex $ranges end] .] break
-	    set index [$path.text index insert]
+	    set index [$cmd index insert]
 	    foreach {iline ichar} [split [lindex $index 0] .] break
 	    if {$line == $iline} {
 		bell
 		return {}
 	    } else {
-		::tk::TextSetCursor $path.text [::tk::TextUpDownLine $path.text 1]
+		::tk::TextSetCursor $cmd [::tk::TextUpDownLine $cmd 1]
 		# The insertion point may now be in another node
-		set newnode [_insert_to_node $path]
+		set newnode [InsertToNode $path]
 		if {[string compare $newnode $selected]} {
 		    dom::event postUIEvent $newnode DOMActivate -detail 1
 		}
@@ -954,28 +1009,28 @@ proc domtext::_key_select {path spec} {
 	    }
 	}
 	textNode,<Key-Left> {
-	    set ranges [$path.text tag ranges $selected]
-	    set index [$path.text index insert]
-	    if {[$path.text compare $index == [lindex $ranges 0]]} {
-		set new [dom::node cget $selected -previousSibling]
+	    set ranges [$cmd tag ranges $selected]
+	    set index [$cmd index insert]
+	    if {[$cmd compare $index == [lindex $ranges 0]]} {
+		set new [$selected cget -previousSibling]
 		if {![string length $new]} {
 		    set new [dom::node parent $selected]
 		}
 	    } else {
-		::tk::TextSetCursor $path.text insert-1c
+		::tk::TextSetCursor $cmd insert-1c
 		return -code break
 	    }
 	}
 	textNode,<Key-Right> {
-	    set ranges [$path.text tag ranges $selected]
-	    set index [$path.text index insert]
-	    if {[$path.text compare $index == [lindex $ranges end]]} {
-		set new [dom::node cget $selected -nextSibling]
+	    set ranges [$cmd tag ranges $selected]
+	    set index [$cmd index insert]
+	    if {[$cmd compare $index == [lindex $ranges end]]} {
+		set new [$selected cget -nextSibling]
 		if {![string length $new]} {
 		    set new [dom::node parent $selected]
 		}
 	    } else {
-		::tk::TextSetCursor $path.text insert+1c
+		::tk::TextSetCursor $cmd insert+1c
 		return -code break
 	    }
 	}
@@ -984,7 +1039,7 @@ proc domtext::_key_select {path spec} {
 	    set new [dom::node parent $selected]
 	}
 	*,<Key-Down>	{
-	    set new [dom::node cget $selected -firstChild]
+	    set new [$selected cget -firstChild]
 	    if {![string length $new]} {
 		bell
 		return {}
@@ -995,13 +1050,13 @@ proc domtext::_key_select {path spec} {
 		bell
 		return {}
 	    }
-	    set new [dom::node cget $selected -previousSibling]
+	    set new [$selected cget -previousSibling]
 	    if {![string length $new]} {
 		set new [dom::node parent $selected]
 	    }
 	}
 	*,<Key-Right>	{
-	    set new [dom::node cget $selected -nextSibling]
+	    set new [$selected cget -nextSibling]
 	    if {![string length $new]} {
 		set new [dom::node parent $selected]
 	    }
@@ -1016,7 +1071,7 @@ proc domtext::_key_select {path spec} {
     return -code break
 }
 
-# domtext::_tkevent_filter_* --
+# domtext::TkeventFilter_* --
 #
 #	React to editing events to keep the DOM structure
 #	synchronised
@@ -1029,19 +1084,15 @@ proc domtext::_key_select {path spec} {
 #	Either event is blocked or passed through to the Text class binding
 #	DOM events may be generated if text is inserted or deleted
 
-proc domtext::_tkevent_filter_<Key> {path detail} {
-    # Once the Text widget gets the focus, it receives the event.
-    # We compensate for this here
-    set code ok
-    if {[winfo class $path] == "Text"} {
-	set path [winfo parent $path]
-	set code break
-    }
-    upvar #0 [namespace current]::selected$path selected
+proc domtext::TkeventFilter_<Key> {path detail} {
+    variable state
 
-    set index [$path.text index insert]
+    set cmd [dict get $state $path cmd]
+    set selected [dict get $state $path selected]
 
-    $path.text tag remove sel 0.0 end
+    set index [$cmd index insert]
+
+    $cmd tag remove sel 0.0 end
 
     # Take action depending upon which node type the event has occurred.
     # Possibilities are:
@@ -1052,15 +1103,15 @@ proc domtext::_tkevent_filter_<Key> {path detail} {
     #	Document Type Declaration	ignore
     #	XML Declaration			ignore
 
-    switch [dom::node cget $selected -nodeType] {
+    switch [$selected cget -nodeType] {
 	element {
-	    set child [dom::node cget $selected -firstChild]
+	    set child [$selected cget -firstChild]
 	    if {[string length $child]} {
-		if {[dom::node cget $child -nodeType] == "textNode"} {
+		if {[$child cget -nodeType] == "textNode"} {
 		    dom::event postUIEvent $child DOMActivate -detail 1
-		    dom::node configure $child -nodeValue [dom::node cget $child -nodeValue]$detail
-		    ::tk::TextSetCursor $path.text insert+1c
-		    focus $path.text
+		    dom::node configure $child -nodeValue [$child cget -nodeValue]$detail
+		    ::tk::TextSetCursor $cmd insert+1c
+		    focus $path
 		    return -code $code {}
 		} else {
 		    bell
@@ -1071,10 +1122,10 @@ proc domtext::_tkevent_filter_<Key> {path detail} {
 		dom::event postUIEvent $child DOMActivate -detail 1
 		# When we return the new text node will have been
 		# inserted into the Text widget
-		set end [lindex [$path.text tag ranges $child] 1]
-		$path.text mark set insert $end
-		$path.text tag remove sel 0.0 end
-		focus $path.text
+		set end [lindex [$cmd tag ranges $child] 1]
+		$cmd mark set insert $end
+		$cmd tag remove sel 0.0 end
+		focus $path
 		return -code $code {}
 	    }
 	}
@@ -1085,12 +1136,12 @@ proc domtext::_tkevent_filter_<Key> {path detail} {
 	    # to do the insertion then take all of the text and
 	    # set that as the node's value
 
-	    $path.text insert insert $detail $selected
-	    $path.text see insert
-	    focus $path.text
-	    set ranges [$path.text tag ranges $selected]
-	    set newvalue [$path.text get [lindex $ranges 0] [lindex $ranges end]]
-	    dom::node configure $selected -nodeValue $newvalue
+	    $cmd insert insert $detail $selected
+	    $cmd see insert
+	    focus $path
+	    set ranges [$cmd tag ranges $selected]
+	    set newvalue [$cmd get [lindex $ranges 0] [lindex $ranges end]]
+	    $selected configure -nodeValue $newvalue
 	    return -code $code {}
 
 	}
@@ -1103,42 +1154,40 @@ proc domtext::_tkevent_filter_<Key> {path detail} {
     return -code $code {}
 }
 
-proc domtext::_tkevent_filter_<Key-Return> {path detail} {
-    set code [catch {_tkevent_filter_<Key> $path \n} msg]
+proc domtext::TkeventFilter_<Key-Return> {path detail} {
+    set code [catch {TkeventFilter_<Key> $path \n} msg]
     return -code $code $msg
 }
-proc domtext::_tkevent_filter_<Control-Key-i> {path detail} {
-    set code [catch {_tkevent_filter_<Key> $path \t} msg]
+proc domtext::TkeventFilter_<Control-Key-i> {path detail} {
+    set code [catch {TkeventFilter_<Key> $path \t} msg]
     return -code $code $msg
 }
 # Don't support transposition (yet)
-proc domtext::_tkevent_filter_<Control-Key-t> {path detail} {
+proc domtext::TkeventFilter_<Control-Key-t> {path detail} {
     return -code break
 }
 
-proc domtext::_tkevent_filter_<Control-Key-h> {path detail} {
-    set code [catch {_tkevent_filter_<Key-Backspace> $path $detail} msg]
+proc domtext::TkeventFilter_<Control-Key-h> {path detail} {
+    set code [catch {TkeventFilter_<Key-Backspace> $path $detail} msg]
     return -code $code $msg
 }
-proc domtext::_tkevent_filter_<Key-BackSpace> {path detail} {
-    # Once the Text widget gets the focus, it receives the event.
-    # We compensate for this here
-    if {[winfo class $path] == "Text"} {
-	set path [winfo parent $path]
-    }
-    upvar #0 [namespace current]::selected$path selected
+proc domtext::TkeventFilter_<Key-BackSpace> {path detail} {
+    variable state
 
-    switch [dom::node cget $selected -nodeType] {
+    set cmd [dict get $state $path cmd]
+    set selected [dict get $state $path selected]
+
+    switch [$selected cget -nodeType] {
 	textNode {
 	    # If we're at the beginning of the text node stop here
-	    set ranges [$path.text tag ranges $selected]
-	    if {![llength $ranges] || [$path.text compare insert <= [lindex $ranges 0]]} {
+	    set ranges [$cmd tag ranges $selected]
+	    if {![llength $ranges] || [$cmd compare insert <= [lindex $ranges 0]]} {
 		bell
 		return -code break
 	    }
 	}
 	default {
-	    switch [tk_messageBox -parent [winfo toplevel $path] -title [mc {Confirm Delete Node}] -message [format [mc {Are you sure you want to delete a node of type %s?}] [dom::node cget $selected -nodeType]] -type okcancel] {
+	    switch [tk_messageBox -parent [winfo toplevel $path] -title [mc {Confirm Delete Node}] -message [format [mc {Are you sure you want to delete a node of type %s?}] [$selected cget -nodeType]] -type okcancel] {
 		ok {
 		    dom::node removeNode [dom::node parent $selected] $selected
 		}
@@ -1149,32 +1198,30 @@ proc domtext::_tkevent_filter_<Key-BackSpace> {path detail} {
 	}
     }
 
-    $path.text delete insert-1c
-    $path.text see insert
+    $cmd delete insert-1c
+    $cmd see insert
 
-    _tkevent_filter_update $path
+    TkeventFilterUpdate $path
 
     return -code break
 }
-proc domtext::_tkevent_filter_<Key-Delete> {path detail} {
-    # Once the Text widget gets the focus, it receives the event.
-    # We compensate for this here
-    if {[winfo class $path] == "Text"} {
-	set path [winfo parent $path]
-    }
-    upvar #0 [namespace current]::selected$path selected
+proc domtext::TkeventFilter_<Key-Delete> {path detail} {
+    variable state
 
-    switch [dom::node cget $selected -nodeType] {
+    set cmd [dict get $state $path cmd]
+    set selected [dict get $state $path selected]
+
+    switch [$selected cget -nodeType] {
 	textNode {
 	    # If we're at the beginning of the text node stop here
-	    set ranges [$path.text tag ranges $selected]
-	    if {[$path.text compare insert >= [lindex $ranges end]]} {
+	    set ranges [$cmd tag ranges $selected]
+	    if {[$cmd compare insert >= [lindex $ranges end]]} {
 		bell
 		return -code break
 	    }
 	}
 	default {
-	    switch [tk_messageBox -parent [winfo toplevel $path] -title [mc {Confirm Delete Node}] -message [format [mc {Are you sure you want to delete a node of type %s?}] [dom::node cget $selected -nodeType]] -type okcancel] {
+	    switch [tk_messageBox -parent [winfo toplevel $path] -title [mc {Confirm Delete Node}] -message [format [mc {Are you sure you want to delete a node of type %s?}] [$selected cget -nodeType]] -type okcancel] {
 		ok {
 		    dom::node removeNode [dom::node parent $selected] $selected
 		}
@@ -1185,24 +1232,27 @@ proc domtext::_tkevent_filter_<Key-Delete> {path detail} {
 	}
     }
 
-    $path.text delete insert
-    $path.text see insert
+    $cmd delete insert
+    $cmd see insert
 
-    _tkevent_filter_update $path
+    TkeventFilterUpdate $path
 
     return -code break
 }
-proc domtext::_tkevent_filter_update path {
-    upvar #0 [namespace current]::selected$path selected
+proc domtext::TkeventFilterUpdate path {
+    variable state
+
+    set cmd [dict get $state $path cmd]
+    set selected [dict get $state $path selected]
 
     # Now update the DOM node's value
 
-    set ranges [$path.text tag ranges $selected]
+    set ranges [$cmd tag ranges $selected]
 
     # If all text has been deleted then remove the node
     if {[llength $ranges]} {
-	set newtext [$path.text get [lindex $ranges 0] [lindex $ranges end]]
-	dom::node configure $selected -nodeValue $newtext
+	set newtext [$cmd get [lindex $ranges 0] [lindex $ranges end]]
+	$selected configure -nodeValue $newtext
     } else {
 	set parent [dom::node parent $selected]
 	dom::node removeNode [dom::node parent $selected] $selected
@@ -1217,21 +1267,21 @@ proc domtext::_tkevent_filter_update path {
 # This will delete from the insertion point to the end of the line
 # or text node, whichever is shorter
 # TODO: implement this
-proc domtext::_tkevent_filter_<Control-Key-k> {path detail} {
+proc domtext::TkeventFilter_<Control-Key-k> {path detail} {
     return -code break
 }
 # TODO: this will delete the word to the left of the insertion point
 # (only within the text node)
-proc domtext::_tkevent_filter_<Meta-Key-Delete> {path detail} {
+proc domtext::TkeventFilter_<Meta-Key-Delete> {path detail} {
     return -code break
 }
-proc domtext::_tkevent_filter_<Meta-Key-BackSpace> {path detail} {
-    _tkevent_filter_<Meta-Key-Delete> $path $detail
+proc domtext::TkeventFilter_<Meta-Key-BackSpace> {path detail} {
+    TkeventFilter_<Meta-Key-Delete> $path $detail
 }
 
 ### Utilities
 
-# domtext::_insert_to_node --
+# domtext::InsertToNode --
 #
 #	Finds the DOM node for the insertion point
 #
@@ -1241,8 +1291,12 @@ proc domtext::_tkevent_filter_<Meta-Key-BackSpace> {path detail} {
 # Results:
 #	Returns DOM token
 
-proc domtext::_insert_to_node path {
-    set tags [$path.text tag names insert]
+proc domtext::InsertToNode path {
+    variable state
+
+    set cmd [dict get $state $path cmd]
+
+    set tags [$cmd tag names insert]
     set newnode [lindex $tags end]
     while {![dom::DOMImplementation isNode $newnode]} {
 	set tags [lreplace $tags end end]

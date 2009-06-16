@@ -1,7 +1,6 @@
 // !$*UTF8*$!
 {
 	0867D690FE84028FC02AAC07 /* Project object */ = {
-		activeArchitecture = i386;
 		activeBuildConfigurationName = Release;
 		activeTarget = 8DC2EF4F0486A6940098B216 /* Tclxml */;
 		addToTargets = (
@@ -83,8 +82,8 @@
 					PBXFileDataSource_Warnings_ColumnID,
 				);
 			};
-			PBXPerProjectTemplateStateSaveDate = 249196867;
-			PBXWorkspaceStateSaveDate = 249196867;
+			PBXPerProjectTemplateStateSaveDate = 264906051;
+			PBXWorkspaceStateSaveDate = 264906051;
 		};
 		sourceControlManager = AA68C5700C8FA6C900D12438 /* Source Control */;
 		userBuildSettings = {
@@ -139,8 +138,9 @@
 	};
 	AA68C5F20C90332A00D12438 /* docObj.c */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {738, 25662}}";
-			sepNavSelRange = "{6609, 0}";
+			sepNavIntBoundsRect = "{{0, 0}, {686, 27272}}";
+			sepNavSelRange = "{65905, 0}";
+			sepNavVisRange = "{14065, 372}";
 			sepNavVisRect = "{{0, 3240}, {738, 647}}";
 			sepNavWindowFrame = "{{28, 28}, {777, 776}}";
 		};
@@ -163,8 +163,9 @@
 	};
 	AA68C5FA0C90337C00D12438 /* tcldom-libxml2.c */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {1664, 100394}}";
-			sepNavSelRange = "{182528, 7}";
+			sepNavIntBoundsRect = "{{0, 0}, {476, 106386}}";
+			sepNavSelRange = "{197499, 0}";
+			sepNavVisRange = "{0, 0}";
 			sepNavVisRect = "{{0, 96312}, {738, 647}}";
 			sepNavWindowFrame = "{{40, 30}, {777, 776}}";
 		};
@@ -179,8 +180,9 @@
 	};
 	AA68C5FF0C90339C00D12438 /* tcldom-libxml2.h */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {738, 3164}}";
-			sepNavSelRange = "{5523, 0}";
+			sepNavIntBoundsRect = "{{0, 0}, {476, 3808}}";
+			sepNavSelRange = "{3291, 48}";
+			sepNavVisRange = "{0, 0}";
 			sepNavVisRect = "{{0, 2419}, {738, 647}}";
 			sepNavWindowFrame = "{{501, 4}, {777, 776}}";
 		};
@@ -195,8 +197,9 @@
 	};
 	AA68C6060C9033E300D12438 /* tclxslt-libxslt.c */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {1274, 26222}}";
-			sepNavSelRange = "{28375, 7}";
+			sepNavIntBoundsRect = "{{0, 0}, {852, 37618}}";
+			sepNavSelRange = "{59785, 141}";
+			sepNavVisRange = "{59628, 440}";
 			sepNavVisRect = "{{0, 13978}, {738, 647}}";
 			sepNavWindowFrame = "{{54, 33}, {777, 776}}";
 		};

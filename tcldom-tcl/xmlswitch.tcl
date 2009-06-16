@@ -5,7 +5,7 @@
 #	the document may be specified using XPath location paths,
 #	and these will trigger Tcl scripts when matched.
 #
-# Copyright (c) 2008 Explain
+# Copyright (c) 2008-2009 Explain
 # http://www.explain.com.au/
 # Copyright (c) 2000-2003 Zveno Pty Ltd
 # http://www.zveno.com/
@@ -15,12 +15,12 @@
 #
 # $Id: xmlswitch.tcl,v 1.6 2003/12/09 04:56:43 balls Exp $
 
-package provide xmlswitch 3.2
+package provide xmlswitch 3.3
 
 # We need the xml, dom and xpath packages
 
-package require xml 3.2
-package require dom 3.2
+package require xml 3.3
+package require dom 3.3
 package require xpath 1.0
 
 namespace eval xmlswitch {

@@ -4,7 +4,7 @@
 #	class support found in ../tclxml.c.  It is only used
 #	when the C implementation is not installed (for some reason).
 #
-# Copyright (c) 2005 by Explain.
+# Copyright (c) 2005-2009 by Explain.
 # http://www.explain.com.au/
 # Copyright (c) 2000-2004 Zveno Pty Ltd
 # http://www.zveno.com/
@@ -14,7 +14,7 @@
 #
 # $Id: xml__tcl.tcl,v 1.15.2.1 2005/12/28 06:49:51 balls Exp $
 
-package provide xml::tcl 3.2
+package provide xml::tcl 3.3
 
 namespace eval xml {
     namespace export configure parser parserclass

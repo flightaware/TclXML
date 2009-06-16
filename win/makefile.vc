@@ -1,5 +1,9 @@
 # makefile.vc --                                               -*- Makefile -*-
 #
+# Makefile for TclXML
+#
+# Copyright (c) 2009 Explain
+#
 # Microsoft Visual C++ makefile for use with nmake.exe v1.62+ (VC++ 5.0+)
 #
 # This makefile is based upon the Tcl 8.4 Makefile.vc and modified to 
@@ -15,17 +19,20 @@
 # Copyright (c) 1998-2000 Ajuba Solutions.
 # Copyright (c) 2001 ActiveState Corporation.
 # Copyright (c) 2001-2002 David Gravereaux.
-# Copyright (c) 2003 Pat Thoyts
-# Copyright (c) 2004 Zveno Pty Ltd
+# Copyright (c) 2003-2006 Pat Thoyts
 #
 #-------------------------------------------------------------------------
-# RCS: @(#)$Id: makefile.vc,v 1.9 2004/10/24 08:09:11 balls Exp $
+# RCS: @(#)$Id: makefile.vc,v 1.10 2008/06/18 11:01:39 patthoyts Exp $
 #-------------------------------------------------------------------------
 
-!if "$(MSVCDIR)" == ""
+# Check to see we are configured to build with MSVC (MSDEVDIR or MSVCDIR)
+# or with the MS Platform SDK (MSSDK). Visual Studio .NET 2003 and 2005 define
+# VCINSTALLDIR instead. The MSVC Toolkit release defines yet another.
+!if !defined(MSDEVDIR) && !defined(MSVCDIR) && !defined(MSSDK) && !defined(VCINSTALLDIR) && !defined(VCToolkitInstallDir)
 MSG = ^
-You will need to run vcvars32.bat from Developer Studio, first, to setup^
-the environment.  Jump to this line to read the new instructions.
+You need to run vcvars32.bat from Developer Studio or setenv.bat from the^
+Platform SDK first to setup the environment.  Jump to this line to read^
+the build instructions.
 !error $(MSG)
 !endif
 
@@ -73,7 +80,7 @@ the environment.  Jump to this line to read the new instructions.
 #		staticpkg = Effects the static option only to switch
 #			   tclshXX.exe to have the dde and reg extension linked
 #			   inside it.
-#		threads =  Turns on full multithreading support.
+#		nothreads = Turns off multithreading support (not recommended)
 #		thrdalloc = Use the thread allocator (shared global free pool).
 #		symbols =  Adds symbols for step debugging.
 #		profile =  Adds profiling hooks.  Map file is assumed.
@@ -89,11 +96,12 @@ the environment.  Jump to this line to read the new instructions.
 #		memdbg   = Enables the debugging memory allocator.
 #		compdbg  = Enables byte compilation logging.
 #
-#	MACHINE=(IX86|IA64|ALPHA)
+#	MACHINE=(IX86|IA64|ALPHA|AMD64)
 #		Set the machine type used for the compiler, linker, and
 #		resource compiler.  This hook is needed to tell the tools
 #		when alternate platforms are requested.  IX86 is the default
-#		when not specified.
+#		when not specified. If the CPU environment variable has been
+#		set (ie: recent Platform SDK) then MACHINE is set from CPU.
 #
 #	TMP_DIR=<path>
 #	OUT_DIR=<path>
@@ -155,37 +163,23 @@ Please `cd` to its location first.
 #-------------------------------------------------------------------------
 
 PROJECT = Tclxml
+
 !include "rules.vc"
 
-DOTVERSION      = 3.1
+DOTVERSION      = 3.3
 VERSION         = $(DOTVERSION:.=)
 STUBPREFIX      = $(PROJECT)stub
 
-#-- Use this line for VC++ 6.0
-#WSOCKLIB = "C:\Program Files\Microsoft Visual Studio\VC98\Lib\WSOCK32.LIB"
-#-- Use this line for VC++ .NET 2003
-WSOCKLIB = "C:\Program Files\Microsoft Visual Studio .NET 2003\Vc7\PlatformSDK\Lib\WSOCK32.LIB"
-
 DLLOBJS = \
-	$(TMP_DIR)\tclxml.obj
-PRJSTUBOBJS = \
-	$(TMP_DIR)\tclxmlStubInit.obj \
-	$(TMP_DIR)\tclxmlStubLib.obj
-EXPATDLLOBJS = \
-	$(TMP_DIR)\tclexpat.obj \
-	$(TMP_DIR)\xmltok.obj \
-	$(TMP_DIR)\xmlrole.obj \
-	$(TMP_DIR)\xmlwf.obj \
-	$(TMP_DIR)\xmlfile.obj \
-	$(TMP_DIR)\codepage.obj \
-	$(TMP_DIR)\hashtable.obj \
-	$(TMP_DIR)\win32filemap.obj \
-	$(TMP_DIR)\xmlparse.obj
-LIBXML2DLLOBJS = \
-	$(TMP_DIR)\tcllibxml2.obj \
-	$(TMP_DIR)\docObj.obj
-LIBXML2STUBOBJS = \
-	$(TMP_DIR)\tcllibxml2StubInit.obj
+	$(TMP_DIR)\tclxml.obj \
+	$(TMP_DIR)\tclxml-libxml2.obj \
+	$(TMP_DIR)\tcldom-libxml2.obj \
+	$(TMP_DIR)\tclxslt-libxslt.obj \
+	$(TMP_DIR)\docObj.obj \
+	$(TMP_DIR)\nodeObj.obj \
+!if !$(STATIC_BUILD)
+	$(TMP_DIR)\tclxml.res
+!endif
 
 #-------------------------------------------------------------------------
 # Target names and paths ( shouldn't need changing )
@@ -201,44 +195,21 @@ PRJLIB		= $(OUT_DIR)\$(PRJLIBNAME)
 PRJSTUBLIBNAME	= $(STUBPREFIX)$(VERSION).lib
 PRJSTUBLIB	= $(OUT_DIR)\$(PRJSTUBLIBNAME)
 
-EXPATIMPLIB     = $(OUT_DIR)\expat$(VERSION)$(SUFX).lib
-EXPATLIBNAME    = expat$(VERSION)$(SUFX).$(EXT)
-EXPATLIB        = $(OUT_DIR)\$(EXPATLIBNAME)
-
-EXPATSTUBLIBNAME = expatstub$(VERSION).lib
-EXPATSTUBLIB    = $(OUT_DIR)\$(EXPATSTUBLIBNAME)
-
-LIBXML2IMPLIB   = $(OUT_DIR)\tcllibxml2$(VERSION)$(SUFX).lib
-LIBXML2LIBNAME  = tcllibxml2$(VERSION)$(SUFX).$(EXT)
-LIBXML2LIB      = $(OUT_DIR)\$(LIBXML2LIBNAME)
-
-LIBXML2STUBLIBNAME = tcllibxml2stub$(VERSION).lib
-LIBXML2STUBLIB  = $(OUT_DIR)\$(LIBXML2STUBLIBNAME)
-
 ### Make sure we use backslash only.
-LIB_INSTALL_DIR		= $(_INSTALLDIR)\lib
-BIN_INSTALL_DIR		= $(_INSTALLDIR)\bin
-DOC_INSTALL_DIR		= $(_INSTALLDIR)\doc
-SCRIPT_INSTALL_DIR	= $(_INSTALLDIR)\lib\$(PROJECT)$(DOTVERSION)
-EXPAT_INSTALL_DIR       = $(_INSTALLDIR)\lib\Tclexpat$(DOTVERSION)
-LIBXML2_INSTALL_DIR     = $(_INSTALLDIR)\lib\Tcllibxml$(DOTVERSION)
-INCLUDE_INSTALL_DIR	= $(_INSTALLDIR)\include
+PRJ_INSTALL_DIR         = $(_INSTALLDIR)\$(PROJECT)$(DOTVERSION)
+LIB_INSTALL_DIR		= $(PRJ_INSTALL_DIR)
+BIN_INSTALL_DIR		= $(PRJ_INSTALL_DIR)
+DOC_INSTALL_DIR		= $(PRJ_INSTALL_DIR)
+SCRIPT_INSTALL_DIR	= $(PRJ_INSTALL_DIR)
+INCLUDE_INSTALL_DIR	= $(_TCLDIR)\include
 
 ### The following paths CANNOT have spaces in them.
 GENERICDIR	= $(ROOT)
-EXPATDIR        = $(ROOT)\expat
-TCLLIBXML2DIR   = $(ROOT)\libxml2
 WINDIR		= $(ROOT)\win
-LIBDIR          = $(ROOT)\library
+LIBDIR          = $(ROOT)
 DOCDIR		= $(ROOT)\doc
 TOOLSDIR	= $(ROOT)\tools
 COMPATDIR	= $(ROOT)\compat
-INCLUDEDIR      = $(ROOT)\include
-
-### Find a tclsh for testing and installation.
-!if !exist("$(TCLSH)")
-TCLSH           = $(BIN_INSTALL_DIR)\tclsh$(TCL_VERSION).exe
-!endif
 
 #---------------------------------------------------------------------
 # Compile flags
@@ -247,39 +218,39 @@ TCLSH           = $(BIN_INSTALL_DIR)\tclsh$(TCL_VERSION).exe
 !if !$(DEBUG)
 !if $(OPTIMIZING)
 ### This cranks the optimization level to maximize speed
-cdebug	= -O2 -Op -Gs
+cdebug	= $(OPTIMIZATIONS)
 !else
 cdebug	=
 !endif
-!else if "$(MACHINE)" == "IA64"
+!else if "$(MACHINE)" == "IA64" || "$(MACHINE)" == "AMD64"
 ### Warnings are too many, can't support warnings into errors.
-cdebug	= -Z7 -Od
+cdebug	= -Zi -Od $(DEBUGFLAGS)
 !else
-cdebug	= -Z7 -WX -Od
+cdebug	= -Zi -WX $(DEBUGFLAGS)
 !endif
 
 ### Declarations common to all compiler options
-cflags = -nologo -c -W3 -YX -Fp$(TMP_DIR)^\
-
-!if $(PENT_0F_ERRATA)
-cflags = $(cflags) -QI0f
-!endif
-
-!if $(ITAN_B_ERRATA)
-cflags = $(cflags) -QIA64_Bx
-!endif
+cwarn = $(WARNINGS) -D _CRT_SECURE_NO_DEPRECATE -D _CRT_NONSTDC_NO_DEPRECATE
+cflags = -nologo -c $(COMPILERFLAGS) $(cwarn) -Fp$(TMP_DIR)^\
 
 !if $(MSVCRT)
-!if $(DEBUG)
+!if $(DEBUG) && !$(UNCHECKED)
 crt = -MDd
 !else
 crt = -MD
 !endif
 !else
-!if $(DEBUG)
+!if $(DEBUG) && !$(UNCHECKED)
 crt = -MTd
 !else
 crt = -MT
+!endif
+!endif
+
+!if !$(STATIC_BUILD)
+cflags = $(cflags) -DUSE_TCL_STUBS
+!if defined(TKSTUBLIB)
+cflags = $(cflags) -DUSE_TK_STUBS
 !endif
 !endif
 
@@ -326,13 +297,30 @@ Don't know where libxml2 tree.h is.  The LIBXML2DIR macro doesn't appear to be c
 !endif
 !endif
 
-TCL_INCLUDES	= -I"$(TCLDIR)\include" -I"$(WINDIR)" -I"$(GENERICDIR)"
-EXPAT_INCLUDES  = -I"$(EXPATDIR)\xmlparse" -I"$(EXPATDIR)\xmltok"
-LIBXML2_INCLUDES = -I"$(LIBZDIR)\include" -I"$(LIBICONVDIR)\include" -I"$(LIBXML2DIR)\include"
-BASE_CLFAGS	= $(cflags) $(cdebug) $(crt) $(TCL_INCLUDES) -I"..\include"
+!if !defined(LIBXSLTDIR)
+MSG=^
+Don't know where libxslt is.  Set the LIBXSLTDIR macro.
+!error $(MSG)
+!else
+_LIBXSLTDIR = $(LIBXSLTDIR:/=\)
+!if !exist("$(_LIBXSLTDIR)\include\libxslt\xslt.h")
+MSG=^
+Don't know where libxslt xslt.h is.  The LIBXSLTDIR macro doesn't appear to be correct.
+!error $(MSG)
+!endif
+!endif
+
+INCLUDES	= $(TCL_INCLUDES) -I"$(WINDIR)" -I"$(GENERICDIR)\include" \
+		  -I"$(LIBZDIR)\include" -I"$(LIBICONVDIR)\include" \
+		  -I"$(LIBXML2DIR)\include" -I"$(LIBXSLTDIR)\include"
+BASE_CFLAGS	= $(cflags) $(cdebug) $(crt) $(INCLUDES)
 CON_CFLAGS	= $(cflags) $(cdebug) $(crt) -DCONSOLE
-TCL_CFLAGS	= -DUSE_TCL_STUBS -DVERSION="\"$(DOTVERSION)\"" $(BASE_CLFAGS) $(OPTDEFINES)
-LIBXML2_CFLAGS  = -DTCLXML_LIBXML2_VERSION="\"$(DOTVERSION)\""
+TCL_CFLAGS	= -DPACKAGE_NAME="\"$(PROJECT)\"" \
+		  -DPACKAGE_VERSION="\"$(DOTVERSION)\"" \
+		  -DBUILD_$(PROJECT) \
+		  -DTCLXML_LIBXML2_VERSION="\"$(DOTVERSION)\"" \
+		  -DLIBXML_STATIC \
+		  $(BASE_CFLAGS) $(OPTDEFINES)
 
 #---------------------------------------------------------------------
 # Link flags
@@ -340,12 +328,15 @@ LIBXML2_CFLAGS  = -DTCLXML_LIBXML2_VERSION="\"$(DOTVERSION)\""
 
 !if $(DEBUG)
 ldebug	= -debug:full -debugtype:cv
+!if $(MSVCRT)
+ldebug = $(ldebug) -nodefaultlib:msvcrt
+!endif
 !else
 ldebug	= -release -opt:ref -opt:icf,3
 !endif
 
 ### Declarations common to all linker options
-lflags	= -nologo -machine:$(MACHINE) $(ldebug)
+lflags	= -nologo -machine:$(MACHINE) $(LINKERFLAGS) $(ldebug)
 
 !if $(PROFILE)
 lflags	= $(lflags) -profile
@@ -366,14 +357,29 @@ lflags	= $(lflags) -ws:aggressive
 dlllflags = $(lflags) -dll
 conlflags = $(lflags) -subsystem:console
 guilflags = $(lflags) -subsystem:windows
-baselibs   = $(TCLSTUBLIB)
+!if !$(STATIC_BUILD)
+baselibs  = $(TCLSTUBLIB)
+!if defined(TKSTUBLIB)
+baselibs  = $(baselibs) $(TKSTUBLIB)
+!endif
+!endif
+
+# Avoid 'unresolved external symbol __security_cookie' errors.
+# c.f. http://support.microsoft.com/?id=894573
+!if "$(MACHINE)" == "IA64" || "$(MACHINE)" == "AMD64"
+!if $(VCVERSION) >= 1400 && $(VCVERSION) < 1500
+baselibs   = $(baselibs) bufferoverflowU.lib
+!endif
+!endif
+
+baselibs   = $(baselibs) user32.lib gdi32.lib $(LIBZDIR)\lib\zlib.lib $(LIBICONVDIR)\lib\iconv_a.lib $(LIBXML2DIR)\lib\libxml2_a.lib $(LIBXSLTDIR)\lib\libxslt_a.lib $(LIBXSLTDIR)\lib\libexslt_a.lib
 
 #---------------------------------------------------------------------
 # TclTest flags
 #---------------------------------------------------------------------
 
 !IF "$(TESTPAT)" != ""
-TESTFLAGS = -file $(TESTPAT)
+TESTFLAGS = $(TESTFLAGS) -file $(TESTPAT)
 !ENDIF
 
 #---------------------------------------------------------------------
@@ -381,89 +387,58 @@ TESTFLAGS = -file $(TESTPAT)
 #---------------------------------------------------------------------
 
 all:	    setup $(PROJECT)
-$(PROJECT): setup $(PRJLIB) $(EXPATLIB) $(LIBXML2LIB)
-install:    install-binaries install-includes install-libraries install-docs
-
+$(PROJECT): setup pkgIndex $(PRJLIB)
+#install:    install-binaries install-libraries install-docs
+install:    install-binaries install-libraries
+pkgIndex:   $(OUT_DIR)\pkgIndex.tcl
 
 test: setup $(PROJECT)
-	set TCL_LIBRARY=$(ROOT)/library
-!if "$(OS)" == "Windows_NT"  || "$(MSVCDIR)" == "IDE"
-	$(TCLSH) "$(ROOT)/tests/all.tcl" $(TESTFLAGS)
+	@set TCL_LIBRARY=$(TCL_LIBRARY:\=/)
+	@set TCLLIBPATH=$(OUT_DIR_PATH:\=/)
+!if $(TCLINSTALL)
+	@set PATH=$(_TCLDIR)\bin;$(PATH)
 !else
-	@echo Please wait while the tests are collected...
-	$(TCLSH) "$(ROOT)/tests/all.tcl" $(TESTFLAGS) > tests.log
+	@set PATH=$(_TCLDIR)\win\$(BUILDDIRTOP);$(PATH)
+!endif
+!if "$(OS)" == "Windows_NT"  || "$(MSVCDIR)" == "IDE"
+	$(DEBUGGER) $(TCLSH) "$(ROOT)/tests/all.tcl" $(TESTFLAGS)
+!else
+        @echo Please wait while the tests are collected...
+        $(DEBUGGER) $(TCLSH) "$(ROOT)/tests/all.tcl" $(TESTFLAGS) > tests.log
 	type tests.log | more
 !endif
 
-setup:
+shell: setup $(PROJECT)
+	@set VLERQ_LIBRARY=$(LIBDIR:\=/)
+	@set TCL_LIBRARY=$(TCL_LIBRARY:\=/)
+	@set TCLLIBPATH=$(OUT_DIR_PATH:\=/)
+!if $(TCLINSTALL)
+	@set PATH=$(_TCLDIR)\bin;$(PATH)
+!else
+	@set PATH=$(_TCLDIR)\win\$(BUILDDIRTOP);$(PATH)
+!endif
+	$(DEBUGGER) $(TCLSH) $(SCRIPT)
+
+setup:	$(GENERICDIR)\include\tclxml\tclxml.h $(ROOT)\README.TXT $(DOCDIR)\tclxml.xml $(DOCDIR)\tcldom.xml $(DOCDIR)\tclxslt.xml
 	@if not exist $(OUT_DIR)\nul mkdir $(OUT_DIR)
 	@if not exist $(TMP_DIR)\nul mkdir $(TMP_DIR)
 
-$(PRJLIB): $(DLLOBJS) $(PRJSTUBOBJS)
-	$(link32) $(dlllflags) -out:$@ $(baselibs) $(DLLOBJS) $(PRJSTUBOBJS)
-	-@del $*.exp
-
-$(EXPATLIB): $(EXPATDLLOBJS)
-	$(link32) $(dlllflags) -out:$@ $(baselibs) $(PRJIMPLIB) @<<
+# See <tcl>/win/coffbase.txt for extension base addresses.
+$(PRJLIB): $(DLLOBJS)
+!if $(STATIC_BUILD)
+	$(lib32) -nologo -out:$@ @<<
 $**
 <<
-	-@del $*.exp
-
-$(LIBXML2LIB): $(LIBXML2DLLOBJS)
-	$(link32) $(dlllflags) -out:$@ $(baselibs) $(PRJIMPLIB) $(LIBZDIR)\lib\zlib.lib $(LIBICONVDIR)\lib\iconv.lib $(LIBXML2DIR)\lib\libxml2.lib $(WSOCKLIB) @<<
+!else
+	$(link32) $(dlllflags) -base:0x10000000 -out:$@ $(baselibs) @<<
 $**
 <<
+	$(_VC_MANIFEST_EMBED_DLL)
 	-@del $*.exp
+!endif
 
 $(PRJSTUBLIB): $(PRJSTUBOBJS)
 	$(lib32) -nologo -out:$@ $(PRJSTUBOBJS)
-$(EXPATSTUBLIB): $(EXPATSTUBOBJS)
-	$(lib32) -nologo -out:$@ $(EXPATSTUBOBJS)
-$(LIBXML2STUBLIB): $(LIBXML2STUBOBJS)
-	$(lib32) -nologo -out:$@ $(LIBXML2STUBOBJS)
-
-#---------------------------------------------------------------------
-# Special case object file targets
-#---------------------------------------------------------------------
-
-$(TMP_DIR)\tclxml.obj: $(GENERICDIR)\tclxml.c
-    $(cc32) $(TCL_CFLAGS) -DBUILD_$(PROJECT) -Fo$@ $?
-
-$(TMP_DIR)\tclexpat.obj: $(GENERICDIR)\tclexpat.c
-    $(cc32) $(TCL_CFLAGS) $(EXPAT_INCLUDES) -DBUILD_$(PROJECT) -Fo$@ $?
-
-$(TMP_DIR)\xmltok.obj: $(EXPATDIR)\xmltok\xmltok.c
-    $(cc32) $(TCL_CFLAGS) -DBUILD_$(PROJECT) -Fo$@ $?
-
-$(TMP_DIR)\xmlrole.obj: $(EXPATDIR)\xmltok\xmlrole.c
-    $(cc32) $(TCL_CFLAGS) -DBUILD_$(PROJECT) -Fo$@ $?
-
-$(TMP_DIR)\xmlwf.obj: $(EXPATDIR)\xmlwf\xmlwf.c
-    $(cc32) $(TCL_CFLAGS) $(EXPAT_INCLUDES) -DBUILD_$(PROJECT) -Fo$@ $?
-
-$(TMP_DIR)\xmlfile.obj: $(EXPATDIR)\xmlwf\xmlfile.c
-    $(cc32) $(TCL_CFLAGS) $(EXPAT_INCLUDES) -DBUILD_$(PROJECT) -Fo$@ $?
-
-$(TMP_DIR)\codepage.obj: $(EXPATDIR)\xmlwf\codepage.c
-    $(cc32) $(TCL_CFLAGS) -DBUILD_$(PROJECT) -Fo$@ $?
-
-$(TMP_DIR)\hashtable.obj: $(EXPATDIR)\xmlparse\hashtable.c
-    $(cc32) $(TCL_CFLAGS) $(EXPAT_INCLUDES) -DBUILD_$(PROJECT) -Fo$@ $?
-
-$(TMP_DIR)\win32filemap.obj: $(EXPATDIR)\xmlwf\win32filemap.c
-    $(cc32) $(TCL_CFLAGS) -DBUILD_$(PROJECT) -Fo$@ $?
-
-$(TMP_DIR)\xmlparse.obj: $(EXPATDIR)\xmlparse\xmlparse.c
-    $(cc32) $(TCL_CFLAGS) $(EXPAT_INCLUDES) -DBUILD_$(PROJECT) -Fo$@ $?
-
-$(TMP_DIR)\tcllibxml2.obj: $(TCLLIBXML2DIR)\tcllibxml2.c
-    $(cc32) $(TCL_CFLAGS) $(LIBXML2_CFLAGS) $(LIBXML2_INCLUDES) -DBUILD_TclXML_libxml2 -Fo$@ $?
-
-$(TMP_DIR)\docObj.obj: $(TCLLIBXML2DIR)\docObj.c
-    $(cc32) $(TCL_CFLAGS) $(LIBXML2_CFLAGS) $(LIBXML2_INCLUDES) -DBUILD_TclXML_libxml2 -Fo$@ $?
-
-$(TMP_DIR)\tcllibxml2StubInit.obj: $(TCLLIBXML2DIR)\tcllibxml2StubInit.c
-    $(cc32) $(TCL_CFLAGS) $(LIBXML2_CFLAGS) $(LIBXML2_INCLUDES) -DBUILD_TclXML_libxml2 -Fo$@ $?
 
 #---------------------------------------------------------------------
 # Implicit rules
@@ -486,6 +461,9 @@ $<
 
 {$(WINDIR)}.rc{$(TMP_DIR)}.res:
 	$(rc32) -fo $@ -r -i "$(GENERICDIR)" -D__WIN32__ \
+		-DCOMMAVERSION=$(DOTVERSION:.=,),0,0 \
+		-DDOTVERSION=\"$(DOTVERSION)\" \
+		-DVERSION=\"$(VERSION)$(SUFX)\" \
 !if $(DEBUG)
 	-d DEBUG \
 !endif
@@ -500,6 +478,43 @@ $<
 .SUFFIXES:
 .SUFFIXES:.c .rc
 
+#-------------------------------------------------------------------------
+# Explicit dependency rules
+#
+#-------------------------------------------------------------------------
+
+$(OUT_DIR)\pkgIndex.tcl: $(ROOT)\pkgIndex.tcl.in
+	@nmakehlp.exe -s << $** > $@
+@PACKAGE_VERSION@    $(DOTVERSION)
+@PACKAGE_NAME@       $(PROJECT)
+@PKG_LIB_FILE@       $(PRJLIBNAME)
+<<
+
+$(GENERICDIR)\include\tclxml\tclxml.h:	$(GENERICDIR)\include\tclxml\tclxml.h.in
+	@nmakehlp.exe -s << $** > $@
+@PACKAGE_VERSION@    $(DOTVERSION)
+<<
+
+$(ROOT)\README.TXT:	$(DOCDIR)\README.xml.in
+	@nmakehlp.exe -s << $** > $@
+@PACKAGE_VERSION@    $(DOTVERSION)
+<<
+
+$(DOCDIR)\tclxml.xml:	$(DOCDIR)\tclxml.xml.in
+	@nmakehlp.exe -s << $** > $@
+@PACKAGE_VERSION@    $(DOTVERSION)
+<<
+
+$(DOCDIR)\tcldom.xml:	$(DOCDIR)\tcldom.xml.in
+	@nmakehlp.exe -s << $** > $@
+@PACKAGE_VERSION@    $(DOTVERSION)
+<<
+
+$(DOCDIR)\tclxslt.xml:	$(DOCDIR)\tclxslt.xml.in
+	@nmakehlp.exe -s << $** > $@
+@PACKAGE_VERSION@    $(DOTVERSION)
+<<
+
 #---------------------------------------------------------------------
 # Installation. (EDIT)
 #
@@ -508,46 +523,32 @@ $<
 #
 #---------------------------------------------------------------------
 
-install-binaries: install-tclxml-binaries install-expat-binaries install-libxml2-binaries
-	@echo Installing to '$(SCRIPT_INSTALL_DIR)'
+install-binaries:
+	@echo Installing binaries to '$(SCRIPT_INSTALL_DIR)'
+	@if not exist "$(SCRIPT_INSTALL_DIR)" mkdir "$(SCRIPT_INSTALL_DIR)"
+	@$(CPY) $(PRJLIB) "$(SCRIPT_INSTALL_DIR)" >NUL
 
-install-tclxml-binaries:
-	@if not exist $(SCRIPT_INSTALL_DIR)\nul mkdir $(SCRIPT_INSTALL_DIR)
-	$(CPY) $(PRJLIB) $(SCRIPT_INSTALL_DIR)
-	$(CPY) $(PRJIMPLIB) $(SCRIPT_INSTALL_DIR)
+install-libraries: $(OUT_DIR)\pkgIndex.tcl
+	@echo Installing libraries to '$(SCRIPT_INSTALL_DIR)'
+	@if exist $(LIBDIR) $(CPY) $(LIBDIR)\*.tcl "$(SCRIPT_INSTALL_DIR)"
+	@if exist $(LIBDIR)\tcldom-tcl $(CPY) $(LIBDIR)\tcldom-tcl\*.tcl "$(SCRIPT_INSTALL_DIR)"
+	@if exist $(LIBDIR)\tclxml-tcl $(CPY) $(LIBDIR)\tclxml-tcl\*.tcl "$(SCRIPT_INSTALL_DIR)"
+	@if exist $(LIBDIR)\tclxslt $(CPY) $(LIBDIR)\tclxslt\*.tcl "$(SCRIPT_INSTALL_DIR)"
+	@echo Installing package index in '$(SCRIPT_INSTALL_DIR)'
+	@$(CPY) $(OUT_DIR)\pkgIndex.tcl $(SCRIPT_INSTALL_DIR)
 
-install-expat-binaries:
-	@if not exist $(EXPAT_INSTALL_DIR)\nul mkdir $(EXPAT_INSTALL_DIR)
-	$(CPY) $(EXPATLIB) $(EXPAT_INSTALL_DIR)
-	$(CPY) $(EXPATIMPLIB) $(EXPAT_INSTALL_DIR)
-	@echo package ifneeded xml::expat $(DOTVERSION)  [list load [file join $$dir $(EXPATLIBNAME)]] > $(EXPAT_INSTALL_DIR)\pkgIndex.tcl
+install-docs:	$(DOCDIR)\tclxml.html $(DOCDIR)\tcldom.html $(DOCDIR)\tclxslt.html
+	@echo Installing documentation files to '$(DOC_INSTALL_DIR)'
+	@if exist $(DOCDIR) $(CPY) $(DOCDIR)\*.html "$(DOC_INSTALL_DIR)"
 
-install-libxml2-binaries:
-	@if not exist $(LIBXML2_INSTALL_DIR)\nul mkdir $(LIBXML2_INSTALL_DIR)
-	$(CPY) $(LIBXML2LIB) $(LIBXML2_INSTALL_DIR)
-	$(CPY) $(LIBXML2IMPLIB) $(LIBXML2_INSTALL_DIR)
-	@echo package ifneeded xml::libxml2 $(DOTVERSION)  [list load [file join $$dir $(LIBXML2LIBNAME)] Tclxml_libxml2] > $(LIBXML2_INSTALL_DIR)\pkgIndex.tcl
+$(DOCDIR)\tclxml.html:	$(DOCDIR)\tclxml.xml
+	$(TCLSH) $(DOCDIR)\transform.tcl $(DOCDIR)\tclxml.xml $(DOCDIR)\html.xsl $@
 
-install-includes: install-tclxml-includes install-expat-includes install-libxml2-includes
-	@echo Installing to '$(INCLUDE_INSTALL_DIR)'
-	@if not exist $(INCLUDE_INSTALL_DIR)\nul mkdir $(INCLUDE_INSTALL_DIR)
+$(DOCDIR)\tcldom.html:	$(DOCDIR)\tcldom.xml
+	$(TCLSH) $(DOCDIR)\transform.tcl $(DOCDIR)\tcldom.xml $(DOCDIR)\html.xsl $@
 
-install-tclxml-includes:
-	@if not exist $(INCLUDE_INSTALL_DIR)\tclxml\nul mkdir $(INCLUDE_INSTALL_DIR)\tclxml
-	$(CPY) $(INCLUDEDIR)\tclxml\*.h $(INCLUDE_INSTALL_DIR)\tclxml
-
-install-expat-includes:
-
-install-libxml2-includes:
-	@if not exist $(INCLUDE_INSTALL_DIR)\tclxml-libxml2\nul mkdir $(INCLUDE_INSTALL_DIR)\tclxml-libxml2
-	$(CPY) $(INCLUDEDIR)\tclxml-libxml2\*.h $(INCLUDE_INSTALL_DIR)\tclxml-libxml2
-
-install-libraries:
-	@echo Installing to '$(SCRIPT_INSTALL_DIR)'
-	@if exist $(LIBDIR)\nul $(CPY) $(LIBDIR)\*.tcl $(SCRIPT_INSTALL_DIR)
-	$(TCLSH) $(WINDIR)\mkPkgIndex.tcl $(LIBDIR)\pkgIndex.tcl.in $(SCRIPT_INSTALL_DIR)\pkgIndex.tcl VERSION=$(DOTVERSION) Tclxml_LIB_FILE=$(PRJLIBNAME)
-
-install-docs:
+$(DOCDIR)\tclxslt.html:	$(DOCDIR)\tclxslt.xml
+	$(TCLSH) $(DOCDIR)\transform.tcl $(DOCDIR)\tclxslt.xml $(DOCDIR)\html.xsl $@
 
 #---------------------------------------------------------------------
 # Clean up
@@ -555,6 +556,10 @@ install-docs:
 
 clean:
 	@if exist $(TMP_DIR)\nul $(RMDIR) $(TMP_DIR)
+	@if exist $(WINDIR)\version.vc del $(WINDIR)\version.vc
+	@if exist $(WINDIR)\vercl.i del $(WINDIR)\vercl.i
+	@if exist $(WINDIR)\vercl.x del $(WINDIR)\vercl.x
+	@if exist $(WINDIR)\_junk.pch del $(WINDIR)\_junk.pch
 
 realclean: clean
 	@if exist $(OUT_DIR)\nul $(RMDIR) $(OUT_DIR)

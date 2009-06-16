@@ -23,6 +23,7 @@
 #include <tclxml-libxml2/tclxml-libxml2Decls.h>
 #include <libxml/tree.h>
 #include <libxml/xmlschemas.h>
+#include <libxml/relaxng.h>
 
 /*
  * For C++ compilers, use extern "C"
@@ -106,7 +107,7 @@ typedef struct TclDOM_libxml2_Document {
    */
 
   xmlSchemaPtr schema; /* XML Schemas */
-  /* xmlRelaxNGPtr relaxng; */
+  xmlRelaxNGPtr relaxng; /* RELAX NG Schemas */
 
   /*
    * Event support.

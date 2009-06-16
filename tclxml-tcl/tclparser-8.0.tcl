@@ -6,7 +6,7 @@
 #	See xml-8.[01].tcl for definitions of character sets and
 #	regular expressions.
 #
-# Copyright (c) 2005-2008 by Explain.
+# Copyright (c) 2005-2009 by Explain.
 # http://www.explain.com.au/
 # Copyright (c) 1998-2004 Zveno Pty Ltd
 # http://www.zveno.com/
@@ -18,11 +18,11 @@
 
 package require -exact Tcl 8.0
 
-package require xmldefs 3.2
+package require xmldefs 3.3
 
 package require sgmlparser 1.0
 
-package provide xml::tclparser 3.2
+package provide xml::tclparser 3.3
 
 namespace eval xml {
 

@@ -10,7 +10,7 @@
 #
 ########################
 
-PACKAGE_VERSION	:= 3.2
+PACKAGE_VERSION	:= 3.3
 
 LIBXML2_VERSION	:= $(shell eval echo $$(ls -dt ../libxml2* | head -1 | sed -e '1s/.*\-//'))
 
