@@ -1,0 +1,81 @@
+# Commands covered:  relaxng validate
+#
+# This file contains a collection of tests for one or more of the 
+# TclDOM commands.  Sourcing this file into Tcl runs the tests and
+# generates output for errors.  No output means no errors were found.
+#
+# Copyright (c) 2009 Explain
+#
+# $Id$
+
+package require tcltest
+source [file join [tcltest::workingDirectory] tcldomutils.tcl]
+
+testPackage dom
+
+namespace eval ::dom::relaxngTest {
+    namespace import -force ::tcltest::*
+
+    variable SETUP {
+	set valid [dom::parse {<t:Test xmlns:t='urn:tcl-dom-test'>This is a valid document</t:Test>}]
+	set invalid [dom::parse {<t:Invalid xmlns:t='urn:tcl-dom-test'>This is an invalid document</t:Invalid>}]
+	set schema [dom::parse {<grammar xmlns="http://relaxng.org/ns/structure/1.0"
+	 xmlns:rng="http://relaxng.org/ns/structure/1.0"
+	 xmlns:test="urn:tcl-dom-test"
+	 ns="urn:tcl-dom-test">
+  <start>
+    <ref name='test.Test'/>
+  </start>
+
+  <define name='test.Test'>
+    <element name='Test'>
+      <text/>
+    </element>
+  </define>
+</grammar>
+}]
+    }
+    variable CLEANUP {
+	dom::destroy $valid
+	dom::destroy $invalid
+	dom::destroy $schema
+    }
+
+    ### RELAX NG compilation
+
+    test relaxng-1.1 {compile RELAX NG schema} -setup $SETUP -constraints {dom_libxml2} -match glob -body {
+	$schema relaxng compile
+    } -cleanup $CLEANUP -result {*}
+    test relaxng-1.2 {RELAX NG compile too many args} -setup $SETUP -constraints {dom_libxml2} -match glob -body {
+	expectError {
+	    $schema relaxng compile another
+	}
+    } -cleanup $CLEANUP -result {wrong # args*}
+    test relaxng-1.3 {RELAX NG too few args} -setup $SETUP -constraints {dom_libxml2} -match glob -body {
+	expectError {
+	    $schema relaxng
+	}
+    } -cleanup $CLEANUP -result {wrong # args*}
+
+    test relaxng-2.1 {RELAX NG validate validate doc} -setup {
+	eval $SETUP
+	$schema relaxng compile
+    } -constraints {dom_libxml2} -body {
+	$schema relaxng validate $valid
+    } -cleanup $CLEANUP -result {}
+
+    test relaxng-2.2 {RELAX NG validate invalid doc} -constraints {dom_libxml2} -setup {
+	eval $SETUP
+	$schema relaxng compile
+    } -match glob -body {
+	expectError {
+	    $schema relaxng validate $invalid
+	}
+    } -cleanup $CLEANUP -result {*relaxng-validation error*Expecting element Test*}
+
+    cleanupTests
+}
+
+namespace delete ::dom::relaxngTest
+
+return

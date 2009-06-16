@@ -12,41 +12,41 @@
 # The information in this file is specific to a single platform.
 
 # Tclxml's version number.
-Tclxml_VERSION='3.2'
+Tclxml_VERSION='3.3'
 
 # The name of the Tclxml library (may be either a .a file or a shared library):
-Tclxml_LIB_FILE='libTclxml3.2.dylib'
+Tclxml_LIB_FILE='libTclxml3.3.dylib'
 
 # String to pass to linker to pick up the Tclxml library from its
 # build directory.
-Tclxml_BUILD_LIB_SPEC='-L/Users/steve/Projects/tclxml-3.2 -lTclxml3.2'
+Tclxml_BUILD_LIB_SPEC='-L/Users/steve/Projects/tclxml-repos -lTclxml3.3'
 
 # String to pass to linker to pick up the Tclxml library from its
 # installed directory.
-Tclxml_LIB_SPEC='-L/usr/local/lib/Tclxml3.2 -lTclxml3.2'
+Tclxml_LIB_SPEC='-L/usr/lib/Tclxml3.3 -lTclxml3.3'
 
 # The name of the Tclxml stub library (a .a file):
-Tclxml_STUB_LIB_FILE='libTclxmlstub3.2.a'
+Tclxml_STUB_LIB_FILE='libTclxmlstub3.3.a'
 
 # String to pass to linker to pick up the Tclxml stub library from its
 # build directory.
-Tclxml_BUILD_STUB_LIB_SPEC='-L/Users/steve/Projects/tclxml-3.2 -lTclxmlstub3.2'
+Tclxml_BUILD_STUB_LIB_SPEC='-L/Users/steve/Projects/tclxml-repos -lTclxmlstub3.3'
 
 # String to pass to linker to pick up the Tclxml stub library from its
 # installed directory.
-Tclxml_STUB_LIB_SPEC='-L/usr/local/lib/Tclxml3.2 -lTclxmlstub3.2'
+Tclxml_STUB_LIB_SPEC='-L/usr/lib/Tclxml3.3 -lTclxmlstub3.3'
 
 # String to pass to linker to pick up the Tclxml stub library from its
 # build directory.
-Tclxml_BUILD_STUB_LIB_PATH='/Users/steve/Projects/tclxml-3.2/'
+Tclxml_BUILD_STUB_LIB_PATH='/Users/steve/Projects/tclxml-repos/'
 
 # String to pass to linker to pick up the Tclxml stub library from its
 # installed directory.
-Tclxml_STUB_LIB_PATH='/usr/local/lib/Tclxml3.2/'
+Tclxml_STUB_LIB_PATH='/usr/lib/Tclxml3.3/'
 
 # String to pass to the compiler so that an extension can find
 # installed header.
-Tclxml_INCLUDE_SPEC='-I/usr/local/include'
+Tclxml_INCLUDE_SPEC='-I/usr/include'
 
 # Location of the top-level source directories from which [incr Tcl]
 # was built.  This is the directory that contains generic, unix, etc.

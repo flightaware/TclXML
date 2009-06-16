@@ -2,7 +2,7 @@
  *
  *	This module manages libxml2 xmlDocPtr Tcl objects.
  *
- * Copyright (c) 2005 by Explain.
+ * Copyright (c) 2005-2009 by Explain.
  * http://www.explain.com.au/
  * Copyright (c) 2003-2004 Zveno Pty Ltd
  * http://www.zveno.com/
@@ -176,8 +176,9 @@ TclXML_libxml2_NewDocObj(interp)
  */
 
 Tcl_Obj *
-TclXML_libxml2_CreateObjFromDoc (docPtr)
+ImportDoc (docPtr, tDocPtrPtr)
   xmlDocPtr docPtr;
+  TclXML_libxml2_Document **tDocPtrPtr;
 {
   ThreadSpecificData *tsdPtr = Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
   TclXML_libxml2_Document *tDocPtr;
@@ -252,7 +253,28 @@ TclXML_libxml2_CreateObjFromDoc (docPtr)
   /* Bug fix #1032660.  David Welton. */
   Tcl_IncrRefCount(objPtr);
 
+  if (tDocPtrPtr != NULL) {
+    *tDocPtrPtr = tDocPtr;
+  }
+
   return objPtr;
+}
+
+Tcl_Obj *
+TclXML_libxml2_CreateObjFromDoc (docPtr)
+  xmlDocPtr docPtr;
+{
+  return ImportDoc(docPtr, NULL);
+}
+
+TclXML_libxml2_Document *
+TclXML_libxml2_NewDoc (docPtr)
+  xmlDocPtr docPtr;
+{
+  Tcl_Obj *objPtr;
+  TclXML_libxml2_Document *tDocPtr;
+  objPtr = ImportDoc(docPtr, &tDocPtr);
+  return tDocPtr;
 }
 
 /*
@@ -315,9 +337,9 @@ TclXML_libxml2_GetTclDocFromNode (interp, nodePtr, tDocPtrPtr)
 
   entryPtr = Tcl_FindHashEntry(tsdPtr->docByPtr, (ClientData) nodePtr->doc);
   if (!entryPtr) {
-    *tDocPtrPtr = NULL;
-    Tcl_SetResult(interp, "document not known", NULL);
-    return TCL_ERROR;
+    /* We haven't seen this doc before - probably a RVT */
+    *tDocPtrPtr = TclXML_libxml2_NewDoc(nodePtr->doc);
+    return TCL_OK;
   }
 
   *tDocPtrPtr = (TclXML_libxml2_Document *) Tcl_GetHashValue(entryPtr);
@@ -354,6 +376,43 @@ TclXML_libxml2_GetTclDocFromObj (interp, objPtr, tDocPtr)
   } else {
     return TCL_ERROR;
   }
+
+  return TCL_OK;
+}
+
+/*
+ *----------------------------------------------------------------------------
+ *
+ * TclXML_libxml2_GetTclDocFromDoc --
+ *
+ *  Retrieve the TclXML_libxml2_Document from a xmlDocPtr.
+ *
+ * Results:
+ *  Returns success code.
+ *
+ * Side effects:
+ *  Sets pointer.
+ *
+ *----------------------------------------------------------------------------
+ */
+
+int
+TclXML_libxml2_GetTclDocFromDoc (interp, docPtr, tDocPtrPtr)
+     Tcl_Interp *interp;
+     xmlDocPtr docPtr;
+     TclXML_libxml2_Document **tDocPtrPtr;
+{
+  ThreadSpecificData *tsdPtr = Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
+  Tcl_HashEntry *entryPtr;
+
+  entryPtr = Tcl_FindHashEntry(tsdPtr->docByPtr, (ClientData) docPtr);
+  if (!entryPtr) {
+    *tDocPtrPtr = NULL;
+    Tcl_SetResult(interp, "document not known", NULL);
+    return TCL_ERROR;
+  }
+
+  *tDocPtrPtr = (TclXML_libxml2_Document *) Tcl_GetHashValue(entryPtr);
 
   return TCL_OK;
 }
@@ -427,6 +486,70 @@ TclXML_libxml2_DocKeep(objPtr, keep)
   }
 
   tDocPtr->keep = keep;
+}
+
+/*
+ *----------------------------------------------------------------------------
+ *
+ * TclXML_libxml2_GetBaseURIFromDoc --
+ *
+ *  Returns the base URI of a document.
+ *
+ * Results:
+ *  Returns Tcl object.
+ *
+ *----------------------------------------------------------------------------
+ */
+
+Tcl_Obj *
+TclXML_libxml2_GetBaseURIFromDoc(docPtr)
+     xmlDocPtr docPtr;
+{
+  return Tcl_NewStringObj((char *) docPtr->URL, -1);
+}
+
+/*
+ *----------------------------------------------------------------------------
+ *
+ * TclXML_libxml2_SetBaseURI --
+ *
+ *  Sets the base URI of a document.
+ *
+ * Results:
+ *  Returns success code.
+ *
+ * Side effects:
+ *  Changes the xml document's URL.
+ *
+ *----------------------------------------------------------------------------
+ */
+
+int
+TclXML_libxml2_SetBaseURI(interp, docPtr, uriObj)
+     Tcl_Interp *interp;
+     xmlDocPtr docPtr;
+     Tcl_Obj *uriObj;
+{
+  char *url;
+  int len;
+
+  if (docPtr == NULL) {
+    Tcl_SetResult(interp, "no document", NULL);
+    return TCL_ERROR;
+  }
+  if (uriObj == NULL) {
+    Tcl_SetResult(interp, "no URL", NULL);
+    return TCL_ERROR;
+  }
+
+  if (docPtr->URL) {
+    xmlFree((xmlChar *) docPtr->URL);
+  }
+
+  url = Tcl_GetStringFromObj(uriObj, &len);
+  docPtr->URL = xmlCharStrndup(url, len);
+
+  return TCL_OK;
 }
 
 /*

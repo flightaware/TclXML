@@ -7,12 +7,12 @@ exec tclsh "$0" "$@"
 #	Simple character count of a DOM document,
 #	from README.
 #
-# Copyright (c) 2008 Explain
+# Copyright (c) 2008-2009 Explain
 # http://www.explain.com.au/
 #
 # $Id$
 
-package require xml 3.2
+package require xml
 
 set doc [dom::parse [read stdin]]
 set count 0

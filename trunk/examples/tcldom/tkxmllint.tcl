@@ -6,7 +6,7 @@ exec wish "$0" "$@"
 #
 #	Simple GUI for xmllint-style processing of XML documents
 #
-# Copyright (c) 2005-2007 Explain
+# Copyright (c) 2005-2009 Explain
 # http://www.explain.com.au/
 # Copyright (c) 2003-2004 Zveno
 # http://www.zveno.com/
@@ -23,7 +23,7 @@ set VERSION 1.9
 # Temporary hack for TclApp-wrapped executables
 lappend auto_path [file dirname [info nameofexecutable]]
 
-package require dom::libxml2 3.2
+package require dom
 
 package require msgcat
 namespace import ::msgcat::mc
@@ -144,6 +144,7 @@ proc Init win {
     radiobutton $w.validation.none -text [mc none] -variable State${win}(validate) -value no
     radiobutton $w.validation.dtd -text [mc DTD] -variable State${win}(validate) -value dtd
     radiobutton $w.validation.wxs -text [mc WXS] -variable State${win}(validate) -value wxs
+    radiobutton $w.validation.rng -text [mc RNG] -variable State${win}(validate) -value rng
     labelframe $w.validation.doc -text [mc {Schema Document}]
     label $w.validation.doc.url -text [mc URL:]
     entry $w.validation.doc.urlentry -width 40 -textvariable State${win}(schemaurl)
@@ -156,6 +157,7 @@ proc Init win {
     grid $w.validation.none -row 0 -column 0 -sticky w
     grid $w.validation.dtd -row 0 -column 1 -sticky w
     grid $w.validation.wxs -row 0 -column 2 -sticky w
+    grid $w.validation.rng -row 0 -column 3 -sticky w
     grid $w.validation.doc - - - -row 1 -sticky ew
     grid columnconfigure $w.validation 2 -weight 1
 
@@ -386,6 +388,45 @@ proc Check win {
 			}
 			set time(schemavalidate) [clock clicks -milliseconds]
 			Log timing $win "Schema validation took [expr $time(schemavalidate) - $time(last)]ms\n"
+			set time(last) $time(schemavalidate)
+		    }
+
+		    # TODO: cache the compiled schema
+		    dom::destroy $schemadoc
+		}
+	    }
+	rng {
+	    Feedback $win [mc "RELAX NG-validating document"]
+	    set schemafname [GetFilename $win $w.validation.doc.urlentry schemaurl]
+	    if {[string length $schemafname]} {
+		set schematime(start) $time(last)
+		if {[catch {ReadAndParseXML $win [mc "schema"] $schemafname ? schematime} schemadoc]} {
+		    # continue
+		} else {
+		    set time(last) $schematime(last)
+		    Feedback $win [mc "Preparing RELAX NG schema"]
+		    if {[catch {$schemadoc relaxng compile} msg]} {
+			Log add $win $msg
+			Feedback $win [mc "Preparing RELAX NG schema failed"]
+			set time(schemacompile) [clock clicks -milliseconds]
+			set time(last) $time(schemacompile)
+			set dodisplay 0
+		    } else {
+			set time(schemacompile) [clock clicks -milliseconds]
+			Log timing $win "Preparing RELAX NG schema took [expr $time(schemacompile) - $time(last)]ms\n"
+			set time(last) $time(schemacompile)
+
+			Feedback $win [mc "RELAX NG-validating document"]
+			if {[catch {$schemadoc relaxng validate $doc} msg]} {
+			    Log addXMLError $win [dom::serialize $doc] $msg
+			    Feedback $win [mc "Document is not RELAX NG-valid"]
+			    set dodisplay 0
+			} else {
+			    Log add $win $msg
+			    Feedback $win [mc "Document is RELAX NG-valid"]
+			}
+			set time(schemavalidate) [clock clicks -milliseconds]
+			Log timing $win "RELAX NG validation took [expr $time(schemavalidate) - $time(last)]ms\n"
 			set time(last) $time(schemavalidate)
 		    }
 

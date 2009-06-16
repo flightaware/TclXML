@@ -1,114 +1,82 @@
 # domtree.tcl --
 #
-#	Extension to tree (mega)widget to support display of a DOM hierarchy.
+#	A megawidget to support display of a DOM hierarchy
+#	based on the TTK treectrl widget.
 #
 #	This widget both generates and reacts to DOM Events.
 #
 # This package features ordered and non-unique directories and items.
 # Paths are managed as live links into a DOM hierarchy.
 #
-# Copyright (c) 1999-2003 Zveno Pty Ltd
+# Copyright (c) 2005-2009 Explain
+# http://www.explain.com.au/
+# Copyright (c) 2004 Zveno Pty Ltd
 # http://www.zveno.com/
 #
 # See the file "LICENSE" in this distribution for information on usage and
 # redistribution of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# $Id: domtree.tcl,v 1.5 2003/12/09 04:56:40 balls Exp $
+# $Id$
 
-package provide domtree 2.5
-
-# We need BWidgets
-
-package require BWidget 1.4
+package provide domtree 3.3
 
 # We need the DOM
 # V2.0 gives us Level 2 event model
 # V2.1 gives us libxml2
+# V3.3 gives us -id node option
 
-package require dom 2.5
+package require dom 3.3
 
 namespace eval domtree {
-    Tree::use
+    variable counter
 
-    Widget::bwinclude domtree Tree .tree
-
-    Widget::declare domtree {
-        {-rootnode         String  ""        0}
-	{-showlength       Int     20        0}
-	{-showtextcontent  Boolean 0         0}
-	{-showelementid    Boolean 0         0}
+    if {![info exists counter]} {
+	set counter 0
     }
 
-    proc ::domtree { path args } { return [eval domtree::create $path $args] }
-    proc use {} {}
-
-    variable eventTypeMap
-    array set eventTypeMap {
-	ButtonPress	mousedown
-	ButtonRelease	mouseup
-	Enter		mouseover
-	Leave		mouseout
-	Motion		mousemove
-	FocusIn		DOMFocusIn
-	FocusOut	DOMFocusOut
-    }
+    variable defaults
+    dict set defaults showlength 20
+    dict set defaults showtextcontent 0
+    dict set defaults showelementid 0
 }
 
-# domtree::create --
+proc domtree::create {path args} {
+    variable state
+
+    ttk::treeview $path
+    set cmd [namespace current]::_cmd$path
+    rename ::$path $cmd
+    dict set state $path cmd $cmd
+    dict set state $path rootnode {}
+
+    proc ::$path {args} "[namespace current]::Cmd $path {*}\$args"
+
+    bindtags $path [list $path Domtree Treeview [winfo toplevel $path] all]
+
+    $cmd tag configure element -foreground blue
+    $cmd tag configure textNode -foreground black
+    $cmd tag configure comment -foreground red
+    $cmd tag configure processing-instruction -foreground red
+
+    configure $path {*}$args
+
+    return $path
+}
+
+# domtree::Cmd --
 #
-#	Create a DOM Tree widget
+#	Implements widget command
 #
 # Arguments:
 #	path	widget path
-#	args	configuration options
+#	cmd	subcommand
+#	args	options
 #
 # Results:
-#	Tree widget created
+#	Depends on subcommand
 
-proc domtree::create {path args} {
-    array set maps [list Tree {} :cmd {} .tree {}]
-    array set maps [Widget::parseArgs domtree $args]
-
-    eval frame $path $maps(:cmd) -bd 0 -relief flat -takefocus 0 \
-	    -class domtree -highlightthickness 0
-
-    Widget::initFromODB domtree $path $maps(Tree)
-
-    bindtags $path [list $path Bwdomtree [winfo toplevel $path] all]
-
-    set tree [eval ::Tree::create $path.tree $maps(.tree) \
-	    -opencmd [list [namespace code [list _node_open $path]]] \
-	    -selectcommand [list [namespace code [list _select_node $path]]]]
-
-    $tree configure -xscrollcommand [Widget::cget $path -xscrollcommand] \
-	-yscrollcommand [Widget::cget $path -yscrollcommand]
-
-    # Set various bindings to generate DOM events
-
-    foreach event {ButtonRelease ButtonPress Enter Leave Motion} {
-	$path.tree bindImage <$event> [namespace code [list _node_mouse_event $event {} $path]]
-	$path.tree bindText <$event> [namespace code [list _node_mouse_event $event {} $path]]
-	foreach modifier {Control Shift Alt Meta Double} {
-	    $path.tree bindImage <$modifier-$event> [namespace code [list _node_mouse_event $event $modifier $path]]
-	    $path.tree bindText <$modifier-$event> [namespace code [list _node_mouse_event $event $modifier $path]]
-	}
-    }
-
-    grid $tree -row 0 -column 0 -sticky news
-    grid rowconfigure $path 0 -weight 1
-    grid columnconfigure $path 0 -weight 1
-
-    $path configure -background [Widget::cget $path -background]
-	    
-    rename $path ::$path:cmd
-    proc ::$path { cmd args } "return \[eval domtree::\$cmd $path \$args\]"
-
-    set root [Widget::getMegawidgetOption $path -rootnode]
-    if {[string length $root]} {
-	_add_node $path root $root
-    }
-
-    return $path
+proc domtree::Cmd {path cmd args} {
+    [namespace current]::$cmd $path {*}$args
 }
 
 # domtree::cget --
@@ -123,7 +91,13 @@ proc domtree::create {path args} {
 #	Returns value of option
 
 proc domtree::cget {path option} {
-    return [Widget::getoption $path $option]
+    variable state
+
+    regexp {^-(.*)} $option discard opt
+    if {[catch {dict get $state $path $opt} result]} {
+	set result [[dict get $state $path cmd] cget $option]
+    }
+    return $result
 }
 
 # domtree::configure --
@@ -135,32 +109,538 @@ proc domtree::cget {path option} {
 #	args	configuration options
 #
 # Results:
-#	Sets value of options
+#	Sets values of options
 
 proc domtree::configure {path args} {
-    if {[catch {eval configure:dbg [list $path] $args} msg]} {
-	puts stderr "domtree::configure incurred error\n$msg"
-    } else {
-	#puts stderr [list domtree::configure ran OK]
+    variable state
+
+    switch [llength $args] {
+	0 {
+	    return {}
+	}
+	1 {
+	    return [cget $path [lindex $args 0]]
+	}
+	default {
+	    set cmd [dict get $state $path cmd]
+	    foreach {option value} $args {
+		regexp {^-(.*)} $option discard opt
+
+		switch -- $opt {
+		    rootnode {
+			dict set state $path rootnode $value
+
+			# Completely remove the previous tree
+			foreach item [$cmd children {}] {
+			    $cmd delete $item
+			}
+
+			if {[string length $value]} {
+			    # Listen for UI events
+			    dom::node addEventListener $value DOMActivate [namespace code [list NodeSelected $path]] -usecapture 1
+
+			    # Listen for mutation events
+			    #dom::node addEventListener $value DOMNodeInserted [namespace code [list NodeInserted $path]] -usecapture 1
+			    #dom::node addEventListener $value DOMNodeRemoved [namespace code [list NodeRemoved $path]] -usecapture 1
+			    #dom::node addEventListener $value DOMCharacterDataModified [namespace code [list NodePCDATAModified $path]] -usecapture 1
+			    #dom::node addEventListener $value DOMAttrModified [namespace code [list NodeAttrModified $path]] -usecapture 1
+			    #dom::node addEventListener $value DOMAttrRemoved [namespace code [list NodeAttrRemoved $path]] -usecapture 1
+
+			    Insert $path [$value cget -documentElement]
+			}
+		    }
+
+		    cursor -
+		    xscrollcommand -
+		    yscrollcommand {
+			$cmd configure $option $value
+		    }
+
+		    default {
+			return -code error "unknown option \"$option\""
+		    }
+		}
+	    }
+	}
+    }
+
+    return {}
+}
+
+# domtree::xview --
+#
+#	Implements xview method
+#
+# Arguments:
+#	path	widget path
+#	args	additional arguments
+#
+# Results:
+#	Depends on Tree's xview method
+
+proc domtree::xview {path args} {
+    variable state
+
+    [dict get $state $path cmd] xview {*}$args
+}
+
+# domtree::yview --
+#
+#	Implements yview method
+#
+# Arguments:
+#	path	widget path
+#	args	additional arguments
+#
+# Results:
+#	Depends on Tree's yview method
+
+proc domtree::yview {path args} {
+    variable state
+
+    [dict get $state $path cmd] yview {*}$args
+}
+
+# domtree::instate --
+#
+#	Implements instate method
+#
+# Arguments:
+#	path	widget path
+#	args	additional arguments
+#
+# Results:
+#	Depends on Tree's instate method
+
+proc domtree::instate {path args} {
+    variable state
+
+    [dict get $state $path cmd] instate {*}$args
+}
+
+# domtree::identify --
+#
+#	Implements identify method
+#
+# Arguments:
+#	path	widget path
+#	args	additional arguments
+#
+# Results:
+#	Depends on Tree's identify method
+
+proc domtree::identify {path args} {
+    variable state
+
+    [dict get $state $path cmd] identify {*}$args
+}
+
+# domtree::see --
+#
+#	Implements see method
+#
+# Arguments:
+#	path	widget path
+#	args	additional arguments
+#
+# Results:
+#	Depends on Tree's see method
+
+proc domtree::see {path args} {
+    variable state
+
+    [dict get $state $path cmd] see {*}$args
+}
+
+# domtree::focus --
+#
+#	Implements focus method
+#
+# Arguments:
+#	path	widget path
+#	args	additional arguments
+#
+# Results:
+#	Depends on Tree's focus method
+
+proc domtree::focus {path args} {
+    variable state
+
+    [dict get $state $path cmd] focus {*}$args
+}
+
+# domtree::selection --
+#
+#	Implements selection method
+#
+# Arguments:
+#	path	widget path
+#	args	additional arguments
+#
+# Results:
+#	Depends on Tree's selection method
+
+proc domtree::selection {path args} {
+    variable state
+
+    switch -- [lindex $args 0] {
+	set {
+	    # Post a DOMActivate event. The event listener will capture
+	    # this and actually set the selection.
+	    dom::event postUIEvent [dict get $state $path map [lindex $args 1]] DOMActivate -detail 1
+	}
+	default {
+	    [dict get $state $path cmd] selection {*}$args
+	}
     }
 }
 
-proc domtree::configure:dbg {path args} {
-    set res [Widget::configure $path $args]
+# domtree::item --
+#
+#	Implements item method
+#
+# Arguments:
+#	path	widget path
+#	args	additional arguments
+#
+# Results:
+#	Depends on Tree's item method
 
-    set rn [Widget::hasChanged $path -rootnode root]
-    if {$rn} {
+proc domtree::item {path args} {
+    variable state
 
-	eval Tree::delete $path.tree [Tree::nodes $path.tree root]
-	# Remove event listeners from previous DOM tree
+    [dict get $state $path cmd] item {*}$args
+}
 
-	if {[llength $root]} {
-	    #puts stderr [list domtree::configure root $root]
-	    set docel [dom::document cget $root -documentElement]
-	    if {[string length $docel]} {
-		_refresh $path $root
-		_add_node $path root $root
+# domtree::heading --
+#
+#	Implements heading method
+#
+# Arguments:
+#	path	widget path
+#	args	additional arguments
+#
+# Results:
+#	Depends on Tree's heading method
 
+proc domtree::heading {path args} {
+    variable state
+
+    [dict get $state $path cmd] heading {*}$args
+}
+
+# domtree::Insert --
+#
+#	Add a DOM node to the tree.
+#
+# TODO:
+#	Set image for different node types
+#
+# Arguments:
+#	path	widget path
+#	node	DOM node
+#
+# Results:
+#	Tree item created.
+
+proc domtree::Insert {path node} {
+    variable state
+
+    set cmd [dict get $state $path cmd]
+
+    set parent [$node parent]
+    if {[$parent cget -nodeType] == "document"} {
+	set tree_parent {}
+    } else {
+	set tree_parent [$parent cget -id]
+    }
+
+    set label --Unknown--
+    switch [$node cget -nodeType] {
+	element {
+	    set label [$node cget -prefix][expr {[$node cget -prefix] != "" ? ":" : ""}][$node cget -nodeName]
+	    set values [list [expr {[array size [$node cget -attributes]] > 0 ? "@" : ""}] {}]
+	}
+	textNode {
+	    set label \#PCDATA
+	    set values [list {} [$node cget -nodeValue]]
+	}
+	comment {
+	    set label !
+	    set values [list {} [$node cget -nodeValue]]
+	}
+	processing-instruction {
+	    set label ?[$node cget -nodeName]
+	    set values [list {} [$node cget -nodeValue]]
+	}
+    }
+
+    set id [$cmd insert $tree_parent end -id [$node cget -id] -text $label \
+		-values $values \
+		-tags [$node cget -nodeType] \
+		-open true]
+
+    dict set state $path map [$node cget -id] $node
+
+    foreach child [$node children] {
+	Insert $path $child
+    }
+
+    return $id
+}
+
+# domtree::NodeSelected --
+#
+#	Handle selection event.
+#
+# Arguments:
+#	path	widget path
+#	evid	event node
+#
+# Results:
+#	Selection is set.
+
+proc domtree::NodeSelected {path evid} {
+    variable state
+
+    set cmd [dict get $state $path cmd]
+
+    set node [dom::event cget $evid -target]
+
+    $cmd selection set [$node cget -id]
+    $cmd see [$node cget -id]
+
+    return {}
+}
+
+return {}
+
+### TODO
+
+namespace eval domtree::treectrl {
+
+    catch {font create [namespace current]::bold -weight bold}
+
+    proc ::domtree::treectrl { path args } { return [eval domtree::treectrl::create $path $args] }
+
+    # We may be able to use tktreectrl's event mechanism
+    # to exactly match treectrl events to DOM events
+    variable eventTypeMap
+    array set eventTypeMap {
+	ButtonPress	mousedown
+	ButtonRelease	mouseup
+	Enter		mouseover
+	Leave		mouseout
+	Motion		mousemove
+	FocusIn		DOMFocusIn
+	FocusOut	DOMFocusOut
+    }
+}
+
+# domtree::treectrl::create --
+#
+#	Create a DOM Treectrl widget
+#
+# Arguments:
+#	path	widget path
+#	args	configuration options
+#
+# Results:
+#	Tree widget created
+
+proc domtree::treectrl::create {path args} {
+    upvar \#0 [namespace current]::Widget$path widget
+
+    eval frame $path -bd 0 -relief flat -takefocus 0 \
+	    -class domtree::treectrl -highlightthickness 0
+
+    bindtags $path [list $path domtree::treectrl [winfo toplevel $path] all]
+
+    set tree [eval treectrl $path.tree -showroot yes -showrootbutton yes \
+		  -showbuttons yes -showlines yes \
+		  -itemheight 0 \
+		  -openbuttonimage ::domtree::collapse -closedbuttonimage ::domtree::expand]
+
+    $path.tree column create -expand yes -text Elements -tag element
+    $path.tree column create -text Attributes -tag attr
+    $path.tree column create -text Depth -tag depth
+
+    $path.tree element create e1 image -image {::domtree::element {open} ::domtree::element {}}
+    $path.tree element create Edocument image -image ::domtree::textNode
+    $path.tree element create EtextNode text
+    $path.tree element create Ecomment image -image ::domtree::Comment
+    $path.tree element create e3 text \
+	-fill [list [$path cget -highlightcolor] {selected focus}] \
+	-font [list [namespace current]::bold {}]
+    $path.tree element create e4 text -fill blue
+    $path.tree element create e6 text
+    $path.tree element create e5 rect -showfocus yes \
+	-fill [list [$path cget -highlightbackground] {selected focus} gray {selected !focus}]
+
+    $path.tree style create Selement
+    $path.tree style elements Selement {e5 e1 e3 e4}
+    $path.tree style layout Selement e1 -padx {0 4} -expand ns
+    $path.tree style layout Selement e3 -padx {0 4} -expand ns
+    $path.tree style layout Selement e4 -padx {0 6} -expand ns
+    $path.tree style layout Selement e5 -union [list e3] -iexpand ns -ipadx 2
+
+    $path.tree style create Sdocument
+    $path.tree style elements Sdocument {e5 Edocument e3 e4}
+    $path.tree style layout Sdocument Edocument -padx {0 4} -expand ns
+    $path.tree style layout Sdocument e3 -padx {0 4} -expand ns
+    $path.tree style layout Sdocument e4 -padx {0 6} -expand ns
+    $path.tree style layout Sdocument e5 -union [list e3] -iexpand ns -ipadx 2
+
+    $path.tree style create StextNode
+    $path.tree style elements StextNode EtextNode
+    $path.tree style layout StextNode EtextNode -padx {0 4} -squeeze x
+
+    $path.tree style create Scomment
+    $path.tree style elements Scomment {e5 Ecomment e3 e4}
+    $path.tree style layout Scomment Ecomment -padx {0 4} -expand ns
+    $path.tree style layout Scomment e3 -padx {0 4} -expand ns
+    $path.tree style layout Scomment e4 -padx {0 6} -expand ns
+    $path.tree style layout Scomment e5 -union [list e3] -iexpand ns -ipadx 2
+
+    $path.tree style create s3
+    $path.tree style elements s3 {e6}
+    $path.tree style layout s3 e6 -padx 6 -expand ns
+
+    # Create custom event to allow mapping to DOM nodes
+    $path.tree notify install event MapDOMNode
+
+    # Set various bindings to generate DOM events
+
+    if {0} {
+    foreach event {ButtonRelease ButtonPress Enter Leave Motion} {
+	$path.tree bindImage <$event> [namespace code [list _node_mouse_event $event {} $path]]
+	$path.tree bindText <$event> [namespace code [list _node_mouse_event $event {} $path]]
+	foreach modifier {Control Shift Alt Meta Double} {
+	    $path.tree bindImage <$modifier-$event> [namespace code [list _node_mouse_event $event $modifier $path]]
+	    $path.tree bindText <$modifier-$event> [namespace code [list _node_mouse_event $event $modifier $path]]
+	}
+    }
+    }
+
+    grid $tree -row 0 -column 0 -sticky news
+    grid rowconfigure $path 0 -weight 1
+    grid columnconfigure $path 0 -weight 1
+
+    rename $path ::$path:cmd
+    proc ::$path { cmd args } "return \[eval domtree::treectrl::cmd $path \$cmd \$args\]"
+
+    array set widget {
+	-rootnode {}
+	-populate normal
+    }
+
+    foreach {option value} $args {
+	configure $path $option $value
+    }
+
+    return $path
+}
+
+# domtree::treectrl::cmd --
+#
+#	Widget command
+#
+# Arguments:
+#	path	widget path
+#	method	command method
+#	args	method arguments
+#
+# Results:
+#	Depends on method.
+
+proc domtree::treectrl::cmd {path method args} {
+    return [eval [list $method $path] $args]
+}
+
+# domtree::treectrl::cget --
+#
+#	Implements the cget method
+#
+# Arguments:
+#	path	widget path
+#	option	configuration option
+#
+# Results:
+#	Returns value of option
+
+proc domtree::treectrl::cget {path option} {
+    switch -- $option {
+	-rootnode -
+	-populate {
+	    upvar \#0 [namespace current]::Widget$path widget
+
+	    return $widget($option)
+	}
+	default {
+	    return [$path.tree cget $option]
+	}
+    }
+}
+
+# domtree::treectrl::configure --
+#
+#	Implements the configure method
+#
+# Arguments:
+#	path	widget path
+#	args	configuration options
+#
+# Results:
+#	Sets value of options
+
+proc domtree::treectrl::configure {path args} {
+    if {[catch {eval configure:dbg [list $path] $args} msg]} {
+	puts stderr "domtree::treectrl::configure incurred error\n$msg"
+    }
+}
+
+proc domtree::treectrl::configure:dbg {path args} {
+    set res {}
+
+    foreach {option value} $args {
+	switch -- $option {
+	    -rootnode {
+		upvar \#0 [namespace current]::Widget$path widget
+
+		if {$widget(-rootnode) != ""} {
+		    $path.tree item delete all
+		    _dom_unmap $path $widget(-rootnode)
+		}
+
+		if {$value != ""} {
+		    set widget(-rootnode) $value
+		    _add_node $path 0 $value
+		}
+	    }
+	    -populate {
+		upvar \#0 [namespace current]::Widget$path widget
+
+		switch -- $value {
+		    {} -
+		    normal {
+			set widget(-populate) normal
+		    }
+		    lazy {
+			set widget(-populate) lazy
+		    }
+		    default {
+			return -code error "unknown value \"$value\" for option \"-populate\""
+		    }
+		}
+	    }
+	    default {
+		return [$path.tree configure $option $value]
+	    }
+	}
+    }
+
+    # May need to add these to above switch code
+    if {0} {
 		# Listen for UI events
 		dom::node addEventListener $docel DOMActivate [namespace code [list _node_selected $path]] -usecapture 1
 
@@ -171,18 +651,12 @@ proc domtree::configure:dbg {path args} {
 		dom::node addEventListener $docel DOMCharacterDataModified [namespace code [list _node_data_modified $path]] -usecapture 1
 		dom::node addEventListener $docel DOMAttrModified [namespace code [list _node_attr_modified $path]] -usecapture 1
 		dom::node addEventListener $docel DOMAttrRemoved [namespace code [list _node_attr_removed $path]] -usecapture 1
-	    }
-	}
-    }
-
-    if {!$rn && [Widget::hasChanged $path -showtextcontent showtext]} {
-	_refresh_all $path root
     }
 
     return $res
 }
 
-# domtree::refresh --
+# domtree::treectrl::refresh --
 #
 #	Updates the Tree display with the value of a node
 #
@@ -193,42 +667,11 @@ proc domtree::configure:dbg {path args} {
 # Results:
 #	May change node display
 
-proc domtree::refresh {path node} {
+proc domtree::treectrl::refresh {path node} {
     _refresh $path $node
     return {}
 }
-
-# domtree::xview --
-#
-#	Implement xview method
-#
-# Arguments:
-#	path	widget path
-#	args	additional arguments
-#
-# Results:
-#	Depends on Tree xview method
-
-proc domtree::xview {path args} {
-    eval $path.tree xview $args
-}
-
-# domtree::yview --
-#
-#	Implement yview method
-#
-# Arguments:
-#	path	widget path
-#	args	additional arguments
-#
-# Results:
-#	Depends on Tree yview method
-
-proc domtree::yview {path args} {
-    eval $path.tree yview $args
-}
-
-# domtree::find --
+# domtree::treectrl::find --
 #
 #	Find DOM node at given location
 #
@@ -240,76 +683,14 @@ proc domtree::yview {path args} {
 # Results:
 #	DOM node at location
 
-proc domtree::find {path findInfo {confine {}}} {
+proc domtree::treectrl::find {path findInfo {confine {}}} {
     set tnode [$path.tree find $findInfo $confine]
-    return [_tree_to_dom $tnode]
-}
-
-# domtree::_dom_to_tree --
-#
-#	Map a DOM node to a tree node
-#
-# Arguments:
-#	node	DOM node id
-#
-# Results:
-#	A string suitable for use as a tree node path
-
-proc domtree::_dom_to_tree node {
-    if {[catch {dom::document cget $node -documentElement} docel]} {
-	return $node
-    } else {
-	return root
-    }
-}
-
-# domtree::_tree_to_dom --
-#
-#	Map a tree node to a DOM node
-#
-# Arguments:
-#	node	Tree node path
-#
-# Results:
-#	A string suitable for use as a DOM node id
-
-proc domtree::_tree_to_dom node {
-    if {[string compare $node "root"]} {
-	return $node
-    } else {
-	# Really want to return the document node,
-	# but don't know it here
-	return {}
-    }
-}
-
-# domtree::_open_ancestors --
-#
-#	Make sure that all ancestors of the given node are open.
-#	Don't use "opentree", since that will recursively open
-#	all children.
-#
-# Arguments:
-#	path	widget path
-#	node	tree node
-#
-# Results:
-#	All ancestors of the node are opened
-
-proc domtree::_open_ancestors {path node} {
-    while {[string compare $node root]} {
-	#$path.tree opentree $node
-	if {[namespace eval ::Tree [list Widget::getoption $path.tree.$node -open]] != 1} {
-	    namespace eval ::Tree [list Widget::setoption $path.tree.$node -open 1]
-	    uplevel #0 [namespace eval ::Tree [list Widget::getoption $path.tree -opencmd]] [list $node]
-	}
-	set node [$path.tree parent $node]
-    }
+    return [_treeid_to_dnode $tnode]
 }
 
 # Procedures to implement display
 
-# domtree::_refresh --
+# domtree::treectrl::_refresh --
 #
 #	Configure node with appropriate images, labels, etc
 #
@@ -321,9 +702,7 @@ proc domtree::_open_ancestors {path node} {
 # Results:
 #	Tree node may have image or label changed
 
-proc domtree::_refresh {path node args} {
-
-    #puts stderr [list domtree::_refresh $path $node]
+proc domtree::treectrl::_refresh {path node args} {
 
     switch [set nodetype [::dom::node cget $node -nodeType]] {
 	document -
@@ -401,7 +780,7 @@ proc domtree::_refresh {path node args} {
     return {}
 }
 
-# domtree::_refresh_text_content_display_find_text --
+# domtree::treectrl::_refresh_text_content_display_find_text --
 #
 #	Searches given element for text.
 #	In future could use XPath - just get the string value
@@ -414,7 +793,7 @@ proc domtree::_refresh {path node args} {
 # Results:
 #	Returns string
 
-proc domtree::_refresh_text_content_display_find_text {node len} {
+proc domtree::treectrl::_refresh_text_content_display_find_text {node len} {
     switch -- $len {
 	0 {
 	    return {}
@@ -452,7 +831,7 @@ proc domtree::_refresh_text_content_display_find_text {node len} {
     return {}
 }
 
-# domtree::_refresh_all --
+# domtree::treectrl::_refresh_all --
 #
 #	Updates display of all tree nodes
 #
@@ -463,7 +842,7 @@ proc domtree::_refresh_text_content_display_find_text {node len} {
 # Results:
 #	Returns empty string
 
-proc domtree::_refresh_all {path node} {
+proc domtree::treectrl::_refresh_all {path node} {
     foreach child [$path.tree nodes $node] {
 	_refresh $path [_tree_to_dom $child]
 	_refresh_all $path $child
@@ -472,7 +851,7 @@ proc domtree::_refresh_all {path node} {
     return {}
 }
 
-# domtree::_refresh_string_trim --
+# domtree::treectrl::_refresh_string_trim --
 #
 #	Massage text for display
 #
@@ -483,7 +862,7 @@ proc domtree::_refresh_all {path node} {
 # Results:
 #	Returns string
 
-proc domtree::_refresh_string_trim {text max} {
+proc domtree::treectrl::_refresh_string_trim {text max} {
     if {[string length $text] > $max} {
 	set text [string range $text 0 [expr $max - 3]]...
     }
@@ -496,7 +875,7 @@ proc domtree::_refresh_string_trim {text max} {
     return $text
 }
 
-# domtree::_node_selected --
+# domtree::treectrl::_node_selected --
 #
 #	A node has been selected.
 #
@@ -506,7 +885,7 @@ proc domtree::_refresh_string_trim {text max} {
 #	path	widget path
 #	evid	event node
 
-proc domtree::_node_selected {path evid} {
+proc domtree::treectrl::_node_selected {path evid} {
 
     set domnode [dom::event cget $evid -target]
 
@@ -522,7 +901,7 @@ proc domtree::_node_selected {path evid} {
     return {}
 }
 
-# domtree::_select_node --
+# domtree::treectrl::_select_node --
 #
 #	A tree node has been selected.
 #
@@ -531,14 +910,14 @@ proc domtree::_node_selected {path evid} {
 #	tree	tree path
 #	tnode	tree node
 
-proc domtree::_select_node {path tree tnode} {
+proc domtree::treectrl::_select_node {path tree tnode} {
 
     dom::event postMouseEvent [_tree_to_dom $tnode] click -detail 1
 
     return {}
 }
 
-# domtree::_node_mouse_event --
+# domtree::treectrl::_node_mouse_event --
 #
 #	Generate DOM Mouse Event
 #
@@ -551,7 +930,7 @@ proc domtree::_select_node {path tree tnode} {
 # Results:
 #	Event synthesized for DOM
 
-proc domtree::_node_mouse_event {event mod path tnode} {
+proc domtree::treectrl::_node_mouse_event {event mod path tnode} {
     variable eventTypeMap
 
     set type $event
@@ -580,7 +959,7 @@ proc domtree::_node_mouse_event {event mod path tnode} {
     return {}
 }
 
-# domtree::_node_ui_event --
+# domtree::treectrl::_node_ui_event --
 #
 #	Generate DOM UI Event
 #
@@ -592,7 +971,7 @@ proc domtree::_node_mouse_event {event mod path tnode} {
 # Results:
 #	Event synthesized for DOM
 
-proc domtree::_node_ui_event {event path tnode} {
+proc domtree::treectrl::_node_ui_event {event path tnode} {
     variable eventTypeMap
 
     set type $event
@@ -602,72 +981,164 @@ proc domtree::_node_ui_event {event path tnode} {
     return {}
 }
 
-# domtree::_add_node --
+# domtree::treectrl::_add_node --
 #
 #	Recurse DOM structure, inserting tree nodes as we go.
 #
-#	Trouble is, this is very expensive when beyond a certain
-#	depth we're not going to see the nodes anyway.
-#	Instead, build the tree as the user opens nodes.
-#	This will spread the cost of building the tree, and the
-#	user may never open certain nodes anyway.
 #
 # Arguments:
-#	path	widget path
+#	w	tree widget path
 #	tnode	tree node to add children to
 #	dnode	DOM node corresponding to tree path above
 #
 # Results:
 #	Nodes added to tree
 
-proc domtree::_add_node {path tnode dnode} {
+proc domtree::treectrl::_add_node {path tnode dnode} {
+    upvar \#0 [namespace current]::Widget$path widget
 
-    if {[string compare $tnode "root"]} {
-
-	# If the grandparent is open, then do add the items
-	# This is so that the open/close toggle is added to the parent
-
-	set parent [$path.tree parent $tnode]
-
-	if {[string compare $parent "root"]} {
-	    set grandParent [$path.tree parent $parent]
-	    if {[string compare $grandParent "root"]} {
-
-		# We are beyond the second level from the root
-
-		array set ParentInfo [$path.tree itemcget $parent -data]
-		array set GrandParentInfo [$path.tree itemcget $grandParent -data]
-		if {[info exists ParentInfo(nodeOpen)]} {
-		    # Parent is open, so add ourself
-		} elseif {[info exists GrandParentInfo(nodeOpen)]} {
-		    # Grandparent is open, so add ourself
-		} else {
-		    return {}
-		}
-
-	    } else {
-		# We are two levels down from the root.  Go ahead and build,
-		# but don't automatically mark this node as being open.
-	    }
-
-	} else {
-	    # We are a child of the root, so go ahead and build here
-	    _set_client_data $path $tnode nodeOpen 1
+    switch [dom::node cget $dnode -nodeType] {
+	document {
+	    set nodename {}
+	    set hasChildren 1
+	    set text {}
+	    set attrs {}
 	}
-
-    } else {
-	# We are the root node, so definitely go ahead and build children
+	element {
+	    set nodename [$dnode cget -nodeName]
+	    set hasChildren [$dnode hasChildNodes]
+	    set text {}
+	    set attrs {}
+	    foreach atnode [dom::node selectNode $dnode @*] {
+		lappend attrs [dom::node cget $atnode -nodeName]
+	    }
+	}
+	textNode {
+	    set nodename {}
+	    set hasChildren 0
+	    set text [$dnode cget -nodeValue]
+	    set attrs {}
+	}
+	default {
+	    set nodename [dom::node cget $dnode -nodeType]
+	    set hasChildren 0
+	    set text {}
+	    set attrs {}
+	}
     }
 
-    foreach child [::dom::node children $dnode] {
-	# Due to lazy population of the tree, the node may already exist
-	catch {$path.tree insert end $tnode [_dom_to_tree $child]}
-	_refresh $path $child
+    set id [$path.tree item create]
+    if {$tnode != ""} {
+	$path.tree item lastchild $tnode $id
+    }
+    $path.tree item configure $id -button $hasChildren
+    switch [dom::node cget $dnode -nodeType] {
+	textNode {
+	    $path.tree item style set $id 0 S[dom::node cget $dnode -nodeType]
+	    $path.tree item text $id 0 $text
+	}
+	default {
+	    $path.tree item style set $id 0 S[dom::node cget $dnode -nodeType] \
+		1 s3 2 s3
+	    $path.tree item complex $id \
+		[list [list e3 -text $nodename]] \
+		[list [list e6 -text $attrs]] \
+		[list [list e6 -text [llength [dom::node path $dnode]]]]
+	}
+    }
 
-	_add_node $path [_dom_to_tree $child] $child
+    # Create a two-way mapping between DOM node and tree id
+    $path.tree notify bind $id <MapDOMNode> [list [namespace current]::_domid $dnode]
+    dom::node addEventListener $dnode DOMActivate [list [namespace current]::_treeid $path $id]
+
+    # Implement lazy population of the tree widget
+    if {$widget(-populate) == "lazy"} {
+	$path.tree collapse $id
+	after idle [list $path.tree notify bind $id <Expand-before> [namespace code [list _node_open $path %I $id $dnode]]]
+    }
+    if {$widget(-populate) == "normal"} {
+	foreach dchild [dom::node children $dnode] {
+	    _add_node $path $id $dchild
+	}
     }
 
     return {}
+}
+# These should not be called
+proc domtree::treectrl::_domid {dnode} {
+    return $dnode
+}
+proc domtree::treectrl::_treeid {id} {
+    return $id
+}
+
+# domtree::treectrl::_dnode_to_treeid --
+#
+#	Find the tree item for a DOM node
+#
+# Arguments:
+#	path	widget path
+#	dnode	DOM node
+#
+# Results:
+#	Returns a tree item descriptor
+
+proc domtree::treectrl::_dnode_to_treeid {path dnode} {
+    set listener {}
+    foreach l [dom::node addEventListener $dnode DOMActivate] {
+	foreach {key dpath value} $l break
+	if {[string equal $path $dpath] && \
+		[string equal $key "[namespace current]::_treeid"]} {
+	    return $value
+	}
+    }
+
+    return {}
+}
+
+# domtree::treectrl::_treeid_to_dnode --
+#
+#	Find the DOM node for a tree item
+#
+# Arguments:
+#	path	widget path
+#	id	item descriptor
+#
+# Results:
+#	Returns a DOM node token
+
+proc domtree::treectrl::_treeid_to_dnode {path id} {
+    return [lindex [$path.tree notify bind $id <MapDOMNode>] end]
+}
+
+# domtree::treectrl::_dom_unmap --
+#
+#	Remove all event listeners for a tree widget.
+#
+# Arguments:
+#	path	widget path
+#	node	DOM node
+#
+# Results:
+#	Returns empty string.
+#	Event listeners may be removed from DOM document nodes.
+
+proc domtree::treectrl::_dom_unmap {path node} {
+    # Crashing bug in TclDOM v3.1 prevents us from cleaning up
+    return {}
+
+    foreach listener [dom::node addEventListener $node DOMActivate] {
+	foreach {key dpath value} $listener break
+	if {[string match [namespace current]::_* $key] && \
+		[string equal $dpath $path]} {
+	    # This is one of ours
+	    dom::node removeEventListener $node DOMActivate $listener
+	}
+    }
+
+    foreach child [dom::node children $node] {
+	_dom_unmap $path $child
+    }
 }
 
 # domtree::_set_client_data --
@@ -709,21 +1180,24 @@ proc domtree::_unset_client_data {path node field} {
 
 # domtree::_node_open --
 #
-#	Invoked when a tree item is opened.
-#	If we haven't done this node's children yet, 
-#	do it now.  This lazily populates the tree.
+#	Invoked when a tree item is opened and
+#	the tree is being populated lazily.
 #
 # Arguments:
 #	path	widget path
-#	node	tree node
+#	id	tree item
+#	dnode	DOM node
 #
 # Results:
 #	Tree nodes may be added
 
-proc domtree::_node_open {path node} {
-
-    _set_client_data $path $node nodeOpen 1
-    _add_node $path $node [_tree_to_dom $node]
+proc domtree::treectrl::_node_open {path tnode id dnode} {
+    if {[string equal $tnode $id]} {
+	$path.tree notify bind $id <Expand-before> {}
+	foreach dchild [dom::node children $dnode] {
+	    _add_node $path $id $dchild
+	}
+    }
 
     return {}
 }
@@ -904,5 +1378,21 @@ mgn3+8xsFwuzeUYopR5NBAA7
 image create photo ::domtree::other -data {R0lGODlhEAAOAKL/AP///39/fxAQEAAAAP///wAAAAAAAAAAACH/C0FET0JFOklSMS4wAt7t
 ACH5BAEAAAQALAAAAAAQAA4AAAM4SDSj/m8E0ByrdtI1wI4aFV6ZR5kiJpmrJ6kj+pbuGMCs
 fIO1O/MdhmcHeUkCSGJEIriQIByoIwEAOw==
+}
+image create photo ::domtree::collapse -data {R0lGODlhEAAQALIAAAAAAAAAMwAAZgAAmQAAzAAA/wAzAAAzMyH5BAUAAAYA
+LAAAAAAQABAAggAAAGZmzIiIiLu7u5mZ/8zM/////wAAAAMlaLrc/jDKSRm4
+OAMHiv8EIAwcYRKBSD6AmY4S8K4xXNFVru9SAgAh/oBUaGlzIGFuaW1hdGVk
+IEdJRiBmaWxlIHdhcyBjb25zdHJ1Y3RlZCB1c2luZyBVbGVhZCBHSUYgQW5p
+bWF0b3IgTGl0ZSwgdmlzaXQgdXMgYXQgaHR0cDovL3d3dy51bGVhZC5jb20g
+dG8gZmluZCBvdXQgbW9yZS4BVVNTUENNVAAh/wtQSUFOWUdJRjIuMAdJbWFn
+ZQEBADs=
+}
+image create photo ::domtree::expand -data {R0lGODlhEAAQALIAAAAAAAAAMwAAZgAAmQAAzAAA/wAzAAAzMyH5BAUAAAYA
+LAAAAAAQABAAggAAAGZmzIiIiLu7u5mZ/8zM/////wAAAAMnaLrc/lCB6MCk
+C5SLNeGR93UFQQRgVaLCEBasG35tB9Qdjhny7vsJACH+gFRoaXMgYW5pbWF0
+ZWQgR0lGIGZpbGUgd2FzIGNvbnN0cnVjdGVkIHVzaW5nIFVsZWFkIEdJRiBB
+bmltYXRvciBMaXRlLCB2aXNpdCB1cyBhdCBodHRwOi8vd3d3LnVsZWFkLmNv
+bSB0byBmaW5kIG91dCBtb3JlLgFVU1NQQ01UACH/C1BJQU5ZR0lGMi4wB0lt
+YWdlAQEAOw==
 }
 

@@ -3,7 +3,7 @@
  *
  *  Interface to Gnome libxslt.
  *
- * Copyright (c) 2005-2007 Explain
+ * Copyright (c) 2005-2009 Explain
  * http://www.explain.com.au/
  * Copyright (c) 2001-2004 Zveno Pty Ltd
  * http://www.zveno.com/
@@ -17,15 +17,21 @@
 
 #include <tclxslt/tclxslt.h>
 #include <string.h>
+#include <libxml/parserInternals.h>
+#include <libxslt/namespaces.h>
 #include <libxslt/imports.h>
 #include <libxslt/security.h>
+#include <libxslt/preproc.h>
+#include <libxslt/variables.h>
+#include <libxslt/templates.h>
 
 #undef TCL_STORAGE_CLASS
 #define TCL_STORAGE_CLASS DLLEXPORT
 
-#ifdef __WIN32__
-#     include "win/win32config.h"
+/*#ifdef __WIN32__
+ *#     include "win/win32config.h"
 #endif
+*/
 
 /*
  * Manage stylesheet objects
@@ -108,9 +114,9 @@ static void TclXSLTExtShutdown _ANSI_ARGS_((xsltTransformContextPtr ctxt,
 static void TclXSLTExtFunction _ANSI_ARGS_((xmlXPathParserContextPtr xpathCtxt,
 					    int nargs));
 /* static xsltPreComputeFunction TclXSLTExtElementPreComp; */
-static void TclXSLTExtElementPreComp _ANSI_ARGS_((xsltStylesheetPtr style,
-						  xmlNodePtr inst,
-						  xsltTransformFunction function));
+static xsltElemPreCompPtr TclXSLTExtElementPreComp _ANSI_ARGS_((xsltStylesheetPtr style,
+								xmlNodePtr inst,
+								xsltTransformFunction function));
 /* static xsltTransformFunction TclXSLTExtElementTransform; */
 static void TclXSLTExtElementTransform _ANSI_ARGS_((xsltTransformContextPtr ctxt,
 					            xmlNodePtr node,
@@ -141,6 +147,13 @@ static Tcl_Obj * TclXSLT_ConvertXPathObjToTclObj _ANSI_ARGS_((Tcl_Interp *interp
                                                               xmlXPathObjectPtr xpobj));
 static xmlXPathObjectPtr TclXSLT_ConvertTclObjToXPathObj _ANSI_ARGS_((Tcl_Interp *interp,
                                                               Tcl_Obj *objPtr));
+
+/* Copied from libxslt-1.1.24 transform.c */
+
+static void
+xsltApplySequenceConstructor(xsltTransformContextPtr ctxt,
+			     xmlNodePtr contextNode, xmlNodePtr list,
+			     xsltTemplatePtr templ);
 
 /*
  * Error context for passing error result back to caller.
@@ -364,7 +377,7 @@ TclXSLTCompileCommand(dummy, interp, objc, objv)
    * xmlCopyDoc doesn't copy some of the fields.
    */
   if (origDoc->URL) {
-    doc->URL = (const xmlChar *) Tcl_Alloc(strlen((char *) origDoc->URL) + 1);
+    doc->URL = (const xmlChar *) xmlMalloc(strlen((char *) origDoc->URL) + 1);
     strcpy((char *) doc->URL, (char *) origDoc->URL);
   }
 
@@ -1323,13 +1336,13 @@ TclXSLT_RegisterAll(extinfo, nsuri)
  *----------------------------------------------------------------------------
  */
 
-static void 
+static xsltElemPreCompPtr
 TclXSLTExtElementPreComp(style, inst, function)
     xsltStylesheetPtr style;
     xmlNodePtr inst;
     xsltTransformFunction function;
 {
-  return;
+  return NULL;
 }
 
 /*
@@ -1348,6 +1361,720 @@ TclXSLTExtElementPreComp(style, inst, function)
  *----------------------------------------------------------------------------
  */
 
+/*
+ * xsltAddTextString --
+ * Copied from libxslt-1.1.24 transform.c
+ * (without the debugging code)
+ */
+
+static xmlNodePtr
+xsltAddTextString(xsltTransformContextPtr ctxt, xmlNodePtr target,
+		  const xmlChar *string, int len) {
+    if ((len <= 0) || (string == NULL) || (target == NULL))
+        return(target);
+
+    if (ctxt->lasttext == target->content) {
+
+	if (ctxt->lasttuse + len >= ctxt->lasttsize) {
+	    xmlChar *newbuf;
+	    int size;
+
+	    size = ctxt->lasttsize + len + 100;
+	    size *= 2;
+	    newbuf = (xmlChar *) xmlRealloc(target->content,size);
+	    if (newbuf == NULL) {
+		xsltTransformError(ctxt, NULL, target,
+		 "xsltCopyText: text allocation failed\n");
+		return(NULL);
+	    }
+	    ctxt->lasttsize = size;
+	    ctxt->lasttext = newbuf;
+	    target->content = newbuf;
+	}
+	memcpy(&(target->content[ctxt->lasttuse]), string, len);
+	ctxt->lasttuse += len;
+	target->content[ctxt->lasttuse] = 0;
+    } else {
+	xmlNodeAddContent(target, string);
+	ctxt->lasttext = target->content;
+	len = xmlStrlen(target->content);
+	ctxt->lasttsize = len;
+	ctxt->lasttuse = len;
+    }
+    return(target);
+}
+
+/*
+ * xsltCopyNamespaceListInternal --
+ * Copied from libxslt-1.1.24 transform.c
+ * (without the debugging code)
+ */
+
+static xmlNsPtr
+xsltCopyNamespaceListInternal(xmlNodePtr elem, xmlNsPtr ns) {
+    xmlNsPtr ret = NULL;
+    xmlNsPtr p = NULL, q, luNs;
+
+    if (ns == NULL)
+	return(NULL);
+    if ((elem != NULL) && (elem->type != XML_ELEMENT_NODE))
+	elem = NULL;
+
+    do {
+	if (ns->type != XML_NAMESPACE_DECL)
+	    break;
+	if (elem != NULL) {	    
+	    if ((elem->ns != NULL) &&
+		xmlStrEqual(elem->ns->prefix, ns->prefix) &&
+		xmlStrEqual(elem->ns->href, ns->href))
+	    {
+		ns = ns->next;
+		continue;
+	    }
+	    luNs = xmlSearchNs(elem->doc, elem, ns->prefix);
+	    if ((luNs != NULL) && (xmlStrEqual(luNs->href, ns->href)))
+	    {
+		ns = ns->next;
+		continue;
+	    }
+	}	    	
+	q = xmlNewNs(elem, ns->href, ns->prefix);
+	if (p == NULL) {
+	    ret = p = q;
+	} else if (q != NULL) {
+	    p->next = q;
+	    p = q;
+	}
+	ns = ns->next;	
+    } while (ns != NULL);
+    return(ret);
+}
+
+/*
+ * xsltCopyText --
+ * Copied from libxslt-1.1.24 transform.c
+ * (without the debugging code)
+ */
+
+static xmlNodePtr
+xsltCopyText(xsltTransformContextPtr ctxt, xmlNodePtr target,
+	     xmlNodePtr cur, int interned)
+{
+    xmlNodePtr copy;
+
+    if ((cur->type != XML_TEXT_NODE) &&
+	(cur->type != XML_CDATA_SECTION_NODE))
+	return(NULL);
+    if (cur->content == NULL) 
+	return(NULL);
+
+    if ((target == NULL) || (target->children == NULL)) {
+	ctxt->lasttext = NULL;
+    }
+
+    if ((ctxt->style->cdataSection != NULL) &&
+	(ctxt->type == XSLT_OUTPUT_XML) &&	
+	(target != NULL) &&
+	(target->type == XML_ELEMENT_NODE) &&
+	(((target->ns == NULL) && 
+	  (xmlHashLookup2(ctxt->style->cdataSection,
+		          target->name, NULL) != NULL)) ||
+	 ((target->ns != NULL) &&
+	  (xmlHashLookup2(ctxt->style->cdataSection,
+	                  target->name, target->ns->href) != NULL))))
+    {
+	if ((target->last != NULL) &&
+	     (target->last->type == XML_CDATA_SECTION_NODE))
+	{
+	    copy = xsltAddTextString(ctxt, target->last, cur->content,
+		xmlStrlen(cur->content));
+	    goto exit;
+	} else {
+	    unsigned int len;
+
+	    len = xmlStrlen(cur->content);	    
+	    copy = xmlNewCDataBlock(ctxt->output, cur->content, len);
+	    if (copy == NULL)
+		goto exit;
+	    ctxt->lasttext = copy->content;
+	    ctxt->lasttsize = len;
+	    ctxt->lasttuse = len;
+	}
+    } else if ((target != NULL) &&
+	(target->last != NULL) &&
+	(((target->last->type == XML_TEXT_NODE) &&
+	(target->last->name == cur->name)) ||
+	(((target->last->type == XML_CDATA_SECTION_NODE) &&
+	(cur->name == xmlStringTextNoenc)))))
+    {
+	copy = xsltAddTextString(ctxt, target->last, cur->content,
+	    xmlStrlen(cur->content));
+	goto exit;
+    } else if ((interned) && (target != NULL) &&
+	(target->doc != NULL) &&
+	(target->doc->dict == ctxt->dict))
+    {        
+        copy = xmlNewTextLen(NULL, 0);
+	if (copy == NULL)
+	    goto exit;	
+	if (cur->name == xmlStringTextNoenc)
+	    copy->name = xmlStringTextNoenc;
+	
+	if (xmlDictOwns(ctxt->dict, cur->content))
+	    copy->content = cur->content;
+	else {
+	    if ((copy->content = xmlStrdup(cur->content)) == NULL)
+		return NULL;
+	}
+    } else {
+        unsigned int len;
+
+	len = xmlStrlen(cur->content);
+	copy = xmlNewTextLen(cur->content, len);
+	if (copy == NULL)
+	    goto exit;
+	if (cur->name == xmlStringTextNoenc)
+	    copy->name = xmlStringTextNoenc;
+	ctxt->lasttext = copy->content;
+	ctxt->lasttsize = len;
+	ctxt->lasttuse = len;
+    }
+    if (copy != NULL) {
+	if (target != NULL) {
+	    copy->doc = target->doc;
+	    xmlAddChild(target, copy);
+	}
+    } else {
+	xsltTransformError(ctxt, NULL, target,
+			 "xsltCopyText: text copy failed\n");
+    }
+
+exit:
+    if ((copy == NULL) || (copy->content == NULL)) {
+	xsltTransformError(ctxt, NULL, target,
+	    "Internal error in xsltCopyText(): "
+	    "Failed to copy the string.\n");
+	ctxt->state = XSLT_STATE_STOPPED;
+    }
+    return(copy);
+}
+
+/*
+ * xsltShallowCopyElem --
+ * Copied from libxslt-1.1.24 transform.c
+ * (without the debugging code)
+ */
+
+static xmlNodePtr
+xsltShallowCopyElem(xsltTransformContextPtr ctxt, xmlNodePtr node,
+		    xmlNodePtr insert, int isLRE)
+{
+    xmlNodePtr copy;
+
+    if ((node->type == XML_DTD_NODE) || (insert == NULL))
+	return(NULL);
+    if ((node->type == XML_TEXT_NODE) ||
+	(node->type == XML_CDATA_SECTION_NODE))
+	return(xsltCopyText(ctxt, insert, node, 0));
+
+    copy = xmlDocCopyNode(node, insert->doc, 0);
+    if (copy != NULL) {
+	copy->doc = ctxt->output;
+	xmlAddChild(insert, copy);
+
+	if (node->type == XML_ELEMENT_NODE) {
+	    if (node->nsDef != NULL) {
+		if (isLRE)
+		    xsltCopyNamespaceList(ctxt, copy, node->nsDef);
+		else
+		    xsltCopyNamespaceListInternal(copy, node->nsDef);
+	    }
+
+	    if (node->ns != NULL) {
+		if (isLRE) {
+		    copy->ns = xsltGetNamespace(ctxt, node, node->ns, copy);
+		} else {
+		    copy->ns = xsltGetSpecialNamespace(ctxt,
+			node, node->ns->href, node->ns->prefix, copy);
+		    
+		}
+	    } else if ((insert->type == XML_ELEMENT_NODE) &&
+		       (insert->ns != NULL))
+	    {
+		xsltGetSpecialNamespace(ctxt, node, NULL, NULL, copy);
+	    }
+	}
+    } else {
+	xsltTransformError(ctxt, NULL, node,
+		"xsltShallowCopyElem: copy %s failed\n", node->name);
+    }
+    return(copy);
+}
+
+/*
+ * xsltApplyFallbacks --
+ * Copied from libxslt-1.1.24 transform.c
+ * (without the debugging code)
+ */
+
+static int
+xsltApplyFallbacks(xsltTransformContextPtr ctxt, xmlNodePtr node,
+	           xmlNodePtr inst) {
+
+    xmlNodePtr child;
+    int ret = 0;
+    
+    if ((ctxt == NULL) || (node == NULL) || (inst == NULL) ||
+	(inst->children == NULL))
+	return(0);
+
+    child = inst->children;
+    while (child != NULL) {
+        if ((IS_XSLT_ELEM(child)) &&
+            (xmlStrEqual(child->name, BAD_CAST "fallback"))) {
+	    ret++;
+	    xsltApplySequenceConstructor(ctxt, node, child->children,
+		NULL);
+	}
+	child = child->next;
+    }
+    return(ret);
+}
+
+/*
+ * xsltReleaseLocalRVTs --
+ * Copied from libxslt-1.1.24 transform.c
+ * (without the debugging code)
+ */
+
+static void
+xsltReleaseLocalRVTs(xsltTransformContextPtr ctxt, xmlDocPtr base)
+{
+    xmlDocPtr cur = ctxt->localRVT, tmp;
+    
+    while ((cur != NULL) && (cur != base)) {
+	if (cur->psvi == (void *) ((long) 1)) {
+	    cur = (xmlDocPtr) cur->next;
+	} else {
+	    tmp = cur;
+	    cur = (xmlDocPtr) cur->next;
+
+	    if (tmp == ctxt->localRVT)
+		ctxt->localRVT = cur;
+
+	    if (tmp == ctxt->localRVTBase)
+		ctxt->localRVTBase = cur;
+
+	    if (tmp->prev)
+		tmp->prev->next = (xmlNodePtr) cur;
+	    if (cur)
+		cur->prev = tmp->prev;
+	    xsltReleaseRVT(ctxt, tmp);
+	}
+    }
+}
+
+/*
+ * xsltApplySequenceConstructor --
+ * Copied from libxslt-1.1.24 transform.c
+ * (without the debugging code)
+ */
+
+static void
+xsltApplySequenceConstructor(xsltTransformContextPtr ctxt,
+			     xmlNodePtr contextNode, xmlNodePtr list,
+			     xsltTemplatePtr templ)
+{
+    xmlNodePtr oldInsert, oldInst, oldCurInst, oldContextNode;
+    xmlNodePtr cur, insert, copy = NULL;
+    int level = 0, oldVarsNr;
+    xmlDocPtr oldLocalFragmentTop, oldLocalFragmentBase;
+#ifdef XSLT_REFACTORED
+    xsltStylePreCompPtr info;
+#endif
+
+    if (ctxt == NULL)
+	return;
+    if (list == NULL)
+        return;
+    CHECK_STOPPED;
+
+
+    oldLocalFragmentTop = ctxt->localRVT;
+    oldInsert = insert = ctxt->insert;
+    oldInst = oldCurInst = ctxt->inst;
+    oldContextNode = ctxt->node;
+
+    oldVarsNr = ctxt->varsNr;
+
+    cur = list;
+    while (cur != NULL) {
+        ctxt->inst = cur;
+
+        if (insert == NULL) {
+	  goto error;
+	}
+#ifdef XSLT_REFACTORED
+	if (cur->type == XML_ELEMENT_NODE) {
+	    info = (xsltStylePreCompPtr) cur->psvi;
+	    if (info == NULL) {
+		if (IS_XSLT_ELEM_FAST(cur) && IS_XSLT_NAME(cur, "message")) {
+		    xsltMessage(ctxt, contextNode, cur);
+		    goto skip_children;
+		}		    		 
+		/*
+		* Something really went wrong:
+		*/
+		xsltTransformError(ctxt, NULL, cur,
+		    "Internal error in xsltApplySequenceConstructor(): "
+		    "The element '%s' in the stylesheet has no compiled "
+		    "representation.\n",
+		    cur->name);
+                goto skip_children;
+            }
+
+	    if (info->type == XSLT_FUNC_LITERAL_RESULT_ELEMENT) {
+		xsltStyleItemLRElementInfoPtr lrInfo =
+		    (xsltStyleItemLRElementInfoPtr) info;
+		copy = xmlDocCopyNode(cur, insert->doc, 0);
+		if (copy == NULL) {
+		    xsltTransformError(ctxt, NULL, cur,
+			"Internal error in xsltApplySequenceConstructor(): "
+			"Failed to copy literal result element '%s'.\n",
+			cur->name);
+		    goto error;
+		} else {
+		    copy->doc = ctxt->output;
+		    xmlAddChild(insert, copy);
+		    if (lrInfo->effectiveNs != NULL) {
+			xsltEffectiveNsPtr effNs = lrInfo->effectiveNs;
+			xmlNsPtr ns, lastns = NULL;
+
+			while (effNs != NULL) {
+			    ns = xmlSearchNs(copy->doc, copy, effNs->prefix);
+			    if ((ns != NULL) &&
+				(xmlStrEqual(ns->href, effNs->nsName)))
+			    {
+				effNs = effNs->next;
+				continue;			    
+			    }
+			    ns = xmlNewNs(copy, effNs->nsName, effNs->prefix);
+			    if (ns == NULL) {
+				xsltTransformError(ctxt, NULL, cur,
+				    "Internal error in "
+				    "xsltApplySequenceConstructor(): "
+				    "Failed to copy a namespace "
+				    "declaration.\n");
+				goto error;
+			    }
+								
+			    if (lastns == NULL)
+				copy->nsDef = ns;
+			    else
+				lastns->next =ns;
+			    lastns = ns;
+
+			    effNs = effNs->next;
+			}
+			
+		    }
+		    if (cur->ns != NULL) {
+			copy->ns = xsltGetSpecialNamespace(ctxt, cur,
+			    cur->ns->href, cur->ns->prefix, copy);			    
+		    } else {
+			if (copy->nsDef ||
+			    ((insert != NULL) &&
+			     (insert->type == XML_ELEMENT_NODE) &&
+			     (insert->ns != NULL)))
+			{
+			    xsltGetSpecialNamespace(ctxt, cur,
+				NULL, NULL, copy);
+			}
+		    }
+		}
+		if (cur->properties != NULL) {
+		    xsltAttrListTemplateProcess(ctxt, copy, cur->properties);
+		}
+	    } else if (IS_XSLT_ELEM_FAST(cur)) {
+		if (info->type == XSLT_FUNC_UNKOWN_FORWARDS_COMPAT) {
+		    ctxt->insert = insert;
+		    if (!xsltApplyFallbacks(ctxt, contextNode, cur)) {
+			xsltTransformError(ctxt, NULL, cur,
+			    "The is no fallback behaviour defined for "
+			    "the unknown XSLT element '%s'.\n",
+			    cur->name);
+		    }			
+		    ctxt->insert = oldInsert;
+		} else if (info->func != NULL) {
+		    ctxt->insert = insert;
+
+		    info->func(ctxt, contextNode, cur,
+			(xsltElemPreCompPtr) info);
+
+		    if (oldLocalFragmentTop != ctxt->localRVT)
+			xsltReleaseLocalRVTs(ctxt, oldLocalFragmentTop);
+
+		    ctxt->insert = oldInsert;
+		} else if (info->type == XSLT_FUNC_VARIABLE) {		
+		    xsltStackElemPtr tmpvar = ctxt->vars;
+		
+		    xsltParseStylesheetVariable(ctxt, cur);
+		    
+		    if (tmpvar != ctxt->vars) {
+			ctxt->vars->level = level;
+		    }
+		} else if (info->type == XSLT_FUNC_MESSAGE) {
+		    xsltMessage(ctxt, contextNode, cur);
+		} else {
+		    xsltTransformError(ctxt, NULL, cur,
+			"Unexpected XSLT element '%s'.\n", cur->name);		    	
+		}
+		goto skip_children;
+
+	    } else {
+		xsltTransformFunction func;
+		if (cur->psvi == xsltExtMarker) {
+		    func = (xsltTransformFunction)
+			xsltExtElementLookup(ctxt, cur->name, cur->ns->href);
+		} else
+		    func = ((xsltElemPreCompPtr) cur->psvi)->func;
+		
+		if (func == NULL) {
+		    ctxt->insert = insert;
+		    if (!xsltApplyFallbacks(ctxt, contextNode, cur)) {
+			xsltTransformError(ctxt, NULL, cur,
+			    "Unknown extension instruction '{%s}%s'.\n",
+			    cur->ns->href, cur->name);
+		    }			
+		    ctxt->insert = oldInsert;		    
+		} else {
+		    ctxt->insert = insert;
+		    oldLocalFragmentBase = ctxt->localRVTBase;
+		    ctxt->localRVTBase = NULL;
+
+		    func(ctxt, contextNode, cur, cur->psvi);
+
+		    ctxt->localRVTBase = oldLocalFragmentBase;
+		    if (oldLocalFragmentTop != ctxt->localRVT)
+			xsltReleaseLocalRVTs(ctxt, oldLocalFragmentTop);
+
+		    ctxt->insert = oldInsert;
+		}
+		goto skip_children;
+	    }
+
+	} else if (XSLT_IS_TEXT_NODE(cur)) {
+            if (xsltCopyText(ctxt, insert, cur, ctxt->internalized) == NULL)
+		goto error;	    
+	}
+
+#else /* XSLT_REFACTORED */
+
+        if (IS_XSLT_ELEM(cur)) {
+            xsltStylePreCompPtr info = (xsltStylePreCompPtr) cur->psvi;
+
+            if (info == NULL) {
+                if (IS_XSLT_NAME(cur, "message")) {
+                    xsltMessage(ctxt, contextNode, cur);
+                } else {		    
+                    ctxt->insert = insert;
+                    if (!xsltApplyFallbacks(ctxt, contextNode, cur)) {
+                        xsltGenericError(xsltGenericErrorContext,
+			    "xsltApplySequenceConstructor: %s was not compiled\n",
+			    cur->name);
+                    }
+                    ctxt->insert = oldInsert;
+                }
+                goto skip_children;
+            }	    
+
+            if (info->func != NULL) {
+		oldCurInst = ctxt->inst;
+		ctxt->inst = cur;
+                ctxt->insert = insert;
+		oldLocalFragmentBase = ctxt->localRVTBase;
+		ctxt->localRVTBase = NULL;
+
+                info->func(ctxt, contextNode, cur, (xsltElemPreCompPtr) info);
+
+		ctxt->localRVTBase = oldLocalFragmentBase;
+		if (oldLocalFragmentTop != ctxt->localRVT)
+		    xsltReleaseLocalRVTs(ctxt, oldLocalFragmentTop);
+
+                ctxt->insert = oldInsert;
+		ctxt->inst = oldCurInst;
+                goto skip_children;
+            }
+
+            if (IS_XSLT_NAME(cur, "variable")) {
+		xsltStackElemPtr tmpvar = ctxt->vars;
+		
+		oldCurInst = ctxt->inst;
+		ctxt->inst = cur;
+
+		xsltParseStylesheetVariable(ctxt, cur);
+
+		ctxt->inst = oldCurInst;
+		
+		if (tmpvar != ctxt->vars) {
+		    ctxt->vars->level = level;
+		}
+            } else if (IS_XSLT_NAME(cur, "message")) {
+                xsltMessage(ctxt, contextNode, cur);
+            } else {
+		xsltTransformError(ctxt, NULL, cur,
+		    "Unexpected XSLT element '%s'.\n", cur->name);
+            }
+            goto skip_children;
+        } else if ((cur->type == XML_TEXT_NODE) ||
+                   (cur->type == XML_CDATA_SECTION_NODE)) {
+
+            if (xsltCopyText(ctxt, insert, cur, ctxt->internalized) == NULL)
+		goto error;
+        } else if ((cur->type == XML_ELEMENT_NODE) &&
+                   (cur->ns != NULL) && (cur->psvi != NULL)) {
+            xsltTransformFunction function;
+
+	    oldCurInst = ctxt->inst;
+	    ctxt->inst = cur;
+            if (cur->psvi == xsltExtMarker)
+                function = (xsltTransformFunction)
+                    xsltExtElementLookup(ctxt, cur->name, cur->ns->href);
+            else
+                function = ((xsltElemPreCompPtr) cur->psvi)->func;
+
+            if (function == NULL) {
+                xmlNodePtr child;
+                int found = 0;
+
+                child = cur->children;
+                while (child != NULL) {
+                    if ((IS_XSLT_ELEM(child)) &&
+                        (IS_XSLT_NAME(child, "fallback")))
+		    {
+                        found = 1;
+                        xsltApplySequenceConstructor(ctxt, contextNode,
+			    child->children, NULL);
+                    }
+                    child = child->next;
+                }
+
+                if (!found) {
+                    xsltTransformError(ctxt, NULL, cur,
+			"xsltApplySequenceConstructor: failed to find extension %s\n",
+			cur->name);
+                }
+            } else {
+
+                ctxt->insert = insert;
+		oldLocalFragmentBase = ctxt->localRVTBase;
+		ctxt->localRVTBase = NULL;
+
+                function(ctxt, contextNode, cur, cur->psvi);
+		if (oldLocalFragmentTop != ctxt->localRVT)
+		    xsltReleaseLocalRVTs(ctxt, oldLocalFragmentTop);
+
+		ctxt->localRVTBase = oldLocalFragmentBase;
+                ctxt->insert = oldInsert;
+
+            }
+	    ctxt->inst = oldCurInst;
+            goto skip_children;
+        } else if (cur->type == XML_ELEMENT_NODE) {
+	    oldCurInst = ctxt->inst;
+	    ctxt->inst = cur;
+
+            if ((copy = xsltShallowCopyElem(ctxt, cur, insert, 1)) == NULL)
+		goto error;            
+            if ((templ != NULL) && (oldInsert == insert) &&
+                (ctxt->templ != NULL) && (ctxt->templ->inheritedNs != NULL)) {
+                int i;
+                xmlNsPtr ns, ret;
+
+                for (i = 0; i < ctxt->templ->inheritedNsNr; i++) {
+		    const xmlChar *URI = NULL;
+		    xsltStylesheetPtr style;
+                    ns = ctxt->templ->inheritedNs[i];		    
+		    
+		    style = ctxt->style;
+		    while (style != NULL) {
+			if (style->nsAliases != NULL)
+			    URI = (const xmlChar *) 
+				xmlHashLookup(style->nsAliases, ns->href);
+			if (URI != NULL)
+			    break;
+			
+			style = xsltNextImport(style);
+		    }
+		    if (URI == UNDEFINED_DEFAULT_NS)
+			continue;
+		    if (URI == NULL)
+			URI = ns->href;
+		    ret = xmlSearchNs(copy->doc, copy, ns->prefix);
+		    if ((ret == NULL) || (!xmlStrEqual(ret->href, URI)))
+		    {
+			xmlNewNs(copy, URI, ns->prefix);
+		    }
+                }
+		if (copy->ns != NULL) {
+		    copy->ns = xsltGetNamespace(ctxt, cur, copy->ns, copy);
+		}
+            }
+            if (cur->properties != NULL) {
+                xsltAttrListTemplateProcess(ctxt, copy, cur->properties);
+            }
+	    ctxt->inst = oldCurInst;
+        }
+#endif /* else of XSLT_REFACTORED */
+
+        if (cur->children != NULL) {
+            if (cur->children->type != XML_ENTITY_DECL) {
+                cur = cur->children;
+		level++;
+                if (copy != NULL)
+                    insert = copy;
+                continue;
+            }
+        }
+
+skip_children:
+	if (ctxt->state == XSLT_STATE_STOPPED)
+	    break;
+        if (cur->next != NULL) {
+            cur = cur->next;
+            continue;
+        }
+
+        do {
+            cur = cur->parent;
+	    level--;
+	    if ((ctxt->varsNr > oldVarsNr) && (ctxt->vars->level > level)) {
+		xsltLocalVariablePop(ctxt, oldVarsNr, level);		
+	    }
+
+            insert = insert->parent;
+            if (cur == NULL)
+                break;
+            if (cur == list->parent) {
+                cur = NULL;
+                break;
+            }
+            if (cur->next != NULL) {
+                cur = cur->next;
+                break;
+            }
+        } while (cur != NULL);
+    }
+
+error:
+    if (ctxt->varsNr > oldVarsNr)
+	xsltLocalVariablePop(ctxt, oldVarsNr, -1);     
+
+    ctxt->node = oldContextNode;
+    ctxt->inst = oldInst;
+    ctxt->insert = oldInsert;
+}
+
 static void 
 TclXSLTExtElementTransform(ctxt, node, inst, comp)
     xsltTransformContextPtr ctxt; /* unused */
@@ -1358,7 +2085,12 @@ TclXSLTExtElementTransform(ctxt, node, inst, comp)
   ThreadSpecificData *tsdPtr = (ThreadSpecificData *) Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
   TclXSLT_Extension *extinfo;
   Tcl_HashEntry *entry;
-  Tcl_Obj *cmdPtr;
+  Tcl_Obj *cmdPtr, *objPtr, *avtObjPtr, *elemObj;
+  xsltStylesheetPtr style = NULL;
+  xmlDocPtr oldOutput, res = NULL;
+  xmlNodePtr oldInsert;
+  xsltOutputType oldType;
+  xmlAttrPtr attr;
   int ret;
 
   if (inst == NULL) {
@@ -1377,15 +2109,127 @@ TclXSLTExtElementTransform(ctxt, node, inst, comp)
   extinfo = (TclXSLT_Extension *) Tcl_GetHashValue(entry);
 
   /*
+   * Evaluate every attribute as an AVT.
+   * Pass these values on to the callback as a list.
+   * Each list element is (name, ns, value)
+   */
+
+  avtObjPtr = Tcl_NewListObj(0, NULL);
+  for (attr = inst->properties; attr != NULL; attr = attr->next) {
+    elemObj = Tcl_NewListObj(0, NULL);
+    if (Tcl_ListObjAppendElement(extinfo->interp, elemObj, Tcl_NewStringObj((CONST char *) attr->name, -1))) {
+      goto error;
+    }
+    if (attr->ns != NULL) {
+      if (Tcl_ListObjAppendElement(extinfo->interp, elemObj, Tcl_NewStringObj((CONST char *) attr->ns->href, -1))) {
+	goto error;
+      }
+    } else {
+      if (Tcl_ListObjAppendElement(extinfo->interp, elemObj, Tcl_NewObj())) {
+	goto error;
+      }
+    }
+    if (Tcl_ListObjAppendElement(extinfo->interp, elemObj, Tcl_NewStringObj((char *) xsltEvalAttrValueTemplate(ctxt, inst, attr->name, NULL), -1))) {
+      goto error;
+    }
+
+    if (Tcl_ListObjAppendElement(extinfo->interp, avtObjPtr, elemObj)) {
+      goto error;
+    }
+  }
+
+  /*
+   * Evaluate the element content.
+   */
+
+  oldOutput = ctxt->output;
+  oldInsert = ctxt->insert;
+  oldType = ctxt->type;
+
+  style = xsltNewStylesheet();
+  if (style == NULL) {
+    xsltTransformError(ctxt, NULL, inst,
+		       "TclXSLT: out of memory\n");
+    goto error;
+  }
+  res = xmlNewDoc(style->version);
+  res->charset = XML_CHAR_ENCODING_UTF8;
+  ctxt->output = res;
+  ctxt->insert = (xmlNodePtr) res;
+
+  xsltApplySequenceConstructor(ctxt, node, inst->children, NULL);
+
+  /*
    * Start constructing the script by first defining the command.
    */
 
   cmdPtr = Tcl_DuplicateObj(extinfo->tclns);
   Tcl_AppendStringsToObj(cmdPtr, "::", inst->name, NULL);
 
-  if (Tcl_ListObjAppendElement(extinfo->interp, cmdPtr, TclDOM_libxml2_CreateObjFromNode(extinfo->interp, node)) != TCL_OK) {
+  if (res != NULL) {
+    objPtr = TclDOM_libxml2_CreateObjFromDoc(extinfo->interp, res);
+    if (objPtr == NULL) {
+      Tcl_DecrRefCount(cmdPtr);
+      Tcl_BackgroundError(extinfo->interp);
+      goto error;
+    }
+    if (Tcl_ListObjAppendElement(extinfo->interp, cmdPtr, objPtr) != TCL_OK) {
+      Tcl_DecrRefCount(cmdPtr);
+      Tcl_BackgroundError(extinfo->interp);
+      goto error;
+    }
+  } else {
+    if (Tcl_ListObjAppendElement(extinfo->interp, cmdPtr, Tcl_NewObj()) != TCL_OK) {
+      Tcl_DecrRefCount(cmdPtr);
+      Tcl_BackgroundError(extinfo->interp);
+      goto error;
+    }
+  }
+
+  if (node != NULL) {
+    objPtr = TclDOM_libxml2_CreateObjFromNode(extinfo->interp, node);
+    if (objPtr == NULL) {
+      Tcl_DecrRefCount(cmdPtr);
+      Tcl_BackgroundError(extinfo->interp);
+      goto error;
+    }
+    if (Tcl_ListObjAppendElement(extinfo->interp, cmdPtr, objPtr) != TCL_OK) {
+      Tcl_DecrRefCount(cmdPtr);
+      Tcl_BackgroundError(extinfo->interp);
+      goto error;
+    }
+  } else {
+    if (Tcl_ListObjAppendElement(extinfo->interp, cmdPtr, Tcl_NewObj()) != TCL_OK) {
+      Tcl_DecrRefCount(cmdPtr);
+      Tcl_BackgroundError(extinfo->interp);
+      goto error;
+    }
+  }
+
+  if (inst != NULL) {
+    objPtr = TclDOM_libxml2_CreateObjFromNode(extinfo->interp, inst);
+    if (objPtr == NULL) {
+      Tcl_DecrRefCount(cmdPtr);
+      Tcl_BackgroundError(extinfo->interp);
+      goto error;
+    }
+    if (Tcl_ListObjAppendElement(extinfo->interp, cmdPtr, objPtr) != TCL_OK) {
+      Tcl_DecrRefCount(cmdPtr);
+      Tcl_BackgroundError(extinfo->interp);
+      goto error;
+    }
+  } else {
+    if (Tcl_ListObjAppendElement(extinfo->interp, cmdPtr, Tcl_NewObj()) != TCL_OK) {
+      Tcl_DecrRefCount(cmdPtr);
+      Tcl_BackgroundError(extinfo->interp);
+      goto error;
+    }
+  }
+
+  if (Tcl_ListObjAppendElement(extinfo->interp, cmdPtr, avtObjPtr) != TCL_OK) {
     Tcl_DecrRefCount(cmdPtr);
-    return;
+    Tcl_BackgroundError(extinfo->interp);
+    goto error;
   }
 
   /*
@@ -1399,13 +2243,24 @@ TclXSLTExtElementTransform(ctxt, node, inst, comp)
 
   /*
    * Now evaluate the complete command.
-   * Can't propagqte a return error result to
-   * XSLT, so flag background error instead.
    */
   ret = Tcl_EvalObjEx(extinfo->interp, cmdPtr, TCL_EVAL_GLOBAL | TCL_EVAL_DIRECT);
   if (ret != TCL_OK) {
+    xsltTransformError(ctxt, NULL, NULL, "TclXSLT extension failed: \"%s\"", Tcl_GetStringFromObj(Tcl_GetObjResult(extinfo->interp), NULL));
     Tcl_BackgroundError(extinfo->interp);
   }
+
+  /*
+   * TODO:
+   * If the script evaluation is successful, then the return
+   * result is either a DOM node to be inserted into the result tree
+   * or a string to be added as a text node.
+   */
+
+  error:
+    ctxt->output = oldOutput;
+    ctxt->insert = oldInsert;
+    ctxt->type = oldType;
 }
 
 /*

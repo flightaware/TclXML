@@ -6,7 +6,7 @@ exec wish "$0" "$@"
 #
 #	Simple GUI for xsltproc-style transformations
 #
-# Copyright (c) 2005-2007 Explain
+# Copyright (c) 2005-2002009 Explain
 # http://www.explain.com.au
 # Copyright (c) 2003-2004 Zveno
 # http://www.zveno.com/
@@ -24,7 +24,7 @@ set VERSION 1.9
 lappend auto_path [file dirname [info nameofexecutable]]
 
 # v3.1+ gives us the "-indent", "-resulturi" and "-profilefilename" options
-package require xslt 3.2
+package require xslt 3.3
 
 package require msgcat
 catch {namespace import ::msgcat::mc}

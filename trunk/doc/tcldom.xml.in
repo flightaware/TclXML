@@ -9,6 +9,7 @@
       <surname>Ball</surname>
     </author>
     <copyright>
+      <year>2009</year>
       <year>2008</year>
       <year>2007</year>
       <holder xmlns:xlink="http://www.w3.org/XLink" xlink:href="http://www.explain.com.au/">Explain</holder>
@@ -448,6 +449,16 @@ proc NodeCompare2 {A B} {
               <variablelist>
                 <varlistentry>
                   <term>
+                    <arg>-baseuri</arg>
+                    <arg><replaceable>URI</replaceable></arg>
+		  </term>
+                  <listitem>
+                    <para>Gives the Base URI for the document. Any relative URIs specified in the document are resolved against the given base URI. Examples of relative URIs include external entity references.</para>
+		    <para>If no Base URI is given then relative URIs are resolved in the current context, namely the current working directory.</para>
+		  </listitem>
+		</varlistentry>
+                <varlistentry>
+                  <term>
                     <arg>-parser</arg>
                     <arg>
                       <group>
@@ -703,20 +714,30 @@ set node [::dom::document createElement $top First]
               </varlistentry>
               <varlistentry>
                 <term>
-                  <arg>-implementation</arg>
-                </term>
-                <listitem>
-                  <para>Specifies the token of the document's implementation.</para>
-                  <para>This is a read-only option.</para>
-                </listitem>
-              </varlistentry>
-              <varlistentry>
-                <term>
                   <arg>-documentElement</arg>
                 </term>
                 <listitem>
                   <para>Specifies the token of the document's document element node.  A document node may only have one document element, but may have other types of children (such as comments).</para>
                   <para>This is a read-only option.  Use the factory method to create the document element node.</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>
+                  <arg>-keep</arg>
+		  <arg>normal|implicit</arg>
+                </term>
+                <listitem>
+                  <para>Specifies the memory management strategy for the document. The value <arg>normal</arg> specifies that the document must be explicitly destroyed in order for resources consumed by the document to be freed. The value <arg>implicit</arg> specifies that the resources consumed by the document are freed when there are no longer any references to the document. Note that object shimmering can prematurely remove document references.</para>
+		  <para>The default value is <arg>implicit</arg>.</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>
+                  <arg>-implementation</arg>
+                </term>
+                <listitem>
+                  <para>Specifies the token of the document's implementation.</para>
+                  <para>This is a read-only option.</para>
                 </listitem>
               </varlistentry>
             </variablelist>
@@ -952,6 +973,34 @@ set node [::dom::document createElement $top First]
         </varlistentry>
         <varlistentry>
           <term>
+            <methodname>relaxng</methodname>
+          </term>
+          <listitem>
+            <cmdsynopsis xmlns="http://tclxml.sourceforge.net/doc">
+              <methodname xmlns="http://docbook.org/ns/docbook">
+                <replaceable>submethod</replaceable>
+              </methodname>
+              <group xmlns="http://docbook.org/ns/docbook" choice="opt" rep="repeat">
+                <arg>
+                  <replaceable>args</replaceable>
+                </arg>
+              </group>
+            </cmdsynopsis>
+            <para>This method performs RELAX NG Schema validation upon the document.  RELAX NG Schema validation is performed in two steps.  First the document is compiled into a schema document.  Second, the schema document is used to schema-validate an instance document.</para>
+            <para>Example:</para>
+            <informalexample>
+              <programlisting>
+set schema [dom::parse $XML]
+$schema relaxng compile
+set instance [dom::parse $XML2]
+$schema relaxng validate $instance
+</programlisting>
+            </informalexample>
+            <para>If the document is changed after compiling, then schema document must be recompiled.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
             <methodname>schema</methodname>
           </term>
           <listitem>
@@ -1108,6 +1157,14 @@ $schema schema validate $instance
                 </term>
                 <listitem>
                   <para>Specifies the value of a node.  The DOM specification gives the meaning of values for different types of nodes.  For example, the <option>-nodeValue</option> option of a textNode node is the node's text.</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>
+                  <option>-id</option>
+                </term>
+                <listitem>
+                  <para>Read-only. Returns a unique identifier for the node. The same identifier is always returned for the same node.</para>
                 </listitem>
               </varlistentry>
             </variablelist>
@@ -2505,9 +2562,6 @@ $schema schema validate $instance
         <itemizedlist>
           <listitem>
             <para>The TclXML/libxml2 parser must be used to parse an XML document.  It is not possible to use any other parser class.</para>
-          </listitem>
-          <listitem>
-            <para>RELAX-NG validation is not yet supported.</para>
           </listitem>
           <listitem>
             <para>The importNode method has not been implemented.</para>

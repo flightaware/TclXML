@@ -11,13 +11,13 @@ exec tclsh "$0" "$@"
 #	style-doc	XSL Stylesheet
 #	result-doc	Result HTML document
 #
-# Copyright (c) 2008 Explain
+# Copyright (c) 2008-2009 Explain
 # http://www.explain.com.au/
 #
 # $Id$
 
-package require xml 3.2
-package require xslt 3.2
+package require xml
+package require xslt
 
 set srcFname {}
 set styleFname {}

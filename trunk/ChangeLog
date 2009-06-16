@@ -1,3 +1,16 @@
+2009-04-12 Steve Ball <Steve.Ball#explain.com.au>
+	* tclxslt-libxslt.c (TclXSLTCompileCommand): Use xmlMalloc instead of Tcl_Alloc.
+
+2009-04-02 Steve Ball <Steve.Ball@explain.com.au>
+	* tcldom*.[ch]: added "-id" node option, added RELAX NG validation.
+	* configure.in: prepare for 3.3 release.
+	* examples/domtext.tcl, examples/domtree.tcl: updated for Tk 8.5.
+
+2009-01-15  Steve Ball  <Steve.Ball@explain.com.au>
+	* pkgIndex.tcl.in: fixed utilities package number
+
+==============  Released version 3.2      16/12/2008  ==============
+
 2008-12-04  Steve Ball  <Steve.Ball@explain.com.au>
 	* doc/html.xsl, doc/*.xml: Upgrade to DocBook v5.0. Eliminate
 	dependency on DocBook XSL stylesheets.

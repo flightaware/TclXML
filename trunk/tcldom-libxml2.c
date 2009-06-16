@@ -3,7 +3,7 @@
  *	A Tcl wrapper for libxml's node tree API,
  *	conformant to the TclDOM API.
  *
- * Copyright (c) 2005-2008 by Explain.
+ * Copyright (c) 2005-2009 by Explain.
  * http://www.explain.com.au/
  * Copyright (c) 2001-2004 Zveno Pty Ltd
  * http://www.zveno.com/
@@ -16,6 +16,7 @@
 
 #include <tcldom/tcldom.h>
 #include <tcldom-libxml2/tcldom-libxml2.h>
+#include <tclxml-libxml2/docObj.h>
 #include <libxml/xpath.h>
 #include <libxml/xpathInternals.h>
 #include <libxml/xmlIO.h>
@@ -25,6 +26,7 @@
 #include <libxml/parserInternals.h>
 #include <libxml/xmlschemas.h>
 #include <libxml/xmlschemastypes.h>
+#include <libxml/relaxng.h>
 #include <libxml/xmlsave.h>
 #include <string.h>
 
@@ -173,6 +175,10 @@ static int AdoptDocument _ANSI_ARGS_((Tcl_Interp *interp, Tcl_Obj *objPtr));
 static int DocumentCget _ANSI_ARGS_((Tcl_Interp *interp, 
 				     xmlDocPtr docPtr, 
 				     Tcl_Obj *CONST objPtr));
+static int DocumentConfigure _ANSI_ARGS_((Tcl_Interp *interp, 
+					  xmlDocPtr docPtr,
+					  int objc,
+					  Tcl_Obj *CONST objv[]));
 static int NodeCget _ANSI_ARGS_((Tcl_Interp *interp, 
 				 xmlDocPtr docPtr, 
 				 xmlNodePtr nodePtr, 
@@ -207,13 +213,11 @@ static int SchemaCompile _ANSI_ARGS_((Tcl_Interp *interp,
 static int SchemaValidate _ANSI_ARGS_((Tcl_Interp *interp,
 				       TclDOM_libxml2_Document *domDocPtr,
 				       xmlDocPtr instancePtr));
-/*
 static int RelaxNGCompile _ANSI_ARGS_((Tcl_Interp *interp,
-				    xmlDocPtr doc));
+				    TclDOM_libxml2_Document *domDocPtr));
 static int RelaxNGValidate _ANSI_ARGS_((Tcl_Interp *interp,
-				       xmlRelaxNGPtr schema,
+				       TclDOM_libxml2_Document *domDocPtr,
 				       xmlDocPtr instance));
-*/
 
 static void NodeAddObjRef _ANSI_ARGS_((TclDOM_libxml2_Node *tNodePtr,
 									   Tcl_Obj *objPtr));
@@ -548,6 +552,7 @@ AdoptDocument(interp, objPtr)
   domDocPtr->objPtr = objPtr;
 
   domDocPtr->schema = NULL;
+  domDocPtr->relaxng = NULL;
 
   domDocPtr->nodes = (Tcl_HashTable *) Tcl_Alloc(sizeof(Tcl_HashTable));
   Tcl_InitHashTable(domDocPtr->nodes, TCL_STRING_KEYS);
@@ -797,6 +802,13 @@ FreeDocument (clientData)
     Tcl_MutexLock(&libxml2);
     /* This also frees the copy of the document used by the schema context */
     xmlSchemaFree(domDocPtr->schema);
+    Tcl_MutexUnlock(&libxml2);
+  }
+
+  if (domDocPtr->relaxng) {
+    Tcl_MutexLock(&libxml2);
+    /* This also frees the copy of the document used by the schema context */
+    xmlRelaxNGFree(domDocPtr->relaxng);
     Tcl_MutexUnlock(&libxml2);
   }
 
@@ -1421,9 +1433,130 @@ SchemaValidate (interp, domDocPtr, instancePtr)
 
   return TCL_ERROR;
 }
+
 /*
- * TODO: RelaxNG validation.
+ * RelaxNG validation.
  */
+int
+RelaxNGCompile (interp, domDocPtr)
+     Tcl_Interp *interp;
+     TclDOM_libxml2_Document *domDocPtr;
+{
+  xmlDocPtr relaxNGDocPtr;
+  xmlRelaxNGParserCtxtPtr ctxt = NULL;
+
+  if (domDocPtr->relaxng) {
+    /* Re-compile */
+    Tcl_MutexLock(&libxml2);
+    xmlRelaxNGFree(domDocPtr->relaxng);
+    Tcl_MutexUnlock(&libxml2);
+    domDocPtr->relaxng = NULL;
+  }
+
+  Tcl_MutexLock(&libxml2);
+
+  relaxNGDocPtr = xmlCopyDoc(domDocPtr->tDocPtr->docPtr, 1);
+
+  if (relaxNGDocPtr == NULL) {
+    Tcl_MutexUnlock(&libxml2);
+    Tcl_SetResult(interp, "unable to prepare RELAX NG schema document", NULL);
+    return TCL_ERROR;
+  }
+
+  ctxt = xmlRelaxNGNewDocParserCtxt(relaxNGDocPtr);
+  if (ctxt == NULL) {
+    xmlFreeDoc(relaxNGDocPtr);
+    Tcl_MutexUnlock(&libxml2);
+    Tcl_SetResult(interp, "unable to create RELAX NG schema context", NULL);
+    return TCL_ERROR;
+  }
+
+  TclXML_libxml2_ResetError(interp);
+
+  /* TODO: setup warning and error callbacks */
+
+  Tcl_SetResult(interp, "unable to parse RELAX NG schema document", NULL);
+  domDocPtr->relaxng = xmlRelaxNGParse(ctxt);
+
+  Tcl_MutexUnlock(&libxml2);
+  
+  if (domDocPtr->relaxng == NULL) {
+	Tcl_Obj * errObjPtr = TclXML_libxml2_GetErrorObj(interp);
+
+    if (errObjPtr) {
+      Tcl_SetObjResult(interp, errObjPtr);
+    }
+
+    return TCL_ERROR;
+  }
+
+  Tcl_ResetResult(interp);
+
+  return TCL_OK;
+}
+
+int
+RelaxNGValidate (interp, domDocPtr, instancePtr)
+     Tcl_Interp *interp;
+     TclDOM_libxml2_Document *domDocPtr;
+     xmlDocPtr instancePtr;
+{
+  xmlRelaxNGValidCtxtPtr ctxt = NULL;
+  Tcl_Obj *errObjPtr;
+  int ret;
+
+  if (domDocPtr->relaxng == NULL) {
+    Tcl_SetResult(interp, "RELAX NG schema not compiled", NULL);
+    return TCL_ERROR;
+  }
+
+  TclXML_libxml2_ResetError(interp);
+
+  Tcl_MutexLock(&libxml2);
+
+  ctxt = xmlRelaxNGNewValidCtxt(domDocPtr->relaxng);
+
+  Tcl_SetResult(interp, "document is not valid", NULL);
+
+  ret = xmlRelaxNGValidateDoc(ctxt, instancePtr);
+  errObjPtr = TclXML_libxml2_GetErrorObj(interp);
+  if (ret > 0) {
+    if (errObjPtr) {
+      Tcl_SetObjResult(interp, errObjPtr);
+    }
+    goto error;
+  } else if (ret < 0) {
+    Tcl_SetResult(interp, "RELAX NG schema processor internal error", NULL);
+
+    if (errObjPtr) {
+      Tcl_SetObjResult(interp, errObjPtr);
+    }
+    goto error;
+  }
+
+  xmlRelaxNGFreeValidCtxt(ctxt);
+
+  Tcl_MutexUnlock(&libxml2);
+
+  /* There may be warnings */
+
+  if (errObjPtr) {
+    Tcl_SetObjResult(interp, errObjPtr);
+  } else {
+    Tcl_ResetResult(interp);
+  }
+
+  return TCL_OK;
+
+ error:
+  if (ctxt) {
+    xmlRelaxNGFreeValidCtxt(ctxt);
+  }
+
+  Tcl_MutexUnlock(&libxml2);
+
+  return TCL_ERROR;
+}
 
 int
 TclDOMTrimCommand (dummy, interp, objc, objv)
@@ -2039,8 +2172,7 @@ TclDOMDocumentCommand (clientData, interp, objc, objv)
     if (optobjc == 1) {
       return DocumentCget(interp, docPtr, optobjv[0]);
     } else {
-      Tcl_AppendResult(interp, "attribute \"", Tcl_GetStringFromObj(optobjv[0], NULL), "\" is read-only", NULL);
-      return TCL_ERROR;
+      return DocumentConfigure(interp, docPtr, optobjc, optobjv);
     }
 
     break;
@@ -2667,6 +2799,51 @@ TclDOMDocumentCommand (clientData, interp, objc, objv)
 
     break;
 
+  case TCLDOM_DOCUMENT_RELAXNG:
+
+    if (optobjc < 1) {
+      Tcl_WrongNumArgs(interp, wrongidx, objv, "submethod ?args ...?");
+      return TCL_ERROR;
+    }
+
+    if (Tcl_GetIndexFromObj(interp, optobjv[0], TclDOM_DocumentRelaxNGSubmethods,
+			    "submethod", 0, &method) != TCL_OK) {
+      return TCL_ERROR;
+    }
+
+    switch ((enum TclDOM_DocumentRelaxNGSubmethods) method) {
+    case TCLDOM_DOCUMENT_RELAXNG_COMPILE:
+	  if (optobjc != 1) {
+		Tcl_WrongNumArgs(interp, wrongidx, objv, "compile");
+		return TCL_ERROR;
+	  }
+      return RelaxNGCompile(interp, domDocPtr);
+
+    case TCLDOM_DOCUMENT_RELAXNG_VALIDATE:
+      if (optobjc != 2) {
+		Tcl_WrongNumArgs(interp, wrongidx, objv, "validate instance");
+		return TCL_ERROR;
+      } else {
+		xmlDocPtr instancePtr;
+
+		if (TclXML_libxml2_GetDocFromObj(interp, optobjv[1], &instancePtr) != TCL_OK) {
+		  return TCL_ERROR;
+		}
+
+		return RelaxNGValidate(interp, domDocPtr, instancePtr);
+      }
+
+      break;
+
+    default:
+      Tcl_ResetResult(interp);
+      Tcl_AppendResult(interp, "unknown submethod \"", 
+		       Tcl_GetStringFromObj(optobjv[0], NULL), "\"", NULL);
+      return TCL_ERROR;
+    }
+
+    break;
+
   case TCLDOM_DOCUMENT_DTD:
 
 	if (optobjc < 1) {
@@ -2729,6 +2906,7 @@ DocumentCget(interp, docPtr, optObj)
      xmlDocPtr docPtr;
      Tcl_Obj *CONST optObj;
 {
+  TclXML_libxml2_Document *tDocPtr;
   xmlNodePtr nodePtr;
   int option;
 
@@ -2764,9 +2942,115 @@ DocumentCget(interp, docPtr, optObj)
 
     break;
 
+  case TCLDOM_DOCUMENT_KEEP:
+
+    if (TclXML_libxml2_GetTclDocFromDoc(interp, docPtr, &tDocPtr) != TCL_OK) {
+      return TCL_ERROR;
+    }
+
+    if (tDocPtr->keep == TCLXML_LIBXML2_DOCUMENT_KEEP) {
+      Tcl_SetResult(interp, "normal", NULL);
+    } else if (tDocPtr->keep == TCLXML_LIBXML2_DOCUMENT_IMPLICIT) {
+      Tcl_SetResult(interp, "implicit", NULL);
+    } else {
+      Tcl_SetResult(interp, "internal error", NULL);
+      return TCL_ERROR;
+    }
+    return TCL_OK;
+
+  case TCLDOM_DOCUMENT_BASEURI:
+
+    Tcl_SetObjResult(interp, TclXML_libxml2_GetBaseURIFromDoc(docPtr));
+    return TCL_OK;
+
   default:
     Tcl_SetResult(interp, "unknown option", NULL);
     return TCL_ERROR;
+  }
+
+  return TCL_OK;
+}
+
+int
+DocumentConfigure(interp, docPtr, objc, objv)
+     Tcl_Interp *interp;
+     xmlDocPtr docPtr;
+     int objc;
+     Tcl_Obj *CONST objv[];
+{
+  TclXML_libxml2_Document *tDocPtr;
+  int option;
+
+  /* TODO: set up these tables in the TclXML/libxml2 includes */
+  CONST84 char *KeepOptions[] = {
+    "normal",
+    "implicit",
+    NULL
+  };
+  enum KeepOptions {
+    OPTION_KEEP_NORMAL,
+    OPTION_KEEP_IMPLICIT
+  };
+
+  if (objc <= 1) {
+    Tcl_SetResult(interp, "missing option value", NULL);
+    return TCL_ERROR;
+  }
+
+  while (objc > 1) {
+    if (objc == 1) {
+      Tcl_SetResult(interp, "missing option value", NULL);
+      return TCL_ERROR;
+    }
+
+    if (Tcl_GetIndexFromObj(interp, objv[0], TclDOM_DocumentCommandOptions,
+			    "option", 0, &option) != TCL_OK) {
+      return TCL_ERROR;
+    }
+
+    switch ((enum TclDOM_DocumentCommandOptions) option) {
+
+    case TCLDOM_DOCUMENT_KEEP:
+
+      if (TclXML_libxml2_GetTclDocFromDoc(interp, docPtr, &tDocPtr) != TCL_OK) {
+	return TCL_ERROR;
+      }
+
+      if (Tcl_GetIndexFromObj(interp, objv[1], KeepOptions,
+			      "value", 0, &option) != TCL_OK) {
+	return TCL_ERROR;
+      }
+
+      switch ((enum KeepOptions) option) {
+      case OPTION_KEEP_NORMAL:
+	tDocPtr->keep = TCLXML_LIBXML2_DOCUMENT_KEEP;
+	break;
+      case OPTION_KEEP_IMPLICIT:
+	tDocPtr->keep = TCLXML_LIBXML2_DOCUMENT_IMPLICIT;
+	break;
+      default:
+	Tcl_SetResult(interp, "unknown value", NULL);
+	return TCL_ERROR;
+      }
+
+      break;
+
+    case TCLDOM_DOCUMENT_BASEURI:
+
+      Tcl_ResetResult(interp);
+      if (TclXML_libxml2_SetBaseURI(interp, docPtr, objv[1]) != TCL_OK) {
+	return TCL_ERROR;
+      }
+
+      break;
+
+    default:
+      Tcl_SetResult(interp, "read-only option", NULL);
+      return TCL_ERROR;
+    }
+
+    objc -= 2;
+    objv += 2;
   }
 
   return TCL_OK;
@@ -2797,28 +3081,28 @@ TriggerEventListeners(interp, type, tokenPtr, eventObjPtr, eventPtr)
      Tcl_Obj *eventObjPtr;
      TclDOM_libxml2_Event *eventPtr;
 {
-  Tcl_HashEntry *entryPtr;
-  Tcl_HashTable *tablePtr;
+  Tcl_HashTable *listenerTablePtr;
+  Tcl_HashEntry *entryPtr, *listenerEntryPtr;
   Tcl_Obj *listenerListPtr;
   int listenerLen, listenerIdx;
   char *eventType;
 
   entryPtr = Tcl_FindHashEntry(type, tokenPtr);
-  if (!entryPtr) {
+  if (entryPtr == NULL) {
     return TCL_OK;
   }
-  tablePtr = (Tcl_HashTable *) Tcl_GetHashValue(entryPtr);
+  listenerTablePtr = (Tcl_HashTable *) Tcl_GetHashValue(entryPtr);
 
   if (eventPtr->type != TCLDOM_EVENT_USERDEFINED) {
-	eventType = (char *) TclDOM_EventTypes[eventPtr->type];
+    eventType = (char *) TclDOM_EventTypes[eventPtr->type];
   } else {
-	eventType = Tcl_GetStringFromObj(eventPtr->typeObjPtr, NULL);
+    eventType = Tcl_GetStringFromObj(eventPtr->typeObjPtr, NULL);
   }
-  entryPtr = Tcl_FindHashEntry(tablePtr, eventType);
-  if (!entryPtr) {
+  listenerEntryPtr = Tcl_FindHashEntry(listenerTablePtr, eventType);
+  if (listenerEntryPtr == NULL) {
     return TCL_OK;
   }
-  listenerListPtr = (Tcl_Obj *) Tcl_GetHashValue(entryPtr);
+  listenerListPtr = (Tcl_Obj *) Tcl_GetHashValue(listenerEntryPtr);
 
   /*
    * DOM L2 specifies that the ancestors are determined
@@ -2827,24 +3111,32 @@ TriggerEventListeners(interp, type, tokenPtr, eventObjPtr, eventPtr)
    */
 
   Tcl_ListObjLength(interp, listenerListPtr, &listenerLen);
+
+  /* Preserve the event object until all listeners are triggered */
+  Tcl_IncrRefCount(eventObjPtr);
+
   for (listenerIdx = 0; listenerIdx < listenerLen; listenerIdx++) {
     Tcl_Obj *listenerObj, *cmdPtr;
 
     Tcl_ListObjIndex(interp, listenerListPtr, listenerIdx, &listenerObj);
 
     cmdPtr = Tcl_DuplicateObj(listenerObj);
-	Tcl_IncrRefCount(cmdPtr);
+    Tcl_IncrRefCount(cmdPtr);
     if (Tcl_ListObjAppendElement(interp, cmdPtr, eventObjPtr) != TCL_OK) {
-	  Tcl_DecrRefCount(cmdPtr);
+      Tcl_DecrRefCount(eventObjPtr);
+      Tcl_DecrRefCount(cmdPtr);
       return TCL_ERROR;
     }
-	Tcl_Preserve((ClientData) interp);
+    Tcl_Preserve((ClientData) interp);
     if (Tcl_GlobalEvalObj(interp, cmdPtr) != TCL_OK) {
       Tcl_BackgroundError(interp);
     }
-	Tcl_DecrRefCount(cmdPtr);
-	Tcl_Release((ClientData) interp);
+    Tcl_Release((ClientData) interp);
+    Tcl_DecrRefCount(cmdPtr);
   }
+
+  /* Event object may be released now */
+  Tcl_DecrRefCount(eventObjPtr);
 
   return TCL_OK;
 }
@@ -3397,10 +3689,10 @@ TclDOMNodeCommand (clientData, interp, objc, objv)
 
   case TCLDOM_NODE_ADDEVENTLISTENER:
 
-	/* TODO: type optional, missing type returns all types that have a listener */
+    /* TODO: type optional, missing type returns all types that have a listener */
 
     if (optobjc < 1) {
-	  Tcl_WrongNumArgs(interp, wrongidx, objv, "type ?listener? ?-usecapture boolean?");
+      Tcl_WrongNumArgs(interp, wrongidx, objv, "type ?listener? ?-usecapture boolean?");
       return TCL_ERROR;
     } else {
       enum TclDOM_EventTypes type;
@@ -3408,77 +3700,76 @@ TclDOMNodeCommand (clientData, interp, objc, objv)
       void *tokenPtr = NULL;
 
       if (nodePtr) {
-		tokenPtr = (void *) nodePtr;
+	tokenPtr = (void *) nodePtr;
       } else {
-		tokenPtr = (void *) docPtr;
+	tokenPtr = (void *) docPtr;
       }
 
       if (Tcl_GetIndexFromObj(interp, optobjv[0], TclDOM_EventTypes,
-							  "type", TCL_EXACT, &option) == TCL_OK) {
-		type = (enum TclDOM_EventTypes) option;
+			      "type", TCL_EXACT, &option) == TCL_OK) {
+	type = (enum TclDOM_EventTypes) option;
       } else {
-		type = TCLDOM_EVENT_USERDEFINED;
+	type = TCLDOM_EVENT_USERDEFINED;
       }
       typeObjPtr = optobjv[0];
-	  Tcl_ResetResult(interp);
+      Tcl_ResetResult(interp);
       optobjc -= 1;
       optobjv += 1;
 
-	  if (optobjc > 0 && *Tcl_GetStringFromObj(optobjv[0], NULL) != '-') {
-		listenerPtr = optobjv[0];
-		optobjc -= 1;
-		optobjv += 1;
-	  } /* else we will return the registered listener */
+      if (optobjc > 0 && *Tcl_GetStringFromObj(optobjv[0], NULL) != '-') {
+	listenerPtr = optobjv[0];
+	optobjc -= 1;
+	optobjv += 1;
+      } /* else we will return the registered listener */
 
-	  while (optobjc) {
-		if (optobjc == 1) {
-		  Tcl_SetResult(interp, "missing value", NULL);
-		  return TCL_ERROR;
-		}
-		if (Tcl_GetIndexFromObj(interp, optobjv[0], TclDOM_NodeCommandAddEventListenerOptions,
-								"option", 0, &option) != TCL_OK) {
-		  return TCL_ERROR;
-		}
-		switch ((enum TclDOM_NodeCommandAddEventListenerOptions) option) {
-		  case TCLDOM_NODE_ADDEVENTLISTENER_USECAPTURE:
+      while (optobjc) {
+	if (optobjc == 1) {
+	  Tcl_SetResult(interp, "missing value", NULL);
+	  return TCL_ERROR;
+	}
+	if (Tcl_GetIndexFromObj(interp, optobjv[0], TclDOM_NodeCommandAddEventListenerOptions,
+				"option", 0, &option) != TCL_OK) {
+	  return TCL_ERROR;
+	}
+	switch ((enum TclDOM_NodeCommandAddEventListenerOptions) option) {
+	case TCLDOM_NODE_ADDEVENTLISTENER_USECAPTURE:
 
-			if (Tcl_GetBooleanFromObj(interp, optobjv[1], &usecapture) != TCL_OK) {
-			  return TCL_ERROR;
-			}
-
-			break;
-
-		  default:
-			Tcl_SetResult(interp, "unknown option", NULL);
-			return TCL_ERROR;
-		}
-
-		optobjc -= 2;
-		optobjv += 2;
+	  if (Tcl_GetBooleanFromObj(interp, optobjv[1], &usecapture) != TCL_OK) {
+	    return TCL_ERROR;
 	  }
 
-	  if (nodePtr) {
-		docObjPtr = TclXML_libxml2_CreateObjFromDoc(nodePtr->doc);
-	  } else {
-		docObjPtr = TclXML_libxml2_CreateObjFromDoc(docPtr);
-	  }
-	  TclXML_libxml2_GetTclDocFromObj(interp, docObjPtr, &tDocPtr);
+	  break;
 
-	  if (listenerPtr == NULL) {
-		listenerPtr = TclDOM_GetEventListener(interp, tDocPtr, tokenPtr, type, typeObjPtr, usecapture);
-		if (listenerPtr) {
-		  Tcl_SetObjResult(interp, listenerPtr);
-		} else {
-		  Tcl_SetResult(interp, "unable to find listeners", NULL);
-		  return TCL_ERROR;
-		}
-	  } else {
-		return TclDOM_AddEventListener(interp, tDocPtr, tokenPtr, type, typeObjPtr, listenerPtr, usecapture);
-	  }
+	default:
+	  Tcl_SetResult(interp, "unknown option", NULL);
+	  return TCL_ERROR;
 	}
 
-  break;
+	optobjc -= 2;
+	optobjv += 2;
+      }
 
+      if (nodePtr) {
+	docObjPtr = TclXML_libxml2_CreateObjFromDoc(nodePtr->doc);
+      } else {
+	docObjPtr = TclXML_libxml2_CreateObjFromDoc(docPtr);
+      }
+      TclXML_libxml2_GetTclDocFromObj(interp, docObjPtr, &tDocPtr);
+
+      if (listenerPtr == NULL) {
+	listenerPtr = TclDOM_GetEventListener(interp, tDocPtr, tokenPtr, type, typeObjPtr, usecapture);
+	if (listenerPtr) {
+	  Tcl_SetObjResult(interp, listenerPtr);
+	} else {
+	  Tcl_SetResult(interp, "unable to find listeners", NULL);
+	  return TCL_ERROR;
+	}
+      } else {
+	return TclDOM_AddEventListener(interp, tDocPtr, tokenPtr, type, typeObjPtr, listenerPtr, usecapture);
+      }
+    }
+
+  break;
 
   case TCLDOM_NODE_REMOVEEVENTLISTENER:
 
@@ -3641,6 +3932,7 @@ NodeCget(interp, docPtr, nodePtr, optPtr)
   Tcl_Obj *objPtr;
   xmlNodePtr childNodePtr;
   int option;
+  unsigned long val;
   char varname[100];
   Tcl_Obj *livePtr;
 
@@ -4000,6 +4292,17 @@ NodeCget(interp, docPtr, nodePtr, optPtr)
 
     break;
 
+  case TCLDOM_NODE_ID:
+
+    /* Code borrowed from libxslt-1.1.24 functions.c xsltGenerateIdFunction */
+
+    val = (unsigned long)((char *)nodePtr - (char *)0);
+    val /= sizeof(xmlNode);
+    sprintf(varname, "id%ld", val);
+    Tcl_SetObjResult(interp, Tcl_NewStringObj(varname, -1));
+
+    break;
+
   default:
     Tcl_SetResult(interp, "unknown option or not yet implemented", NULL);
     return TCL_ERROR;
@@ -4044,6 +4347,7 @@ NodeConfigure(interp, nodePtr, objc, objv)
     case TCLDOM_NODE_PREFIX:
     case TCLDOM_NODE_LOCALNAME:
     case TCLDOM_NODE_OWNERDOCUMENT:
+    case TCLDOM_NODE_ID:
 
       Tcl_ResetResult(interp);
       Tcl_AppendResult(interp, "attribute \"", Tcl_GetStringFromObj(objv[0], NULL), "\" is read-only", NULL);
@@ -4279,8 +4583,8 @@ TclDOM_AddEventListener(interp, tDocPtr, tokenPtr, type, typeObjPtr, listenerPtr
     int capturer;
 {
   TclDOM_libxml2_Document *domDocPtr;
-  Tcl_HashTable *tablePtr;
-  Tcl_HashEntry *entryPtr;
+  Tcl_HashTable *tablePtr, *listenerTablePtr;
+  Tcl_HashEntry *entryPtr, *listenerEntryPtr;
   int new;
 
   domDocPtr = GetDOMDocument(interp, tDocPtr);
@@ -4297,17 +4601,19 @@ TclDOM_AddEventListener(interp, tDocPtr, tokenPtr, type, typeObjPtr, listenerPtr
 
   entryPtr = Tcl_CreateHashEntry(tablePtr, tokenPtr, &new);
   if (new) {
-    tablePtr = (Tcl_HashTable *) Tcl_Alloc(sizeof(Tcl_HashTable));
-    Tcl_InitHashTable(tablePtr, TCL_STRING_KEYS);
-    Tcl_SetHashValue(entryPtr, (char *) tablePtr);
+    listenerTablePtr = (Tcl_HashTable *) Tcl_Alloc(sizeof(Tcl_HashTable));
+    Tcl_InitHashTable(listenerTablePtr, TCL_STRING_KEYS);
+    Tcl_SetHashValue(entryPtr, (char *) listenerTablePtr);
   } else {
-    tablePtr = (Tcl_HashTable *) Tcl_GetHashValue(entryPtr);
+    listenerTablePtr = (Tcl_HashTable *) Tcl_GetHashValue(entryPtr);
   }
 
   if (type == TCLDOM_EVENT_USERDEFINED) {
-    entryPtr = Tcl_CreateHashEntry(tablePtr, Tcl_GetStringFromObj(typeObjPtr, NULL), &new);
+    listenerEntryPtr = Tcl_CreateHashEntry(listenerTablePtr,
+				   Tcl_GetStringFromObj(typeObjPtr, NULL),
+				   &new);
   } else {
-    entryPtr = Tcl_CreateHashEntry(tablePtr, TclDOM_EventTypes[type], &new);
+    listenerEntryPtr = Tcl_CreateHashEntry(listenerTablePtr, TclDOM_EventTypes[type], &new);
   }
   if (new) {
     Tcl_Obj *listPtr = Tcl_NewListObj(0, NULL);
@@ -4315,12 +4621,12 @@ TclDOM_AddEventListener(interp, tDocPtr, tokenPtr, type, typeObjPtr, listenerPtr
     Tcl_IncrRefCount(listenerPtr);
     Tcl_IncrRefCount(listPtr);
     Tcl_ListObjAppendElement(interp, listPtr, listenerPtr);
-    Tcl_SetHashValue(entryPtr, (char *) listPtr);
+    Tcl_SetHashValue(listenerEntryPtr, (char *) listPtr);
 
   } else {
-    Tcl_Obj *listPtr = (Tcl_Obj *) Tcl_GetHashValue(entryPtr);
+    Tcl_Obj *listPtr = (Tcl_Obj *) Tcl_GetHashValue(listenerEntryPtr);
     Tcl_Obj *curPtr;
-    int idx, len, listenerLen, len2, listlen;
+    int idx, len, listenerLen, len2;
     char *listenerBuf, *buf2;
 
     if (Tcl_ListObjLength(interp, listPtr, &len) != TCL_OK) {
@@ -4329,6 +4635,7 @@ TclDOM_AddEventListener(interp, tDocPtr, tokenPtr, type, typeObjPtr, listenerPtr
     }
     listenerBuf = Tcl_GetStringFromObj(listenerPtr, &listenerLen);
 
+    /* Don't allow duplicates in the list */
     new = 0;
     for (idx = 0; idx < len; idx++) {
       Tcl_ListObjIndex(interp, listPtr, idx, &curPtr);
@@ -4341,11 +4648,9 @@ TclDOM_AddEventListener(interp, tDocPtr, tokenPtr, type, typeObjPtr, listenerPtr
       }
     }
 
-    if (Tcl_ListObjLength(interp, listPtr, &listlen) != TCL_OK) {
+    if (Tcl_ListObjReplace(interp, listPtr, idx, new, 1, &listenerPtr) != TCL_OK) {
       return TCL_ERROR;
     }
-
-    Tcl_ListObjReplace(interp, listPtr, idx, new, 1, &listenerPtr);
 
   }
 
@@ -4644,18 +4949,18 @@ TclDOM_DispatchEvent(interp, nodeObjPtr, eventObjPtr, eventPtr)
 
     Tcl_SetStringObj(eventPtr->eventPhase, "capturing_phase", -1);
     eventPtr->target = nodeObjPtr;
-	Tcl_IncrRefCount(nodeObjPtr);
+    Tcl_IncrRefCount(nodeObjPtr);
 
     if (nodePtr) {
       pathPtr = GetPath(interp, nodePtr);
     } else {
       pathPtr = Tcl_NewObj();
     }
-	if (eventPtr->currentNode) {
-	  Tcl_DecrRefCount(eventPtr->currentNode);
-	}
-	eventPtr->currentNode = docObjPtr;
-	Tcl_IncrRefCount(docObjPtr);
+    if (eventPtr->currentNode) {
+      Tcl_DecrRefCount(eventPtr->currentNode);
+    }
+    eventPtr->currentNode = docObjPtr;
+    Tcl_IncrRefCount(docObjPtr);
     if (TriggerEventListeners(interp, domDocPtr->captureListeners, (void *) docPtr, eventObjPtr, eventPtr) != TCL_OK) {
       Tcl_DecrRefCount(pathPtr);
       return TCL_ERROR;

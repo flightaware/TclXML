@@ -6,6 +6,8 @@ exec wish "$0" "$@"
 #
 #	A mini XML browser
 #
+# Copyright (c) 2009 Explain
+# http://www.explain.com.au/
 # Copyright (c) 2003 Zveno Pty Ltd
 # http://www.zveno.com/
 #
@@ -17,6 +19,8 @@ exec wish "$0" "$@"
 package require dom
 package require domtree
 package require domtext
+
+package provide app-browser 3.3
 
 proc Open {} {
     global tree text doc view
@@ -65,38 +69,38 @@ proc View:both {} {
 }
 
 frame .controls
-button .controls.open -text Open -command Open
-button .controls.view
+ttk::button .controls.open -text Open -command Open
+ttk::button .controls.view
 View:both
 grid .controls.open .controls.view -sticky w
 
-set p [panedwindow .panes -orient horizontal]
+set p [ttk::panedwindow .panes -orient horizontal]
 
 grid .controls -row 0 -column 0 -sticky ew
 grid $p -row 1 -column 0 -sticky news
 grid rowconfigure . 1 -weight 1
 grid columnconfigure . 0 -weight 1
 
-labelframe $p.tree -text {Tree View}
-$p add $p.tree -minsize 200
+ttk::labelframe $p.tree -text {Tree View}
+$p add $p.tree
 set tree [domtree::create $p.tree.t \
 	      -yscrollcommand [list $p.tree.y set] \
 	      -xscrollcommand [list $p.tree.x set]]
-scrollbar $p.tree.y -orient vertical -command [list $p.tree.t yview]
-scrollbar $p.tree.x -orient horizontal -command [list $p.tree.t xview]
+ttk::scrollbar $p.tree.y -orient vertical -command [list $p.tree.t yview]
+ttk::scrollbar $p.tree.x -orient horizontal -command [list $p.tree.t xview]
 grid $p.tree.t -row 0 -column 0 -sticky news
 grid $p.tree.y -row 0 -column 1 -sticky ns
 grid $p.tree.x -row 1 -column 0 -sticky ew
 grid rowconfigure $p.tree 0 -weight 1
 grid columnconfigure $p.tree 0 -weight 1
 
-labelframe $p.text -text {Source View}
-$p add $p.text -minsize 200
+ttk::labelframe $p.text -text {Source View}
+$p add $p.text
 set text [domtext::create $p.text.t \
 	      -yscrollcommand [list $p.text.y set] \
 	      -xscrollcommand [list $p.text.x set]]
-scrollbar $p.text.y -orient vertical -command [list $p.text.t yview]
-scrollbar $p.text.x -orient horizontal -command [list $p.text.t xview]
+ttk::scrollbar $p.text.y -orient vertical -command [list $p.text.t yview]
+ttk::scrollbar $p.text.x -orient horizontal -command [list $p.text.t xview]
 grid $p.text.t -row 0 -column 0 -sticky news
 grid $p.text.y -row 0 -column 1 -sticky ns
 grid $p.text.x -row 1 -column 0 -sticky ew

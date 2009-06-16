@@ -2,7 +2,7 @@
 #
 #	XSLT extension providing processing functions
 #
-# Copyright (c) 2007 Packaged Press
+# Copyright (c) 2007-2009 Packaged Press
 # http://www.packagedpress.com/
 # Copyright (c) 2002-2004 Zveno Pty Ltd
 # http://www.zveno.com/
@@ -15,7 +15,7 @@
 package provide xslt::process 1.1
 
 package require uri 1.1
-package require xslt::cache 3.2
+package require xslt::cache 3.3
 
 namespace eval xslt::process {
     namespace export transform fop

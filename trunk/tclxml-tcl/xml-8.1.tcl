@@ -5,7 +5,7 @@
 #
 #	See tclparser.tcl for the Tcl implementation of a XML parser.
 #
-# Copyright (c) 2005 by Explain.
+# Copyright (c) 2005-2009 by Explain.
 # http://www.explain.com.au/
 # Copyright (c) 1998-2004 Zveno Pty Ltd
 # http://www.zveno.com/
@@ -17,7 +17,7 @@
 
 package require Tcl 8.1
 
-package provide xmldefs 3.2
+package provide xmldefs 3.3
 
 package require sgml 1.8
 

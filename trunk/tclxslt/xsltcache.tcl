@@ -3,7 +3,7 @@
 #	Handles performing XSLT transformations,
 #	caching documents and results.
 #
-# Copyright (c) 2005-2007 Steve Ball
+# Copyright (c) 2005-2009 Steve Ball
 # http://www.packagedpress.com/staff/Steve.Ball
 # Copyright (c) 2002-2003 Zveno Pty Ltd
 # http://www.zveno.com/
@@ -13,10 +13,10 @@
 #
 # $Id: xsltcache.tcl,v 1.10 2005/11/04 06:41:56 balls Exp $
 
-package require xslt 3.2
+package require xslt 3.3
 package require uri
 
-package provide xslt::cache 3.2
+package provide xslt::cache 3.3
 
 namespace eval xslt::cache {
     namespace export transform transformdoc flush
