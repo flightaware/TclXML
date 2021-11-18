@@ -1576,7 +1576,7 @@ TclXMLInstanceConfigure (interp, xmlinfo, objc, objv)
      int objc;
      Tcl_Obj *CONST objv[];
 {
-  int index, bool, doParse = 0, result;
+  int index, boolean, doParse = 0, result;
   TclXML_ParserClassInfo *classinfo = (TclXML_ParserClassInfo *) xmlinfo->parserClass;
 
   while (objc > 1) {
@@ -1635,14 +1635,14 @@ TclXMLInstanceConfigure (interp, xmlinfo, objc, objv)
     switch ((enum instanceConfigureSwitches) index) {
       case TCLXML_FINAL:            /* -final */
 
-        if (Tcl_GetBooleanFromObj(interp, objv[1], &bool) != TCL_OK) {
+        if (Tcl_GetBooleanFromObj(interp, objv[1], &boolean) != TCL_OK) {
           return TCL_ERROR;
         }
 
-        if (bool && !xmlinfo->final) {
+        if (boolean && !xmlinfo->final) {
           doParse = 1;
 
-        } else if (!bool && xmlinfo->final) {
+        } else if (!boolean && xmlinfo->final) {
           /*
            * Reset the parser for new input
            */
@@ -1650,7 +1650,7 @@ TclXMLInstanceConfigure (interp, xmlinfo, objc, objv)
           TclXMLResetParser(interp, xmlinfo);
           doParse = 0;
         }
-        xmlinfo->final = bool;
+        xmlinfo->final = boolean;
         break;
 
 	  case TCLXML_ENCODING: /* -encoding */
@@ -1662,14 +1662,14 @@ TclXMLInstanceConfigure (interp, xmlinfo, objc, objv)
 		break;
 
       case TCLXML_VALIDATE:         /* -validate */
-        if (Tcl_GetBooleanFromObj(interp, objv[1], &bool) != TCL_OK) {
+        if (Tcl_GetBooleanFromObj(interp, objv[1], &boolean) != TCL_OK) {
           return TCL_ERROR;
         }
         /*
          * If the parser is in the middle of parsing a document,
          * this will be ignored.  Perhaps an error should be returned?
          */
-        xmlinfo->validate = bool;
+        xmlinfo->validate = boolean;
         break;
 
     case TCLXML_BASEURL:             /* -baseurl, -baseuri */
@@ -1684,10 +1684,10 @@ TclXMLInstanceConfigure (interp, xmlinfo, objc, objv)
 
       case TCLXML_DEFAULTEXPANDINTERNALENTITIES:    /* -defaultexpandinternalentities */
         /* ericm@scriptics */
-        if (Tcl_GetBooleanFromObj(interp, objv[1], &bool) != TCL_OK) {
+        if (Tcl_GetBooleanFromObj(interp, objv[1], &boolean) != TCL_OK) {
           return TCL_ERROR;
         }
-        xmlinfo->expandinternalentities = bool;
+        xmlinfo->expandinternalentities = boolean;
         break;
 
       case TCLXML_PARAMENTITYPARSING:

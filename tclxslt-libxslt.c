@@ -2420,10 +2420,10 @@ TclXSLT_ConvertTclObjToXPathObj(interp, objPtr)
       return NULL;
     }
   } else if (objPtr->typePtr == Tcl_GetObjType("boolean")) {
-    int bool;
+    int boolean;
 
-    if (Tcl_GetBooleanFromObj(interp, objPtr, &bool) == TCL_OK) {
-      return xmlXPathNewBoolean(bool);
+    if (Tcl_GetBooleanFromObj(interp, objPtr, &boolean) == TCL_OK) {
+      return xmlXPathNewBoolean(boolean);
     } else {
       return NULL;
     }
