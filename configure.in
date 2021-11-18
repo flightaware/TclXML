@@ -18,9 +18,9 @@ dnl     to configure the system for the local environment.
 # this package.
 #--------------------------------------------------------------------
 
-AC_INIT([Tclxml], [3.3])
+AC_INIT([Tclxml], [3.3.1])
 PACKAGE_NAME=Tclxml
-PACKAGE_VERSION=3.3
+PACKAGE_VERSION=3.3.1
 
 TEA_INIT([3.6])
 AC_CONFIG_AUX_DIR(tclconfig)
