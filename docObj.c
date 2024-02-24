@@ -1852,9 +1852,7 @@ ErrorCodeToString(code)
 }
 
 void
-TclXML_libxml2_ErrorHandler (ctx, error)
-     void *ctx; /* ignore - depends on context */
-     xmlErrorPtr error;
+TclXML_libxml2_ErrorHandler (void *ctx, const xmlError *error)
 {
   ThreadSpecificData *tsdPtr = Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
   Tcl_Obj *objPtr;
