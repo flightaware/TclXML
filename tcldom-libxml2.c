@@ -141,7 +141,7 @@ static int TclDOMSerializeCommand (ClientData dummy,
 static int TclDOMSelectNodeCommand (ClientData dummy,
 					    Tcl_Interp *interp,
 					    int objc,
-					    Tcl_Obj *consconst objv[]);
+					    Tcl_Obj *const objv[]);
 static int TclDOMIsNodeCommand (ClientData dummy,
 					    Tcl_Interp *interp,
 					    int objc,
