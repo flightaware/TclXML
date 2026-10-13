@@ -389,7 +389,8 @@ ReaderParse(clientData, data, len, final)
   Tcl_Obj *nameObj, *nsObj, *nsdeclObj, *valueObj, *attrsObj, *errObj, *baseuriObj, *sysidObj, *extidObj;
   const char *baseuri, *encoding, *name, *ns, *value;
   xmlChar **preservens = NULL;
-  int ret, result = TCL_OK, i, listlen, options = 0, empty;
+  int ret, result = TCL_OK, i, options = 0, empty;
+  Tcl_Size listlen;
 
   /* not used... at present (see case XML_READER_TYPE_DOCUMENT_TYPE)
     xmlNodePtr nodePtr;
@@ -409,7 +410,7 @@ ReaderParse(clientData, data, len, final)
     for (i = 0; i < listlen; i++) {
       Tcl_Obj *objPtr;
       const char *str;
-      int strlen;
+      Tcl_Size strlen;
 
       if (Tcl_ListObjIndex(info->interp, info->preservens, i, &objPtr) != TCL_OK) {
 	Tcl_Free((char *) preservens);
@@ -744,7 +745,8 @@ TclXMLlibxml2Configure(clientData, optionPtr, valuePtr)
     Tcl_Obj *const valuePtr;
 {
   TclXMLlibxml2Info *info = (TclXMLlibxml2Info *) clientData;
-  int option, len;
+  int option;
+  Tcl_Size len;
   char *value;
   CONST84 char *Options[] = {
     "-keep",
