@@ -1830,7 +1830,7 @@ ErrorCodeToString(int code)
   }
 }
 
-# FREEBSD patch suggested 21200 but that didn't work, TODO figure out when this actually becomes required
+// FREEBSD patch suggested 21200 but that didn't work, TODO figure out when this actually becomes required
 // #if LIBXML_VERSION = 21200
 // #define XMLERROR_QUAL const
 // #endif
