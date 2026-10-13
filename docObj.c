@@ -1830,6 +1830,10 @@ ErrorCodeToString(int code)
   }
 }
 
+#define XSTR(x) STR(x)
+#define STR(x) #x
+#pragma message "The value of LIBXML_VERSION: " XSTR(LIBXML_VERSION)
+
 void
 TclXML_libxml2_ErrorHandler (void *ctx,
 #if LIBXML_VERSION >= 21200
