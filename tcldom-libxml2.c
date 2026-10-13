@@ -3163,7 +3163,7 @@ TclDOMLiveNodeListNode(ClientData clientData,
     return NULL;
 #ifdef USE_TCL_INTERP_DELETED
   } else if (Tcl_InterpDeleted(interp)) {
-    return NULL
+    return NULL;
 #endif
   } else if (flags & TCL_TRACE_READS) {
     TclDOMSetLiveNodeListNode(interp, name1, nodePtr);
@@ -3188,7 +3188,7 @@ TclDOMLiveNodeListDoc(ClientData clientData,
     return NULL;
 #ifdef USE_TCL_INTERP_DELETED
   } else if (Tcl_InterpDeleted(interp)) {
-    return NULL
+    return NULL;
 #endif
   } else if (flags & TCL_TRACE_READS) {
     TclDOMSetLiveNodeListDoc(interp, name1, docPtr);
@@ -3239,7 +3239,7 @@ TclDOMLiveNamedNodeMap(ClientData clientData,
     return NULL;
 #ifdef USE_TCL_INTERP_DELETED
   } else if (Tcl_InterpDeleted(interp)) {
-    return NULL
+    return NULL;
 #endif
   } else if (flags & TCL_TRACE_READS && name2 == NULL) {
     TclDOMSetLiveNamedNodeMap(interp, name1, nodePtr);
