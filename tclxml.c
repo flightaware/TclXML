@@ -1339,8 +1339,9 @@ TclXMLInstanceCmd (clientData, interp, objc, objv)
   TclXML_Info *xmlinfo = (TclXML_Info *) clientData;
   TclXML_Info *child;
   char *encoding, *data;
-  int len, index, result = TCL_OK;
+  int index, result = TCL_OK;
   Tcl_Obj *childNamePtr;
+  Tcl_Size len;
   static CONST84 char *options[] = {
     "configure", "cget", "entityparser", "free", "get", "parse", "reset", NULL
   };
@@ -2324,7 +2325,7 @@ TclXML_ElementStartHandler(userData, name, nsuri, atts, nsDecls)
       Tcl_ListObjAppendElement(xmlinfo->interp, cmdPtr, nsuri);
     }
     if (nsDecls) {
-      int len;
+      Tcl_Size len;
       if ((Tcl_ListObjLength(xmlinfo->interp, nsDecls, &len) == TCL_OK) && (len > 0)) {
 	Tcl_ListObjAppendElement(xmlinfo->interp, cmdPtr, Tcl_NewStringObj("-namespacedecls", -1));
 	Tcl_ListObjAppendElement(xmlinfo->interp, cmdPtr, nsDecls);

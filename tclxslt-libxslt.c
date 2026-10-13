@@ -911,7 +911,8 @@ ListObjAppendUniqueList(Tcl_Interp *interp,
                         Tcl_Obj *listPtr,
                         Tcl_Obj *newElementsPtr)
 {
-  int len, idx;
+  int idx;
+  Tcl_Size len;
   Tcl_Obj *elementPtr, *keyPtr, *namePtr, *nameURIPtr;
   Tcl_HashEntry *entryPtr;
 
@@ -1223,7 +1224,8 @@ TclXSLT_RegisterAll(TclXSLT_Extension *extinfo,
 {
   Tcl_Obj *cmdPtr, *objPtr;
   Tcl_Obj **reg;
-  int ret, i, len;
+  int ret, i;
+  Tcl_Size len;
 
   /*
    * Q: How to distinguish between extension elements and functions?
@@ -2419,7 +2421,8 @@ TclXSLT_ConvertTclObjToXPathObj(Tcl_Interp *interp,
      * then return a nodeset.
      */
 
-    int i, len;
+    int i;
+    Tcl_Size len;
     Tcl_Obj **listPtr;
     xmlNodeSetPtr nset;
 
