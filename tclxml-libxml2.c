@@ -58,10 +58,10 @@ static int	TclXMLlibxml2Delete (ClientData clientData);
 static int	ReaderParse (ClientData clientData, 
 											char *data, int len, int final);
 static int	TclXMLlibxml2Configure (ClientData clientdata, 
-						    Tcl_Obj *CONST optionPtr,
-						    Tcl_Obj *CONST valuePtr);
+						    Tcl_Obj *const optionPtr,
+						    Tcl_Obj *const valuePtr);
 static int	TclXMLlibxml2Get (ClientData clientData, 
-                    int objc, Tcl_Obj *CONST objv[]);
+                    int objc, Tcl_Obj *const objv[]);
 
 static xmlParserInputPtr TclXMLlibxml2ExternalEntityLoader (const char *URL,
 									const char *ID,
@@ -525,15 +525,15 @@ ReaderParse(clientData, data, len, final)
 	  Tcl_Obj *itemObj;
 
 	  itemObj = Tcl_NewObj();
-	  Tcl_SetStringObj(itemObj, (CONST char *) xmlTextReaderConstLocalName(info->reader), -1);
+	  Tcl_SetStringObj(itemObj, (const char *) xmlTextReaderConstLocalName(info->reader), -1);
 	  Tcl_ListObjAppendElement(info->interp, attrsObj, itemObj);
-	  itemObj = Tcl_NewStringObj((CONST char *) xmlTextReaderConstValue(info->reader), -1);
+	  itemObj = Tcl_NewStringObj((const char *) xmlTextReaderConstValue(info->reader), -1);
 	  Tcl_ListObjAppendElement(info->interp, attrsObj, itemObj);
 
 	  while (xmlTextReaderMoveToNextAttribute(info->reader) == 1) {
-	    itemObj = Tcl_NewStringObj((CONST char *) xmlTextReaderConstLocalName(info->reader), -1);
+	    itemObj = Tcl_NewStringObj((const char *) xmlTextReaderConstLocalName(info->reader), -1);
 	    Tcl_ListObjAppendElement(info->interp, attrsObj, itemObj);
-	    itemObj = Tcl_NewStringObj((CONST char *) xmlTextReaderConstValue(info->reader), -1);
+	    itemObj = Tcl_NewStringObj((const char *) xmlTextReaderConstValue(info->reader), -1);
 	    Tcl_ListObjAppendElement(info->interp, attrsObj, itemObj);
 	  }
 	}
@@ -649,9 +649,9 @@ ReaderParse(clientData, data, len, final)
       Tcl_IncrRefCount(nameObj);
       baseuriObj = Tcl_NewStringObj(baseuri, -1);
       Tcl_IncrRefCount(baseuriObj);
-      sysidObj = Tcl_NewStringObj((CONST char *) entityPtr->SystemID, -1);
+      sysidObj = Tcl_NewStringObj((const char *) entityPtr->SystemID, -1);
       Tcl_IncrRefCount(sysidObj);
-      extidObj = Tcl_NewStringObj((CONST char *) entityPtr->ExternalID, -1);
+      extidObj = Tcl_NewStringObj((const char *) entityPtr->ExternalID, -1);
       Tcl_IncrRefCount(extidObj);
 
       result = TclXML_ExternalEntityRefHandler(info->xmlinfo,
@@ -740,8 +740,8 @@ ReaderParse(clientData, data, len, final)
 static int
 TclXMLlibxml2Configure(clientData, optionPtr, valuePtr)
     ClientData clientData;
-    Tcl_Obj *CONST optionPtr;
-    Tcl_Obj *CONST valuePtr;
+    Tcl_Obj *const optionPtr;
+    Tcl_Obj *const valuePtr;
 {
   TclXMLlibxml2Info *info = (TclXMLlibxml2Info *) clientData;
   int option, len;
@@ -858,7 +858,7 @@ static int
 TclXMLlibxml2Get(clientData, objc, objv)
     ClientData clientData;
     int objc;
-    Tcl_Obj *CONST objv[];
+    Tcl_Obj *const objv[];
 {
   TclXMLlibxml2Info *info = (TclXMLlibxml2Info *) clientData;
   CONST84 char *methods[] = {

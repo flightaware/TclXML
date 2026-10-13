@@ -75,8 +75,8 @@ extern "C" {
  * linked into an application.
  */
 
-EXTERN CONST char *	Tcldom_libxml2_InitStubs (Tcl_Interp *interp,
-			    CONST char *version, int exact);
+EXTERN const char *	Tcldom_libxml2_InitStubs (Tcl_Interp *interp,
+			    const char *version, int exact);
 
 #ifndef USE_TCLDOMXML_STUBS
 

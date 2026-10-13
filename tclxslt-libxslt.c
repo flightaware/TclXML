@@ -82,23 +82,23 @@ static void TclXSLTGenericError (void *ctx, const char *msg, ...);
 static int TclXSLTCompileCommand (ClientData dummy,
 						Tcl_Interp *interp,
 						int objc,
-						Tcl_Obj *CONST objv[]);
+						Tcl_Obj *const objv[]);
 static int TclXSLTInstanceCommand (ClientData ssheet,
 						Tcl_Interp *interp,
 						int objc,
-						Tcl_Obj *CONST objv[]);
+						Tcl_Obj *const objv[]);
 static void TclXSLTDeleteStylesheet (ClientData ssheet);
 static int TclXSLTExtensionCommand (ClientData dummy,
 						Tcl_Interp *interp,
 						int objc,
-						Tcl_Obj *CONST objv[]);
+						Tcl_Obj *const objv[]);
 
 static Tcl_Obj * GetParameters (Tcl_Interp *interp,
 					    xsltStylesheetPtr stylesheet);
 static int TclXSLTTransform (TclXSLT_Stylesheet *stylesheet,
                                          Tcl_Obj *source,
                                          int paramc,
-                                         Tcl_Obj *CONST paramv[]);
+                                         Tcl_Obj *const paramv[]);
 
 static void TclXSLT_RegisterAll (TclXSLT_Extension *extinfo,
 						const xmlChar *nsuri);
@@ -348,7 +348,7 @@ static int
 TclXSLTCompileCommand(ClientData dummy,
                       Tcl_Interp *interp,
                       int objc,
-                      Tcl_Obj *CONST objv[])
+                      Tcl_Obj *const objv[])
 {
   ThreadSpecificData *tsdPtr = (ThreadSpecificData *) Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
   TclXSLT_Stylesheet *info;
@@ -537,7 +537,7 @@ static int
 TclXSLTInstanceCommand(ClientData clientData,
                        Tcl_Interp *interp,
                        int objc,
-                       Tcl_Obj *CONST objv[])
+                       Tcl_Obj *const objv[])
 {
   TclXSLT_Stylesheet *ssheet = (TclXSLT_Stylesheet *) clientData;
   int method, option, indent = 0, theOmitXMLDeclaration = 0;
@@ -571,7 +571,7 @@ TclXSLTInstanceCommand(ClientData clientData,
     case TCLXSLT_OPTION_METHOD:
       XSLT_GET_IMPORT_PTR(theMethod, ssheet->stylesheet, method);
       if (theMethod != NULL) {
-        Tcl_SetObjResult(interp, Tcl_NewStringObj((CONST char *) theMethod, -1));
+        Tcl_SetObjResult(interp, Tcl_NewStringObj((const char *) theMethod, -1));
       } /* theMethod == NULL means XML method; result should be empty.
 	   EXCEPTION: if the result document is of type XML_HTML_DOCUMENT_NODE
 	   then the method should be "html".
@@ -581,7 +581,7 @@ TclXSLTInstanceCommand(ClientData clientData,
     case TCLXSLT_OPTION_ENCODING:
       XSLT_GET_IMPORT_PTR(theEncoding, ssheet->stylesheet, encoding);
       if (theEncoding != NULL) {
-        Tcl_SetObjResult(interp, Tcl_NewStringObj((CONST char *) theEncoding, -1));
+        Tcl_SetObjResult(interp, Tcl_NewStringObj((const char *) theEncoding, -1));
       } /* theEncoding == NULL means default (UTF-8) encoding; result should be empty.
 	 */
       break;
@@ -741,7 +741,7 @@ static int
 TclXSLTTransform(TclXSLT_Stylesheet *stylesheet,
                  Tcl_Obj *source,
                  int paramc,
-                 Tcl_Obj *CONST paramv[])
+                 Tcl_Obj *const paramv[])
 {
   xmlDocPtr doc, result;
   char **params = NULL;
@@ -927,7 +927,7 @@ ListObjAppendUniqueList(Tcl_Interp *interp,
 						   "^", 
 						   Tcl_GetStringFromObj(namePtr, NULL),
 						   NULL);
-	entryPtr = Tcl_FindHashEntry(tablePtr, (CONST char *) keyPtr);
+	entryPtr = Tcl_FindHashEntry(tablePtr, (const char *) keyPtr);
 	if (entryPtr == NULL) {
 	  Tcl_ListObjAppendElement(interp, listPtr, elementPtr);
 	}
@@ -972,15 +972,15 @@ GetParameters(Tcl_Interp *interp,
 
     if (strcmp((char *) varPtr->comp->inst->name, "param") == 0) {
       listPtr = Tcl_NewListObj(0, NULL);
-      Tcl_ListObjAppendElement(interp, listPtr, Tcl_NewStringObj((CONST char *) varPtr->name, -1));
-      Tcl_ListObjAppendElement(interp, listPtr, Tcl_NewStringObj((CONST char *) varPtr->nameURI, -1));
-      Tcl_ListObjAppendElement(interp, listPtr, Tcl_NewStringObj((CONST char *) varPtr->select, -1));
+      Tcl_ListObjAppendElement(interp, listPtr, Tcl_NewStringObj((const char *) varPtr->name, -1));
+      Tcl_ListObjAppendElement(interp, listPtr, Tcl_NewStringObj((const char *) varPtr->nameURI, -1));
+      Tcl_ListObjAppendElement(interp, listPtr, Tcl_NewStringObj((const char *) varPtr->select, -1));
 
       Tcl_ListObjAppendElement(interp, resultPtr, listPtr);
 
-	  keyPtr = Tcl_NewStringObj((CONST char *) varPtr->nameURI, -1);
+	  keyPtr = Tcl_NewStringObj((const char *) varPtr->nameURI, -1);
 	  Tcl_AppendStringsToObj(keyPtr, "^", varPtr->name, NULL);
-	  Tcl_CreateHashEntry(&entries, (CONST char *) keyPtr, &new);
+	  Tcl_CreateHashEntry(&entries, (const char *) keyPtr, &new);
     }
   }
 
@@ -1086,7 +1086,7 @@ static int
 TclXSLTExtensionCommand(ClientData dummy,
                         Tcl_Interp *interp,
                         int objc,
-                        Tcl_Obj *CONST objv[])
+                        Tcl_Obj *const objv[])
 {
   ThreadSpecificData *tsdPtr = (ThreadSpecificData *) Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
   int method, new;
@@ -1205,7 +1205,7 @@ TclXSLTExtInit(xsltTransformContextPtr ctxt,
   Tcl_HashEntry *entry;
   TclXSLT_Extension *extinfo;
 
-  entry = Tcl_FindHashEntry(tsdPtr->extensions, (CONST char *) URI);
+  entry = Tcl_FindHashEntry(tsdPtr->extensions, (const char *) URI);
   if (entry == NULL) {
     /* Extension module was removed */
     return NULL;
@@ -2085,7 +2085,7 @@ TclXSLTExtElementTransform(xsltTransformContextPtr ctxt,
     return;
   }
 
-  entry = Tcl_FindHashEntry(tsdPtr->extensions, (CONST char *) inst->ns->href);
+  entry = Tcl_FindHashEntry(tsdPtr->extensions, (const char *) inst->ns->href);
   if (entry == NULL) {
     /*
      * Cannot find extension module.
@@ -2105,11 +2105,11 @@ TclXSLTExtElementTransform(xsltTransformContextPtr ctxt,
   avtObjPtr = Tcl_NewListObj(0, NULL);
   for (attr = inst->properties; attr != NULL; attr = attr->next) {
     elemObj = Tcl_NewListObj(0, NULL);
-    if (Tcl_ListObjAppendElement(extinfo->interp, elemObj, Tcl_NewStringObj((CONST char *) attr->name, -1))) {
+    if (Tcl_ListObjAppendElement(extinfo->interp, elemObj, Tcl_NewStringObj((const char *) attr->name, -1))) {
       goto error;
     }
     if (attr->ns != NULL) {
-      if (Tcl_ListObjAppendElement(extinfo->interp, elemObj, Tcl_NewStringObj((CONST char *) attr->ns->href, -1))) {
+      if (Tcl_ListObjAppendElement(extinfo->interp, elemObj, Tcl_NewStringObj((const char *) attr->ns->href, -1))) {
 	goto error;
       }
     } else {
@@ -2524,7 +2524,7 @@ TclXSLT_ConvertXPathObjToTclObj(Tcl_Interp *interp,
     case XPATH_LOCATIONSET:
     case XPATH_USERS:
     default:
-      objPtr = Tcl_NewStringObj((CONST char *) xmlXPathCastToString(xpobj), -1);
+      objPtr = Tcl_NewStringObj((const char *) xmlXPathCastToString(xpobj), -1);
 
       break;
   }

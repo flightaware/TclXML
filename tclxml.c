@@ -141,23 +141,23 @@ enum instanceConfigureSwitches {
 static void TclXMLInstanceDeleteCmd (ClientData clientData);
 static int  TclXMLDestroyParserInstance (TclXML_Info *xmlinfo);
 static int  TclXMLInstanceCmd (ClientData dummy,
-            Tcl_Interp *interp, int objc, struct Tcl_Obj *CONST objv[]);
+            Tcl_Interp *interp, int objc, struct Tcl_Obj *const objv[]);
 static int  TclXMLCreateParserCmd (ClientData dummy,
-            Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]);
+            Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
 static int  TclXMLParserClassCmd (ClientData dummy,
-            Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]);
+            Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
 static int  TclXMLResetParser (Tcl_Interp *interp, TclXML_Info *xmlinfo);
 static int  TclXMLConfigureCmd (ClientData dummy,
-            Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]);
+            Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
 static Tcl_Obj* FindUniqueCmdName (Tcl_Interp *interp);
 static int  TclXMLInstanceConfigure (Tcl_Interp *interp,
-            TclXML_Info *xmlinfo, int objc, Tcl_Obj *CONST objv[]);
+            TclXML_Info *xmlinfo, int objc, Tcl_Obj *const objv[]);
 static int  TclXMLCget (Tcl_Interp *interp,
-            TclXML_Info *xmlinfo, int objc, Tcl_Obj *CONST objv[]);
+            TclXML_Info *xmlinfo, int objc, Tcl_Obj *const objv[]);
 static int  TclXMLConfigureParserInstance (
             TclXML_Info *xmlinfo, Tcl_Obj *option, Tcl_Obj *value);
 static int  TclXMLGet (Tcl_Interp *interp,
-            TclXML_Info *xmlinfo, int objc, Tcl_Obj *CONST objv[]);
+            TclXML_Info *xmlinfo, int objc, Tcl_Obj *const objv[]);
 static int  TclXMLParse (Tcl_Interp *interp,
             TclXML_Info *xmlinfo, char *data, int len);
 static void TclXMLDispatchPCDATA (TclXML_Info *xmlinfo);
@@ -321,7 +321,7 @@ TclXMLConfigureCmd(clientData, interp, objc, objv)
      ClientData clientData;
      Tcl_Interp *interp;
      int objc;
-     Tcl_Obj *CONST objv[];
+     Tcl_Obj *const objv[];
 {
   ThreadSpecificData *tsdPtr = (ThreadSpecificData *) Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
   int index;
@@ -377,7 +377,7 @@ TclXMLParserClassCmd(clientData, interp, objc, objv)
      ClientData clientData;
      Tcl_Interp *interp;
      int objc;
-     Tcl_Obj *CONST objv[];
+     Tcl_Obj *const objv[];
 {
   ThreadSpecificData *tsdPtr = (ThreadSpecificData *) Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
   TclXML_ParserClassInfo *classinfo;
@@ -624,7 +624,7 @@ TclXMLCreateParserCmd(clientData, interp, objc, objv)
      ClientData clientData;
      Tcl_Interp *interp;
      int objc;
-     Tcl_Obj *CONST objv[];
+     Tcl_Obj *const objv[];
 {
   ThreadSpecificData *tsdPtr = (ThreadSpecificData *) Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
   TclXML_Info *xmlinfo;
@@ -1334,7 +1334,7 @@ TclXMLInstanceCmd (clientData, interp, objc, objv)
      ClientData clientData;
      Tcl_Interp *interp;
      int objc;
-     Tcl_Obj *CONST objv[];
+     Tcl_Obj *const objv[];
 {
   TclXML_Info *xmlinfo = (TclXML_Info *) clientData;
   TclXML_Info *child;
@@ -1576,7 +1576,7 @@ TclXMLInstanceConfigure (interp, xmlinfo, objc, objv)
      Tcl_Interp *interp;
      TclXML_Info *xmlinfo;
      int objc;
-     Tcl_Obj *CONST objv[];
+     Tcl_Obj *const objv[];
 {
   int index, boolean, doParse = 0, result;
   TclXML_ParserClassInfo *classinfo = (TclXML_ParserClassInfo *) xmlinfo->parserClass;
@@ -1945,7 +1945,7 @@ TclXMLCget (interp, xmlinfo, objc, objv)
      Tcl_Interp *interp;
      TclXML_Info *xmlinfo;
      int objc;
-     Tcl_Obj *CONST objv[];
+     Tcl_Obj *const objv[];
 {
   int index;
 
@@ -2173,7 +2173,7 @@ TclXMLGet (interp, xmlinfo, objc, objv)
      Tcl_Interp *interp;
      TclXML_Info *xmlinfo;
      int objc;
-     Tcl_Obj *CONST objv[];
+     Tcl_Obj *const objv[];
 {
   TclXML_ParserClassInfo *classInfo = (TclXML_ParserClassInfo *) xmlinfo->parserClass; 
 
