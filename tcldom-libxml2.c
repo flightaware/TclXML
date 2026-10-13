@@ -952,8 +952,7 @@ TclDOMSerializeCommand (ClientData dummy,
   xmlSaveCtxtPtr savectxtptr = NULL;
   xmlChar *result = NULL;
   Tcl_Obj *encodingPtr = NULL;
-  int option, method = TCLDOM_SERIALIZE_METHOD_XML, indent = 0, omitXMLDeclaration = 0, saveoptions = 0;
-  Tcl_Size len = 0;
+  int option, method = TCLDOM_SERIALIZE_METHOD_XML, indent = 0, len = 0, omitXMLDeclaration = 0, saveoptions = 0;
   char *buf, *encoding;
   Tcl_Encoding tclencoding;
   Tcl_DString *serialized;
@@ -1843,10 +1842,9 @@ TclDOMSelectNodeCommand (ClientData dummy,
                          int objc,
                          Tcl_Obj *const objv[])
 {
-  int i, option;
+  int i, len, option;
   char *path;
   Tcl_Obj *objPtr, *nsOptPtr = NULL, *nodeObjPtr;
-  Tcl_Size len;
   xmlDocPtr docPtr;
   xmlNodePtr nodePtr = NULL;
   xmlXPathContextPtr ctxt = NULL;
@@ -2473,7 +2471,7 @@ TclDOMDocumentCommand (ClientData clientData,
 
     if (docPtr) {
       char *content;
-      Tcl_Size len;
+      int len;
 
       content = Tcl_GetStringFromObj(optobjv[0], &len);
       newNodePtr = xmlNewDocTextLen(docPtr, (const xmlChar *) content, len);
@@ -2499,7 +2497,7 @@ TclDOMDocumentCommand (ClientData clientData,
     } else {
       xmlNodePtr returnNode;
       char *content;
-      Tcl_Size len;
+      int len;
 
       content = Tcl_GetStringFromObj(optobjv[0], &len);
       newNodePtr = xmlNewTextLen((const xmlChar *) content, len);
@@ -2591,7 +2589,7 @@ TclDOMDocumentCommand (ClientData clientData,
 
     if (docPtr) {
       char *content;
-      Tcl_Size len;
+      int len;
 
       content = Tcl_GetStringFromObj(optobjv[0], &len);
       newNodePtr = xmlNewDocTextLen(docPtr, (const xmlChar *) content, len);
@@ -3054,8 +3052,7 @@ TriggerEventListeners(Tcl_Interp *interp,
   Tcl_HashTable *listenerTablePtr;
   Tcl_HashEntry *entryPtr, *listenerEntryPtr;
   Tcl_Obj *listenerListPtr;
-  Tcl_Size listenerLen;
-  int listenerIdx;
+  int listenerLen, listenerIdx;
   char *eventType;
 
   entryPtr = Tcl_FindHashEntry(type, tokenPtr);
