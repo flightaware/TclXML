@@ -78,8 +78,8 @@ extern "C" {
  * Declarations for externally visible functions.
  */
 
-EXTERN int      Tclxslt_libxslt_Init _ANSI_ARGS_((Tcl_Interp *interp));
-EXTERN int      Tclxslt_libxslt_SafeInit _ANSI_ARGS_((Tcl_Interp *interp));
+EXTERN int      Tclxslt_libxslt_Init (Tcl_Interp *interp);
+EXTERN int      Tclxslt_libxslt_SafeInit (Tcl_Interp *interp);
 
 /*
  * Class creation command for XSLT compiled stylesheet objects.

@@ -50,187 +50,187 @@ typedef struct ObjList {
  * Forward declarations for private functions.
  */
 
-static void FreeDocument _ANSI_ARGS_((ClientData clientData));
-static TclDOM_libxml2_Document * GetDOMDocument _ANSI_ARGS_((Tcl_Interp *interp,
-							     TclXML_libxml2_Document *tDocPtr));
+static void FreeDocument (ClientData clientData);
+static TclDOM_libxml2_Document * GetDOMDocument (Tcl_Interp *interp,
+							     TclXML_libxml2_Document *tDocPtr);
 
-static void TclDOM_libxml2_DestroyNode _ANSI_ARGS_((Tcl_Interp *interp, TclDOM_libxml2_Node *tNodePtr));
-static void TclDOM_libxml2_InvalidateNode _ANSI_ARGS_((TclDOM_libxml2_Node *tNodePtr));
+static void TclDOM_libxml2_DestroyNode (Tcl_Interp *interp, TclDOM_libxml2_Node *tNodePtr);
+static void TclDOM_libxml2_InvalidateNode (TclDOM_libxml2_Node *tNodePtr);
 
-static char * TclDOMLiveNodeListNode _ANSI_ARGS_((ClientData clientData,
+static char * TclDOMLiveNodeListNode (ClientData clientData,
 						  Tcl_Interp *interp,
 						  char *name1,
 						  char *name2,
-						  int flags));
-static char * TclDOMLiveNodeListDoc _ANSI_ARGS_((ClientData clientData,
+						  int flags);
+static char * TclDOMLiveNodeListDoc (ClientData clientData,
 						  Tcl_Interp *interp,
 						  char *name1,
 						  char *name2,
-						  int flags));
-static char * TclDOMLiveNamedNodeMap _ANSI_ARGS_((ClientData clientData,
+						  int flags);
+static char * TclDOMLiveNamedNodeMap (ClientData clientData,
 						  Tcl_Interp *interp,
 						  char *name1,
 						  char *name2,
-						  int flags));
-static int TclDOMSetLiveNodeListNode _ANSI_ARGS_((Tcl_Interp *interp,
+						  int flags);
+static int TclDOMSetLiveNodeListNode (Tcl_Interp *interp,
 						  char *varname,
-						  xmlNodePtr nodePtr));
-static int TclDOMSetLiveNodeListDoc _ANSI_ARGS_((Tcl_Interp *interp,
+						  xmlNodePtr nodePtr);
+static int TclDOMSetLiveNodeListDoc (Tcl_Interp *interp,
 						  char *varname,
-						  xmlDocPtr docPtr));
-static int TclDOMSetLiveNamedNodeMap _ANSI_ARGS_((Tcl_Interp *interp,
+						  xmlDocPtr docPtr);
+static int TclDOMSetLiveNamedNodeMap (Tcl_Interp *interp,
 						  char *varname,
-						  xmlNodePtr nodePtr));
+						  xmlNodePtr nodePtr);
 
 /*
  * Forward declarations of commands
  */
 
-static int TclDOMDOMImplementationCommand _ANSI_ARGS_((ClientData dummy,
+static int TclDOMDOMImplementationCommand (ClientData dummy,
 						       Tcl_Interp *interp,
 						       int objc,
-						       Tcl_Obj *CONST objv[]));
-static int TclDOMDocumentCommand _ANSI_ARGS_((ClientData dummy,
+						       Tcl_Obj *CONST objv[]);
+static int TclDOMDocumentCommand (ClientData dummy,
 					      Tcl_Interp *interp,
 					      int objc,
-					      Tcl_Obj *CONST objv[]));
-static void DocumentNodeCmdDelete _ANSI_ARGS_((ClientData clientdata));
-static int TclDOMNodeCommand _ANSI_ARGS_((ClientData dummy,
+					      Tcl_Obj *CONST objv[]);
+static void DocumentNodeCmdDelete (ClientData clientdata);
+static int TclDOMNodeCommand (ClientData dummy,
 					  Tcl_Interp *interp,
 					  int objc,
-					  Tcl_Obj *CONST objv[]));
-static void TclDOMNodeCommandDelete _ANSI_ARGS_((ClientData clientdata));
-static int TclDOMElementCommand _ANSI_ARGS_((ClientData dummy,
+					  Tcl_Obj *CONST objv[]);
+static void TclDOMNodeCommandDelete (ClientData clientdata);
+static int TclDOMElementCommand (ClientData dummy,
 					     Tcl_Interp *interp,
 					     int objc,
-					     Tcl_Obj *CONST objv[]));
-static int TclDOMEventCommand _ANSI_ARGS_((ClientData dummy,
+					     Tcl_Obj *CONST objv[]);
+static int TclDOMEventCommand (ClientData dummy,
 					   Tcl_Interp *interp,
 					   int objc,
-					   Tcl_Obj *CONST objv[]));
-static void TclDOMEventCommandDelete _ANSI_ARGS_((ClientData clientdata));
-static Tcl_Obj * TclDOM_libxml2_NewEventObj _ANSI_ARGS_((Tcl_Interp *interp, 
+					   Tcl_Obj *CONST objv[]);
+static void TclDOMEventCommandDelete (ClientData clientdata);
+static Tcl_Obj * TclDOM_libxml2_NewEventObj (Tcl_Interp *interp, 
 	xmlDocPtr docPtr, 
 	enum TclDOM_EventTypes type, 
-	Tcl_Obj *typeObjPtr));
+	Tcl_Obj *typeObjPtr);
 
 /*
  * Functions that implement the TclDOM_Implementation interface
  */
 
-static int TclDOM_HasFeatureCommand _ANSI_ARGS_((ClientData dummy,
+static int TclDOM_HasFeatureCommand (ClientData dummy,
 					    Tcl_Interp *interp,
 					    int objc,
-					    Tcl_Obj *CONST objv[]));
-static int TclDOMCreateCommand _ANSI_ARGS_((ClientData dummy,
+					    Tcl_Obj *CONST objv[]);
+static int TclDOMCreateCommand (ClientData dummy,
 					    Tcl_Interp *interp,
 					    int objc,
-					    Tcl_Obj *CONST objv[]));
-static int TclDOMDestroyCommand _ANSI_ARGS_((ClientData dummy,
+					    Tcl_Obj *CONST objv[]);
+static int TclDOMDestroyCommand (ClientData dummy,
 					    Tcl_Interp *interp,
 					    int objc,
-					    Tcl_Obj *CONST objv[]));
-static int TclDOMParseCommand _ANSI_ARGS_((ClientData dummy,
+					    Tcl_Obj *CONST objv[]);
+static int TclDOMParseCommand (ClientData dummy,
 					    Tcl_Interp *interp,
 					    int objc,
-					    Tcl_Obj *CONST objv[]));
-static int TclDOMSerializeCommand _ANSI_ARGS_((ClientData dummy,
+					    Tcl_Obj *CONST objv[]);
+static int TclDOMSerializeCommand (ClientData dummy,
 					    Tcl_Interp *interp,
 					    int objc,
-					    Tcl_Obj *CONST objv[]));
-static int TclDOMSelectNodeCommand _ANSI_ARGS_((ClientData dummy,
+					    Tcl_Obj *CONST objv[]);
+static int TclDOMSelectNodeCommand (ClientData dummy,
 					    Tcl_Interp *interp,
 					    int objc,
-					    Tcl_Obj *CONST objv[]));
-static int TclDOMIsNodeCommand _ANSI_ARGS_((ClientData dummy,
+					    Tcl_Obj *CONST objv[]);
+static int TclDOMIsNodeCommand (ClientData dummy,
 					    Tcl_Interp *interp,
 					    int objc,
-					    Tcl_Obj *CONST objv[]));
-static int TclDOMAdoptCommand _ANSI_ARGS_((ClientData dummy,
+					    Tcl_Obj *CONST objv[]);
+static int TclDOMAdoptCommand (ClientData dummy,
 					    Tcl_Interp *interp,
 					    int objc,
-					    Tcl_Obj *CONST objv[]));
+					    Tcl_Obj *CONST objv[]);
 
 /*
  * Additional features
  */
 
-static int TclDOMXIncludeCommand _ANSI_ARGS_((ClientData dummy,
+static int TclDOMXIncludeCommand (ClientData dummy,
 					      Tcl_Interp *interp,
 					      int objc,
-					      Tcl_Obj *CONST objv[]));
+					      Tcl_Obj *CONST objv[]);
 
-static int TclDOMPrefix2NSCommand _ANSI_ARGS_((ClientData dummy,
+static int TclDOMPrefix2NSCommand (ClientData dummy,
 					       Tcl_Interp *interp,
 					       int objc,
-					       Tcl_Obj *CONST objv[]));
-static int TclDOMTrimCommand _ANSI_ARGS_((ClientData dummy,
+					       Tcl_Obj *CONST objv[]);
+static int TclDOMTrimCommand (ClientData dummy,
 					    Tcl_Interp *interp,
 					    int objc,
-					    Tcl_Obj *CONST objv[]));
+					    Tcl_Obj *CONST objv[]);
 
-static void TrimDocument _ANSI_ARGS_((Tcl_Interp *interp, xmlDocPtr docPtr));
-static int AdoptDocument _ANSI_ARGS_((Tcl_Interp *interp, Tcl_Obj *objPtr));
+static void TrimDocument (Tcl_Interp *interp, xmlDocPtr docPtr);
+static int AdoptDocument (Tcl_Interp *interp, Tcl_Obj *objPtr);
 
-static int DocumentCget _ANSI_ARGS_((Tcl_Interp *interp, 
+static int DocumentCget (Tcl_Interp *interp, 
 				     xmlDocPtr docPtr, 
-				     Tcl_Obj *CONST objPtr));
-static int DocumentConfigure _ANSI_ARGS_((Tcl_Interp *interp, 
+				     Tcl_Obj *CONST objPtr);
+static int DocumentConfigure (Tcl_Interp *interp, 
 					  xmlDocPtr docPtr,
 					  int objc,
-					  Tcl_Obj *CONST objv[]));
-static int NodeCget _ANSI_ARGS_((Tcl_Interp *interp, 
+					  Tcl_Obj *CONST objv[]);
+static int NodeCget (Tcl_Interp *interp, 
 				 xmlDocPtr docPtr, 
 				 xmlNodePtr nodePtr, 
-				 Tcl_Obj *CONST objPtr));
-static int NodeConfigure _ANSI_ARGS_((Tcl_Interp *interp, 
+				 Tcl_Obj *CONST objPtr);
+static int NodeConfigure (Tcl_Interp *interp, 
 				      xmlNodePtr nodePtr,
 				      int objc,
-				      Tcl_Obj *CONST objPtr[]));
-static int ElementCget _ANSI_ARGS_((Tcl_Interp *interp,
+				      Tcl_Obj *CONST objPtr[]);
+static int ElementCget (Tcl_Interp *interp,
 				    xmlNodePtr nodePtr,
-				    Tcl_Obj *CONST objPtr));
+				    Tcl_Obj *CONST objPtr);
 
-static int TclDOM_NodeAppendChild _ANSI_ARGS_((Tcl_Interp *interp,
+static int TclDOM_NodeAppendChild (Tcl_Interp *interp,
 					       xmlNodePtr nodePtr,
-					       xmlNodePtr newPtr));
-static int TclDOM_NodeInsertBefore _ANSI_ARGS_((Tcl_Interp *interp,
+					       xmlNodePtr newPtr);
+static int TclDOM_NodeInsertBefore (Tcl_Interp *interp,
 						xmlNodePtr refPtr,
-						xmlNodePtr newPtr));
+						xmlNodePtr newPtr);
 
-static void PostMutationEvents _ANSI_ARGS_((Tcl_Interp *interp,
+static void PostMutationEvents (Tcl_Interp *interp,
 					    TclXML_libxml2_Document *tDocPtr,
 					    xmlNodePtr nodePtr,
 					    xmlNodePtr refPtr,
 					    xmlNodePtr newPtr,
 					    xmlNodePtr oldParent,
-					    xmlNodePtr newParent));
+					    xmlNodePtr newParent);
 
-static int DTDValidate _ANSI_ARGS_((Tcl_Interp *interp,
-									TclDOM_libxml2_Document *domDocPtr));
-static int SchemaCompile _ANSI_ARGS_((Tcl_Interp *interp,
-				      TclDOM_libxml2_Document *domDocPtr));
-static int SchemaValidate _ANSI_ARGS_((Tcl_Interp *interp,
+static int DTDValidate (Tcl_Interp *interp,
+									TclDOM_libxml2_Document *domDocPtr);
+static int SchemaCompile (Tcl_Interp *interp,
+				      TclDOM_libxml2_Document *domDocPtr);
+static int SchemaValidate (Tcl_Interp *interp,
 				       TclDOM_libxml2_Document *domDocPtr,
-				       xmlDocPtr instancePtr));
-static int RelaxNGCompile _ANSI_ARGS_((Tcl_Interp *interp,
-				    TclDOM_libxml2_Document *domDocPtr));
-static int RelaxNGValidate _ANSI_ARGS_((Tcl_Interp *interp,
+				       xmlDocPtr instancePtr);
+static int RelaxNGCompile (Tcl_Interp *interp,
+				    TclDOM_libxml2_Document *domDocPtr);
+static int RelaxNGValidate (Tcl_Interp *interp,
 				       TclDOM_libxml2_Document *domDocPtr,
-				       xmlDocPtr instance));
+				       xmlDocPtr instance);
 
-static void NodeAddObjRef _ANSI_ARGS_((TclDOM_libxml2_Node *tNodePtr,
-									   Tcl_Obj *objPtr));
+static void NodeAddObjRef (TclDOM_libxml2_Node *tNodePtr,
+									   Tcl_Obj *objPtr);
 #if 0
-static void DumpNode _ANSI_ARGS_((TclDOM_libxml2_Node *tNodePtr));
+static void DumpNode (TclDOM_libxml2_Node *tNodePtr);
 #endif
 
 /*
  * Other utilities
  */
 
-static Tcl_Obj * GetPath _ANSI_ARGS_((Tcl_Interp *interp,
-					    xmlNodePtr nodePtr));
+static Tcl_Obj * GetPath (Tcl_Interp *interp,
+					    xmlNodePtr nodePtr);
 
 /*
  * MS VC++ oddities
@@ -742,11 +742,11 @@ void DeleteNamespace (Tcl_Interp *interp,
  * SRB: 2005-12-29: This should use #include <tclInt.h>, but private sources may not be available.
  */
 
-EXTERN Tcl_Namespace * Tcl_FindNamespace _ANSI_ARGS_((Tcl_Interp * interp,
+EXTERN Tcl_Namespace * Tcl_FindNamespace (Tcl_Interp * interp,
 						      CONST char * name,
 						      Tcl_Namespace * contextNsPtr,
-						      int flags));
-EXTERN void Tcl_DeleteNamespace _ANSI_ARGS_((Tcl_Namespace * nsPtr));
+						      int flags);
+EXTERN void Tcl_DeleteNamespace (Tcl_Namespace * nsPtr);
 
 #endif /* Tcl < 8.5 */
 
