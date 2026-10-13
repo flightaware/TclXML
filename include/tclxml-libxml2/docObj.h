@@ -26,6 +26,7 @@
 #include <tcl.h>
 #endif /* TCLXML_BUILD_AS_FRAMEWORK */
 #include <libxml/tree.h>
+#include <tclxml/tclsize.h>
 
 typedef void (TclXML_libxml2Doc_FreeHookProc) (ClientData clientData);
 

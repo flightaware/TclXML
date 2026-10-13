@@ -17,6 +17,7 @@
 #include "tcl.h"
 #include <libxml/tree.h>
 #include "tcldom-libxml2.h"
+#include <tclxml/tclsize.h>
 
 #define TCLDOM_LIBXML2_NODE_NODE 0
 #define TCLDOM_LIBXML2_NODE_EVENT 1
