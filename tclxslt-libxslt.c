@@ -77,76 +77,76 @@ static Tcl_ThreadDataKey dataKey;
  * Forward declarations for private functions.
  */
 
-static void TclXSLTGenericError _ANSI_ARGS_((void *ctx, const char *msg, ...));
+static void TclXSLTGenericError (void *ctx, const char *msg, ...);
 
-static int TclXSLTCompileCommand _ANSI_ARGS_((ClientData dummy,
+static int TclXSLTCompileCommand (ClientData dummy,
 						Tcl_Interp *interp,
 						int objc,
-						Tcl_Obj *CONST objv[]));
-static int TclXSLTInstanceCommand _ANSI_ARGS_((ClientData ssheet,
+						Tcl_Obj *CONST objv[]);
+static int TclXSLTInstanceCommand (ClientData ssheet,
 						Tcl_Interp *interp,
 						int objc,
-						Tcl_Obj *CONST objv[]));
-static void TclXSLTDeleteStylesheet _ANSI_ARGS_((ClientData ssheet));
-static int TclXSLTExtensionCommand _ANSI_ARGS_((ClientData dummy,
+						Tcl_Obj *CONST objv[]);
+static void TclXSLTDeleteStylesheet (ClientData ssheet);
+static int TclXSLTExtensionCommand (ClientData dummy,
 						Tcl_Interp *interp,
 						int objc,
-						Tcl_Obj *CONST objv[]));
+						Tcl_Obj *CONST objv[]);
 
-static Tcl_Obj * GetParameters _ANSI_ARGS_((Tcl_Interp *interp,
-					    xsltStylesheetPtr stylesheet));
-static int TclXSLTTransform _ANSI_ARGS_((TclXSLT_Stylesheet *stylesheet,
+static Tcl_Obj * GetParameters (Tcl_Interp *interp,
+					    xsltStylesheetPtr stylesheet);
+static int TclXSLTTransform (TclXSLT_Stylesheet *stylesheet,
                                          Tcl_Obj *source,
                                          int paramc,
-                                         Tcl_Obj *CONST paramv[]));
+                                         Tcl_Obj *CONST paramv[]);
 
-static void TclXSLT_RegisterAll _ANSI_ARGS_((TclXSLT_Extension *extinfo,
-						const xmlChar *nsuri));
+static void TclXSLT_RegisterAll (TclXSLT_Extension *extinfo,
+						const xmlChar *nsuri);
 
 /* static xsltExtInitFunction TclXSLTExtInit; */
-static void *TclXSLTExtInit _ANSI_ARGS_((xsltTransformContextPtr ctxt,
-					const xmlChar *URI));
+static void *TclXSLTExtInit (xsltTransformContextPtr ctxt,
+					const xmlChar *URI);
 /* static xsltExtShutdownFunction TclXSLTExtShutdown; */
-static void TclXSLTExtShutdown _ANSI_ARGS_((xsltTransformContextPtr ctxt,
+static void TclXSLTExtShutdown (xsltTransformContextPtr ctxt,
 					    const xmlChar *URI,
-					    void *userdata));
+					    void *userdata);
 /* static xmlXPathEvalFunc TclXSLTExtFunction; */
-static void TclXSLTExtFunction _ANSI_ARGS_((xmlXPathParserContextPtr xpathCtxt,
-					    int nargs));
+static void TclXSLTExtFunction (xmlXPathParserContextPtr xpathCtxt,
+					    int nargs);
 /* static xsltPreComputeFunction TclXSLTExtElementPreComp; */
-static xsltElemPreCompPtr TclXSLTExtElementPreComp _ANSI_ARGS_((xsltStylesheetPtr style,
+static xsltElemPreCompPtr TclXSLTExtElementPreComp (xsltStylesheetPtr style,
 								xmlNodePtr inst,
-								xsltTransformFunction function));
+								xsltTransformFunction function);
 /* static xsltTransformFunction TclXSLTExtElementTransform; */
-static void TclXSLTExtElementTransform _ANSI_ARGS_((xsltTransformContextPtr ctxt,
+static void TclXSLTExtElementTransform (xsltTransformContextPtr ctxt,
 					            xmlNodePtr node,
 					            xmlNodePtr inst,
-					            xsltStylePreCompPtr comp));
+					            xsltStylePreCompPtr comp);
 /* static xsltSecurityCheck TclXSLTSecurityReadFile; */
-static int TclXSLTSecurityReadFile _ANSI_ARGS_((xsltSecurityPrefsPtr sec,
+static int TclXSLTSecurityReadFile (xsltSecurityPrefsPtr sec,
 						xsltTransformContextPtr ctxt,
-						const char *value));
+						const char *value);
 /* static xsltSecurityCheck TclXSLTSecurityWriteFile; */
-static int TclXSLTSecurityWriteFile _ANSI_ARGS_((xsltSecurityPrefsPtr sec,
+static int TclXSLTSecurityWriteFile (xsltSecurityPrefsPtr sec,
 						 xsltTransformContextPtr ctxt,
-						 const char *value));
+						 const char *value);
 /* static xsltSecurityCheck TclXSLTSecurityCreateDirectory; */
-static int TclXSLTSecurityCreateDirectory _ANSI_ARGS_((xsltSecurityPrefsPtr sec,
+static int TclXSLTSecurityCreateDirectory (xsltSecurityPrefsPtr sec,
 						       xsltTransformContextPtr ctxt,
-						       const char *value));
+						       const char *value);
 /* static xsltSecurityCheck TclXSLTSecurityReadNetwork; */
-static int TclXSLTSecurityReadNetwork _ANSI_ARGS_((xsltSecurityPrefsPtr sec,
+static int TclXSLTSecurityReadNetwork (xsltSecurityPrefsPtr sec,
 						   xsltTransformContextPtr ctxt,
-						   const char *value));
+						   const char *value);
 /* static xsltSecurityCheck TclXSLTSecurityWriteNetwork; */
-static int TclXSLTSecurityWriteNetwork _ANSI_ARGS_((xsltSecurityPrefsPtr sec,
+static int TclXSLTSecurityWriteNetwork (xsltSecurityPrefsPtr sec,
 						    xsltTransformContextPtr ctxt,
-						    const char *value));
+						    const char *value);
 
-static Tcl_Obj * TclXSLT_ConvertXPathObjToTclObj _ANSI_ARGS_((Tcl_Interp *interp,
-                                                              xmlXPathObjectPtr xpobj));
-static xmlXPathObjectPtr TclXSLT_ConvertTclObjToXPathObj _ANSI_ARGS_((Tcl_Interp *interp,
-                                                              Tcl_Obj *objPtr));
+static Tcl_Obj * TclXSLT_ConvertXPathObjToTclObj (Tcl_Interp *interp,
+                                                              xmlXPathObjectPtr xpobj);
+static xmlXPathObjectPtr TclXSLT_ConvertTclObjToXPathObj (Tcl_Interp *interp,
+                                                              Tcl_Obj *objPtr);
 
 /* Copied from libxslt-1.1.24 transform.c */
 

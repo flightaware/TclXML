@@ -29,7 +29,9 @@ jobs:
         autoreconf -vi
         ./configure --with-tcl=/usr/lib/tcl9.0
     - name: make
-      run: make
+      run: |
+         make genstubs
+         make
     - name: install
       run: sudo make install
       
