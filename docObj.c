@@ -1830,17 +1830,18 @@ ErrorCodeToString(int code)
   }
 }
 
-#define XSTR(x) STR(x)
-#define STR(x) #x
-#pragma message "The value of LIBXML_VERSION: " XSTR(LIBXML_VERSION)
+# FREEBSD patch suggested 21200 but that didn't work, TODO figure out when this actually becomes required
+// #if LIBXML_VERSION = 21200
+// #define XMLERROR_QUAL const
+// #endif
+
+#ifndef XMLERROR_QUAL
+#define XMLERROR_QUAL
+#endif
 
 void
 TclXML_libxml2_ErrorHandler (void *ctx,
-#if LIBXML_VERSION >= 21200
-  const xmlError *error
-#else
-  xmlError *error
-#endif
+                             XMLERROR_QUAL xmlError *error
 )
 {
   ThreadSpecificData *tsdPtr = Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
