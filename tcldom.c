@@ -259,8 +259,7 @@ CONST84 char *TclDOM_SelectNodeOptions[] = {
  */
 
 int
-Tcldom_Init (interp)
-      Tcl_Interp *interp; /* Interpreter to initialise. */
+Tcldom_Init (Tcl_Interp *interp)
 {
   Tcl_Obj *objPtr;
 

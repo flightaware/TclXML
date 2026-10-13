@@ -41,10 +41,9 @@ TclxmlStubs *tclxmlStubsPtr;
  */
 
 CONST char *
-TclXML_InitStubs(interp, version, exact)
-    Tcl_Interp *interp;
-    CONST char *version;
-    int exact;
+TclXML_InitStubs(Tcl_Interp *interp,
+                 CONST char *version,
+                 int exact)
 {
     CONST char *result;
 

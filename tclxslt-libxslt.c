@@ -249,8 +249,7 @@ TCL_DECLARE_MUTEX(libxslt)
  */
 
 int
-Tclxslt_libxslt_Init (interp)
-     Tcl_Interp *interp;	/* Interpreter to initialise */
+Tclxslt_libxslt_Init (Tcl_Interp *interp)
 {
   ThreadSpecificData *tsdPtr;
   xsltSecurityPrefsPtr sec;
@@ -318,12 +317,12 @@ Tclxslt_libxslt_Init (interp)
  * XSLT is not safe due to the document(), xsl:include and xsl:import functions/elements.
  * However, libxslt checks whether access is permitted to external resources.
  *
- * NOTE: need to make sure decision to allow access to resources is made by a trusted interpreter, not the untrusted slave.  Even better, use a mechanism similar to TclXML/libxml2 to access external resources.
+ * NOTE: need to make sure decision to allow access to resources is made by a trusted interpreter, not the untrusted slave.  Even better, use a mechanism similar to TclXML/libxml2 to access external 
+resources.
  */
 
 int
-Tclxslt_libxslt_SafeInit (interp)
-     Tcl_Interp *interp;	/* Interpreter to initialise */
+Tclxslt_libxslt_SafeInit (Tcl_Interp *interp)
 {
   return Tclxslt_libxslt_Init(interp);
 }
@@ -346,11 +345,10 @@ Tclxslt_libxslt_SafeInit (interp)
  */
 
 static int
-TclXSLTCompileCommand(dummy, interp, objc, objv)
-     ClientData dummy;
-     Tcl_Interp *interp;
-     int objc;
-     Tcl_Obj *CONST objv[];
+TclXSLTCompileCommand(ClientData dummy,
+                      Tcl_Interp *interp,
+                      int objc,
+                      Tcl_Obj *CONST objv[])
 {
   ThreadSpecificData *tsdPtr = (ThreadSpecificData *) Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
   TclXSLT_Stylesheet *info;
@@ -497,8 +495,7 @@ error:
  */
 
 static void
-TclXSLTDeleteStylesheet(clientData)
-     ClientData clientData;
+TclXSLTDeleteStylesheet(ClientData clientData)
 {
   TclXSLT_Stylesheet *ssheet = (TclXSLT_Stylesheet *) clientData;
 
@@ -537,11 +534,10 @@ TclXSLTDeleteStylesheet(clientData)
  */
 
 static int
-TclXSLTInstanceCommand(clientData, interp, objc, objv)
-     ClientData clientData;
-     Tcl_Interp *interp;
-     int objc;
-     Tcl_Obj *CONST objv[];
+TclXSLTInstanceCommand(ClientData clientData,
+                       Tcl_Interp *interp,
+                       int objc,
+                       Tcl_Obj *CONST objv[])
 {
   TclXSLT_Stylesheet *ssheet = (TclXSLT_Stylesheet *) clientData;
   int method, option, indent = 0, theOmitXMLDeclaration = 0;
@@ -742,11 +738,10 @@ TclXSLTInstanceCommand(clientData, interp, objc, objv)
  */
 
 static int
-TclXSLTTransform(stylesheet, source, paramc, paramv)
-    TclXSLT_Stylesheet *stylesheet;
-    Tcl_Obj *source;
-    int paramc;
-    Tcl_Obj *CONST paramv[];
+TclXSLTTransform(TclXSLT_Stylesheet *stylesheet,
+                 Tcl_Obj *source,
+                 int paramc,
+                 Tcl_Obj *CONST paramv[])
 {
   xmlDocPtr doc, result;
   char **params = NULL;
@@ -911,11 +906,10 @@ TclXSLTTransform(stylesheet, source, paramc, paramv)
 }
 
 void
-ListObjAppendUniqueList(interp, tablePtr, listPtr, newElementsPtr)
-     Tcl_Interp *interp;
-     Tcl_HashTable *tablePtr;
-     Tcl_Obj *listPtr;
-     Tcl_Obj *newElementsPtr;
+ListObjAppendUniqueList(Tcl_Interp *interp,
+                        Tcl_HashTable *tablePtr,
+                        Tcl_Obj *listPtr,
+                        Tcl_Obj *newElementsPtr)
 {
   int len, idx;
   Tcl_Obj *elementPtr, *keyPtr, *namePtr, *nameURIPtr;
@@ -958,9 +952,8 @@ ListObjAppendUniqueList(interp, tablePtr, listPtr, newElementsPtr)
  */
 
 static Tcl_Obj *
-GetParameters(interp, stylesheet)
-     Tcl_Interp *interp;
-     xsltStylesheetPtr stylesheet;
+GetParameters(Tcl_Interp *interp,
+              xsltStylesheetPtr stylesheet)
 {
   Tcl_Obj *resultPtr, *objPtr, *keyPtr;
   xsltStackElemPtr varPtr;
@@ -1090,11 +1083,10 @@ TclXSLTGenericError (void *ctx, const char *msg, ...)
  */
 
 static int
-TclXSLTExtensionCommand(dummy, interp, objc, objv)
-     ClientData dummy;
-     Tcl_Interp *interp;
-     int objc;
-     Tcl_Obj *CONST objv[];
+TclXSLTExtensionCommand(ClientData dummy,
+                        Tcl_Interp *interp,
+                        int objc,
+                        Tcl_Obj *CONST objv[])
 {
   ThreadSpecificData *tsdPtr = (ThreadSpecificData *) Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
   int method, new;
@@ -1206,9 +1198,8 @@ TclXSLTExtensionCommand(dummy, interp, objc, objv)
  */
 
 static void *
-TclXSLTExtInit(ctxt, URI)
-     xsltTransformContextPtr ctxt;
-     const xmlChar *URI;
+TclXSLTExtInit(xsltTransformContextPtr ctxt,
+               const xmlChar *URI)
 {
   ThreadSpecificData *tsdPtr = (ThreadSpecificData *) Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
   Tcl_HashEntry *entry;
@@ -1227,9 +1218,8 @@ TclXSLTExtInit(ctxt, URI)
 }
 
 void
-TclXSLT_RegisterAll(extinfo, nsuri)
-    TclXSLT_Extension *extinfo;
-    const xmlChar *nsuri;
+TclXSLT_RegisterAll(TclXSLT_Extension *extinfo,
+                    const xmlChar *nsuri)
 {
   Tcl_Obj *cmdPtr, *objPtr;
   Tcl_Obj **reg;
@@ -1337,10 +1327,9 @@ TclXSLT_RegisterAll(extinfo, nsuri)
  */
 
 static xsltElemPreCompPtr
-TclXSLTExtElementPreComp(style, inst, function)
-    xsltStylesheetPtr style;
-    xmlNodePtr inst;
-    xsltTransformFunction function;
+TclXSLTExtElementPreComp(xsltStylesheetPtr style,
+                         xmlNodePtr inst,
+                         xsltTransformFunction function)
 {
   return NULL;
 }
@@ -2076,11 +2065,10 @@ error:
 }
 
 static void 
-TclXSLTExtElementTransform(ctxt, node, inst, comp)
-    xsltTransformContextPtr ctxt; /* unused */
-    xmlNodePtr node;
-    xmlNodePtr inst;
-    xsltStylePreCompPtr comp; /* unused */
+TclXSLTExtElementTransform(xsltTransformContextPtr ctxt,
+                           xmlNodePtr node,
+                           xmlNodePtr inst,
+                           xsltStylePreCompPtr comp)
 {
   ThreadSpecificData *tsdPtr = (ThreadSpecificData *) Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
   TclXSLT_Extension *extinfo;
@@ -2280,9 +2268,8 @@ TclXSLTExtElementTransform(ctxt, node, inst, comp)
  */
 
 static void 
-TclXSLTExtFunction(xpathCtxt, nargs)
-     xmlXPathParserContextPtr xpathCtxt;
-     int nargs;
+TclXSLTExtFunction(xmlXPathParserContextPtr xpathCtxt,
+                   int nargs)
 {
   xsltTransformContextPtr xformCtxt;
   TclXSLT_Extension *extinfo;
@@ -2394,9 +2381,8 @@ TclXSLTExtFunction(xpathCtxt, nargs)
  */
 
 static xmlXPathObjectPtr
-TclXSLT_ConvertTclObjToXPathObj(interp, objPtr)
-     Tcl_Interp *interp;
-     Tcl_Obj *objPtr;
+TclXSLT_ConvertTclObjToXPathObj(Tcl_Interp *interp,
+                                Tcl_Obj *objPtr)
 {
   xmlNodePtr nodePtr;
   xmlDocPtr docPtr;
@@ -2497,9 +2483,8 @@ TclXSLT_ConvertTclObjToXPathObj(interp, objPtr)
  */
 
 static Tcl_Obj *
-TclXSLT_ConvertXPathObjToTclObj(interp, xpobj)
-     Tcl_Interp *interp;
-     xmlXPathObjectPtr xpobj;
+TclXSLT_ConvertXPathObjToTclObj(Tcl_Interp *interp,
+                                xmlXPathObjectPtr xpobj)
 {
   Tcl_Obj *objPtr;
   int i;
@@ -2564,10 +2549,9 @@ TclXSLT_ConvertXPathObjToTclObj(interp, xpobj)
  */
 
 static void
-TclXSLTExtShutdown(ctxt, URI, userdata)
-     xsltTransformContextPtr ctxt;
-     const xmlChar *URI;
-     void *userdata;
+TclXSLTExtShutdown(xsltTransformContextPtr ctxt,
+                   const xmlChar *URI,
+                   void *userdata)
 {
   /* Nothing to do */
 }
@@ -2594,10 +2578,9 @@ TclXSLTExtShutdown(ctxt, URI, userdata)
  */
 
 static int
-TclXSLTSecurity(name, method, value)
-     Tcl_Obj *name;
-     const char *method;
-     const char *value;
+TclXSLTSecurity(Tcl_Obj *name,
+                const char *method,
+                const char *value)
 {
   ThreadSpecificData *tsdPtr = (ThreadSpecificData *) Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
   Tcl_Interp *master;
@@ -2668,8 +2651,7 @@ TclXSLTSecurity(name, method, value)
   }
 }
 static Tcl_Obj *
-TclXSLTSecurityGetName(ctxt)
-     xsltTransformContextPtr ctxt;
+TclXSLTSecurityGetName(xsltTransformContextPtr ctxt)
 {
   ThreadSpecificData *tsdPtr = (ThreadSpecificData *) Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
   Tcl_HashEntry *entryPtr;
@@ -2686,42 +2668,37 @@ TclXSLTSecurityGetName(ctxt)
   }
 }
 static int
-TclXSLTSecurityReadFile(sec, ctxt, value)
-     xsltSecurityPrefsPtr sec;
-     xsltTransformContextPtr ctxt;
-     const char *value;
+TclXSLTSecurityReadFile(xsltSecurityPrefsPtr sec,
+                        xsltTransformContextPtr ctxt,
+                        const char *value)
 {
   return TclXSLTSecurity(TclXSLTSecurityGetName(ctxt), "readfile", value);
 }
 static int
-TclXSLTSecurityWriteFile(sec, ctxt, value)
-     xsltSecurityPrefsPtr sec;
-     xsltTransformContextPtr ctxt;
-     const char *value;
+TclXSLTSecurityWriteFile(xsltSecurityPrefsPtr sec,
+                         xsltTransformContextPtr ctxt,
+                         const char *value)
 {
   return TclXSLTSecurity(TclXSLTSecurityGetName(ctxt), "writefile", value);
 }
 static int
-TclXSLTSecurityCreateDirectory(sec, ctxt, value)
-     xsltSecurityPrefsPtr sec;
-     xsltTransformContextPtr ctxt;
-     const char *value;
+TclXSLTSecurityCreateDirectory(xsltSecurityPrefsPtr sec,
+                               xsltTransformContextPtr ctxt,
+                               const char *value)
 {
   return TclXSLTSecurity(TclXSLTSecurityGetName(ctxt), "createdirectory", value);
 }
 static int
-TclXSLTSecurityReadNetwork(sec, ctxt, value)
-     xsltSecurityPrefsPtr sec;
-     xsltTransformContextPtr ctxt;
-     const char *value;
+TclXSLTSecurityReadNetwork(xsltSecurityPrefsPtr sec,
+                           xsltTransformContextPtr ctxt,
+                           const char *value)
 {
   return TclXSLTSecurity(TclXSLTSecurityGetName(ctxt), "readnetwork", value);
 }
 static int
-TclXSLTSecurityWriteNetwork(sec, ctxt, value)
-     xsltSecurityPrefsPtr sec;
-     xsltTransformContextPtr ctxt;
-     const char *value;
+TclXSLTSecurityWriteNetwork(xsltSecurityPrefsPtr sec,
+                            xsltTransformContextPtr ctxt,
+                            const char *value)
 {
   return TclXSLTSecurity(TclXSLTSecurityGetName(ctxt), "writenetwork", value);
 }
