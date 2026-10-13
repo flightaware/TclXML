@@ -1831,7 +1831,13 @@ ErrorCodeToString(int code)
 }
 
 void
-TclXML_libxml2_ErrorHandler (void *ctx, xmlErrorPtr error)
+TclXML_libxml2_ErrorHandler (void *ctx,
+#if LIBXML_VERSION >= 21200
+  const xmlError *error
+#else
+  xmlError *error
+#endif
+)
 {
   ThreadSpecificData *tsdPtr = Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
   Tcl_Obj *objPtr;
