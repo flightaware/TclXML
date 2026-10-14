@@ -1641,7 +1641,7 @@ xsltApplyFallbacks(xsltTransformContextPtr ctxt, xmlNodePtr node,
 static void
 xsltReleaseLocalRVTs(xsltTransformContextPtr ctxt, xmlDocPtr base)
 {
-    xmlDocPtr cur = ctxt->localRVTList, tmp;
+    xmlDocPtr cur = ctxt->LOCALRVT, tmp;
     
     while ((cur != NULL) && (cur != base)) {
 	if (cur->psvi == (void *) ((long) 1)) {
@@ -1650,8 +1650,8 @@ xsltReleaseLocalRVTs(xsltTransformContextPtr ctxt, xmlDocPtr base)
 	    tmp = cur;
 	    cur = (xmlDocPtr) cur->next;
 
-	    if (tmp == ctxt->localRVTList)
-		ctxt->localRVTList = cur;
+	    if (tmp == ctxt->LOCALRVT)
+		ctxt->LOCALRVT = cur;
 
 	    if (tmp == ctxt->localRVTBase)
 		ctxt->localRVTBase = cur;
@@ -1691,7 +1691,7 @@ xsltApplySequenceConstructor(xsltTransformContextPtr ctxt,
     CHECK_STOPPED;
 
 
-    oldLocalFragmentTop = ctxt->localRVTList;
+    oldLocalFragmentTop = ctxt->LOCALRVT;
     oldInsert = insert = ctxt->insert;
     oldInst = oldCurInst = ctxt->inst;
     oldContextNode = ctxt->node;
@@ -1802,7 +1802,7 @@ xsltApplySequenceConstructor(xsltTransformContextPtr ctxt,
 		    info->func(ctxt, contextNode, cur,
 			(xsltElemPreCompPtr) info);
 
-		    if (oldLocalFragmentTop != ctxt->localRVTList)
+		    if (oldLocalFragmentTop != ctxt->LOCALRVT)
 			xsltReleaseLocalRVTs(ctxt, oldLocalFragmentTop);
 
 		    ctxt->insert = oldInsert;
@@ -1846,7 +1846,7 @@ xsltApplySequenceConstructor(xsltTransformContextPtr ctxt,
 		    func(ctxt, contextNode, cur, cur->psvi);
 
 		    ctxt->localRVTBase = oldLocalFragmentBase;
-		    if (oldLocalFragmentTop != ctxt->localRVTList)
+		    if (oldLocalFragmentTop != ctxt->LOCALRVT)
 			xsltReleaseLocalRVTs(ctxt, oldLocalFragmentTop);
 
 		    ctxt->insert = oldInsert;
@@ -1889,7 +1889,7 @@ xsltApplySequenceConstructor(xsltTransformContextPtr ctxt,
                 info->func(ctxt, contextNode, cur, (xsltElemPreCompPtr) info);
 
 		ctxt->localRVTBase = oldLocalFragmentBase;
-		if (oldLocalFragmentTop != ctxt->localRVTList)
+		if (oldLocalFragmentTop != ctxt->LOCALRVT)
 		    xsltReleaseLocalRVTs(ctxt, oldLocalFragmentTop);
 
                 ctxt->insert = oldInsert;
@@ -1962,7 +1962,7 @@ xsltApplySequenceConstructor(xsltTransformContextPtr ctxt,
 		ctxt->localRVTBase = NULL;
 
                 function(ctxt, contextNode, cur, cur->psvi);
-		if (oldLocalFragmentTop != ctxt->localRVTList)
+		if (oldLocalFragmentTop != ctxt->LOCALRVT)
 		    xsltReleaseLocalRVTs(ctxt, oldLocalFragmentTop);
 
 		ctxt->localRVTBase = oldLocalFragmentBase;
