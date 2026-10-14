@@ -55,7 +55,7 @@ EXTERN void		TclXML_libxml2_DocKeep (Tcl_Obj * objPtr,
 				TclXML_libxml2_DocumentHandling keep);
 /* 10 */
 EXTERN void		TclXML_libxml2_ErrorHandler (void * ctx, 
-				XMLERROR_QUAL xmlErrorPtr error);
+				XMLERROR_QUAL xmlError *error);
 /* 11 */
 EXTERN void		TclXML_libxml2_ResetError (
 				Tcl_Interp * interp);
@@ -93,7 +93,7 @@ typedef struct Tclxml_libxml2Stubs {
     int (*tclXML_libxml2_GetTclDocFromNode) (Tcl_Interp * interp, xmlNodePtr nodePtr, TclXML_libxml2_Document ** tDocPtrPtr); /* 7 */
     void (*tclXML_libxml2_DestroyDocument) (TclXML_libxml2_Document * tDocPtr); /* 8 */
     void (*tclXML_libxml2_DocKeep) (Tcl_Obj * objPtr, TclXML_libxml2_DocumentHandling keep); /* 9 */
-    void (*tclXML_libxml2_ErrorHandler) (void * ctx, XMLERROR_QUAL xmlErrorPtr error); /* 10 */
+    void (*tclXML_libxml2_ErrorHandler) (void * ctx, XMLERROR_QUAL xmlError *error); /* 10 */
     void (*tclXML_libxml2_ResetError) (Tcl_Interp * interp); /* 11 */
     Tcl_Obj * (*tclXML_libxml2_GetErrorObj) (Tcl_Interp * interp); /* 12 */
     void (*tclXML_libxml2_SetErrorNodeFunc) (Tcl_Interp * interp, TclXML_ErrorNodeHandlerProc * proc); /* 13 */
