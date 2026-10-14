@@ -29,6 +29,7 @@
 #include <tclxml/tclsize.h>
 
 // cribbed from FreeBSD patch for TclXML
+// Github Ubuntu-26.04 runner installs 21502
 #if LIBXML_VERSION >= 21200
 #define XMLERROR_QUAL const
 #endif
