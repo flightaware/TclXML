@@ -38,10 +38,6 @@
 #define XMLERROR_QUAL
 #endif
 
-#ifndef LOCALRVT
-#define LOCALRVT localRVT
-#endif
-
 typedef void (TclXML_libxml2Doc_FreeHookProc) (ClientData clientData);
 
 /*
