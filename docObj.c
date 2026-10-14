@@ -1830,14 +1830,6 @@ ErrorCodeToString(int code)
   }
 }
 
-#if LIBXML_VERSION >= 21200
-#define XMLERROR_QUAL const
-#endif
-
-#ifndef XMLERROR_QUAL
-#define XMLERROR_QUAL
-#endif
-
 void
 TclXML_libxml2_ErrorHandler (void *ctx,
                              XMLERROR_QUAL xmlError *error

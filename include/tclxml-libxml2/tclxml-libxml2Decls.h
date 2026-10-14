@@ -17,14 +17,6 @@
 #include "docObj.h"
 #include <libxml/xmlerror.h>
 
-#if LIBXML_VERSION >= 21200
-#define XMLERROR_QUAL const
-#endif
-
-#ifndef XMLERROR_QUAL
-#define XMLERROR_QUAL
-#endif
-
 /* !BEGIN!: Do not edit below this line. */
 
 /*

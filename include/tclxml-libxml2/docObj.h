@@ -28,6 +28,15 @@
 #include <libxml/tree.h>
 #include <tclxml/tclsize.h>
 
+// cribbed from FreeBSD patch for TclXML
+#if LIBXML_VERSION >= 21200
+#define XMLERROR_QUAL const
+#endif
+
+#ifndef XMLERROR_QUAL
+#define XMLERROR_QUAL
+#endif
+
 typedef void (TclXML_libxml2Doc_FreeHookProc) (ClientData clientData);
 
 /*
