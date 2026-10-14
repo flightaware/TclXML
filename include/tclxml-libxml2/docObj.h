@@ -32,11 +32,13 @@
 // Github Ubuntu-26.04 runner installs 21502
 #if LIBXML_VERSION >= 21200
 #define XMLERROR_QUAL const
-#define LOCALRVT localRVTList
 #endif
 
 #ifndef XMLERROR_QUAL
 #define XMLERROR_QUAL
+#endif
+
+#ifndef LOCALRVT
 #define LOCALRVT localRVT
 #endif
 

@@ -23,7 +23,15 @@ jobs:
         sudo apt-get update -qq
         sudo apt-get install -y gcc-11 g++-11
         sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 110 --slave /usr/bin/g++ g++ /usr/bin/g++-11
-        sudo apt-get install -y tcl9.0-dev tcllib libxml2-dev libxslt-dev
+        sudo apt-get install -y tcl9.0-dev tcllib libxml2-dev
+        # We install this version because we don't want the debian patches
+        curl -O https://download.gnome.org/sources/libxslt/1.1/libxslt-1.1.45.tar.xz
+        tar xvfz libxslt-1.1.45.tar.xz
+        cd libxslt-1.1.45
+        autoreconf -vi
+        ./configure
+        make
+        sudo make install
     - name: configure
       run: |
         autoreconf -vi
