@@ -2099,6 +2099,13 @@ TclXSLTExtElementTransform(xsltTransformContextPtr ctxt,
   extinfo = (TclXSLT_Extension *) Tcl_GetHashValue(entry);
 
   /*
+   * Save state for error handler.
+   */
+  oldOutput = ctxt->output;
+  oldInsert = ctxt->insert;
+  oldType = ctxt->type;
+
+  /*
    * Evaluate every attribute as an AVT.
    * Pass these values on to the callback as a list.
    * Each list element is (name, ns, value)
@@ -2131,10 +2138,6 @@ TclXSLTExtElementTransform(xsltTransformContextPtr ctxt,
   /*
    * Evaluate the element content.
    */
-
-  oldOutput = ctxt->output;
-  oldInsert = ctxt->insert;
-  oldType = ctxt->type;
 
   style = xsltNewStylesheet();
   if (style == NULL) {
