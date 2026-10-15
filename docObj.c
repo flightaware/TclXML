@@ -518,7 +518,7 @@ TclXML_libxml2_SetBaseURI(Tcl_Interp *interp,
                           Tcl_Obj *uriObj)
 {
   char *url;
-  int len;
+  Tcl_Size len;
 
   if (docPtr == NULL) {
     Tcl_SetResult(interp, "no document", NULL);

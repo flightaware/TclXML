@@ -1090,16 +1090,19 @@ TclDOMSerializeCommand (ClientData dummy,
 
     break;
 
-  case TCLDOM_SERIALIZE_METHOD_HTML:
+  case TCLDOM_SERIALIZE_METHOD_HTML: {
+    int ilen;
 
     Tcl_MutexLock(&libxml2);
     htmlSetMetaEncoding(docPtr, (const xmlChar *) "UTF-8");
-    htmlDocDumpMemory(docPtr, &result, &len);
+    htmlDocDumpMemory(docPtr, &result, &ilen);
+    len = ilen;
     Tcl_MutexUnlock(&libxml2);
     Tcl_SetObjResult(interp, Tcl_NewStringObj((const char *) result, len));
     xmlFree(result);
 
     break;
+  }
 
   case TCLDOM_SERIALIZE_METHOD_TEXT:
 
@@ -2057,7 +2060,8 @@ TclDOMDocumentCommand (ClientData clientData,
   TclXML_libxml2_Document *tDocPtr;
   TclDOM_libxml2_Document *domDocPtr = NULL;
   enum TclDOM_EventTypes type;
-  int method, optobjc, wrongidx = 1, postMutationEvent = 0, idx, len;
+  int method, optobjc, wrongidx = 1, postMutationEvent = 0, idx;
+  Tcl_Size len;
   xmlDocPtr docPtr = NULL;
   xmlNodePtr nodePtr = NULL, newNodePtr = NULL;
   xmlNsPtr nsPtr = NULL;
@@ -2613,7 +2617,7 @@ TclDOMDocumentCommand (ClientData clientData,
 
     } else {
       char *content;
-      int len;
+      Tcl_Size len;
 
       content = Tcl_GetStringFromObj(optobjv[0], &len);
       newNodePtr = xmlNewTextLen((const xmlChar *) content, len);
