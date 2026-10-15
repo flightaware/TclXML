@@ -15,7 +15,12 @@
 # redistribution of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
-package require Tcl 8.1
+switch -glob -- [info tclversion] {
+    "8*" { set REQUIRED 8.1 }
+    "9*" { set REQUIRED 9.0 }
+}
+
+package require Tcl $REQUIRED
 
 package provide xml::tclparser 3.3.1
 
