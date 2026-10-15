@@ -18,7 +18,7 @@
 
 package require -exact Tcl 8.0
 
-package require xmldefs 3.3
+package require xmldefs 3.3.1
 
 package require sgmlparser 1.0
 
