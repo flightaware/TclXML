@@ -14,7 +14,12 @@
 # 
 # RCS: @(#) $Id: all.tcl,v 1.4 2003/12/03 20:06:36 balls Exp $
 
-package require Tcl 8.4
+switch -glob -- [info tclversion] {
+    "8*" { set REQUIRED 8.4 }
+    "9*" { set REQUIRED 9.0 }
+}
+
+package require Tcl $REQUIRED
 package require tcltest 2.2
 tcltest::Option -parser xml {
     Selects the XML parser class.
