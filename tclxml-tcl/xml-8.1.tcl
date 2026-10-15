@@ -13,7 +13,6 @@
 # See the file "LICENSE" in this distribution for information on usage and
 # redistribution of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# $Id: xml-8.1.tcl,v 1.16.2.1 2005/12/28 06:49:51 balls Exp $
 
 package require Tcl 8.1
 
