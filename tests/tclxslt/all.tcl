@@ -21,7 +21,7 @@ switch -glob -- [info tclversion] {
 
 package require Tcl $REQUIRED
 package require tcltest 2.2
-tcltest::configure -testdir [file dirname [file normalize [info script]]]
+tcltest::configure -testdir [file dirname [file normalize [info script]]] -debug 3
 eval tcltest::configure $argv
 
 tcltest::runAllTests
