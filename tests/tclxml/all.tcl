@@ -12,7 +12,6 @@
 #
 # All rights reserved.
 # 
-# RCS: @(#) $Id: all.tcl,v 1.4 2003/12/03 20:06:36 balls Exp $
 
 switch -glob -- [info tclversion] {
     "8*" { set REQUIRED 8.4 }
@@ -24,8 +23,7 @@ package require tcltest 2.2
 tcltest::Option -parser xml {
     Selects the XML parser class.
 } AcceptAll parser
-tcltest::configure -testdir [file dirname [file normalize [info script]]] -debug 3
-eval tcltest::configure $argv
+tcltest::configure -testdir [file dirname [file normalize [info script]]] {*}$::argv
 
 if {$::tcltest::parser == "xml"} {
     foreach parser {libxml2 tclparser} {
