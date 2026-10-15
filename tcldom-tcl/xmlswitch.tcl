@@ -14,7 +14,7 @@
 # redistribution of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
 
-package provide xmlswitch 3.3
+package provide xmlswitch 3.3.1
 
 # We need the xml, dom and xpath packages
 
