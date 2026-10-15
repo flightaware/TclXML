@@ -2353,7 +2353,7 @@ TclXSLTExtFunction(xmlXPathParserContextPtr xpathCtxt,
     obj = TclXSLT_ConvertTclObjToXPathObj(extinfo->interp, resultPtr);
     valuePush(xpathCtxt, obj);
   } else {
-    xmlGenericError(xmlGenericErrorContext,
+    xmlGenericError(xmlGenericErrorContext, "%s",
 		    Tcl_GetStringFromObj(resultPtr, NULL));
     /* Need to define a new error code - this is the closest in meaning */
     xpathCtxt->error = XPATH_UNKNOWN_FUNC_ERROR;
