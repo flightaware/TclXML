@@ -37,7 +37,7 @@ typedef struct ObjList {
  * Prototypes for procedures defined later in this file:
  */
 
-static void DestroyTclDoc _ANSI_ARGS_((TclXML_libxml2_Document *tDocPtr));
+static void DestroyTclDoc (TclXML_libxml2_Document *tDocPtr);
 
 Tcl_FreeInternalRepProc	TclXMLlibxml2_DocFree;
 Tcl_DupInternalRepProc	TclXMLlibxml2_DocDup;
@@ -100,8 +100,7 @@ TCL_DECLARE_MUTEX(libxml2)
  */
 
 int
-TclXML_libxml2_InitDocObj(interp)
-    Tcl_Interp *interp;
+TclXML_libxml2_InitDocObj(Tcl_Interp *interp)
 {
   ThreadSpecificData *tsdPtr = Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
@@ -143,8 +142,7 @@ TclXML_libxml2_InitDocObj(interp)
  */
 
 Tcl_Obj *
-TclXML_libxml2_NewDocObj(interp)
-     Tcl_Interp *interp;
+TclXML_libxml2_NewDocObj(Tcl_Interp *interp)
 {
   xmlDocPtr new;
 
@@ -176,9 +174,8 @@ TclXML_libxml2_NewDocObj(interp)
  */
 
 Tcl_Obj *
-ImportDoc (docPtr, tDocPtrPtr)
-  xmlDocPtr docPtr;
-  TclXML_libxml2_Document **tDocPtrPtr;
+ImportDoc (xmlDocPtr docPtr,
+           TclXML_libxml2_Document **tDocPtrPtr)
 {
   ThreadSpecificData *tsdPtr = Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
   TclXML_libxml2_Document *tDocPtr;
@@ -261,15 +258,13 @@ ImportDoc (docPtr, tDocPtrPtr)
 }
 
 Tcl_Obj *
-TclXML_libxml2_CreateObjFromDoc (docPtr)
-  xmlDocPtr docPtr;
+TclXML_libxml2_CreateObjFromDoc (xmlDocPtr docPtr)
 {
   return ImportDoc(docPtr, NULL);
 }
 
 TclXML_libxml2_Document *
-TclXML_libxml2_NewDoc (docPtr)
-  xmlDocPtr docPtr;
+TclXML_libxml2_NewDoc (xmlDocPtr docPtr)
 {
   Tcl_Obj *objPtr;
   TclXML_libxml2_Document *tDocPtr;
@@ -294,10 +289,9 @@ TclXML_libxml2_NewDoc (docPtr)
  */
 
 int
-TclXML_libxml2_GetDocFromObj (interp, objPtr, docPtr)
-     Tcl_Interp *interp;
-     Tcl_Obj *objPtr;
-     xmlDocPtr *docPtr;
+TclXML_libxml2_GetDocFromObj (Tcl_Interp *interp,
+                              Tcl_Obj *objPtr,
+                              xmlDocPtr *docPtr)
 {
   TclXML_libxml2_Document *tDocPtr;
 
@@ -327,10 +321,9 @@ TclXML_libxml2_GetDocFromObj (interp, objPtr, docPtr)
  */
 
 int
-TclXML_libxml2_GetTclDocFromNode (interp, nodePtr, tDocPtrPtr)
-     Tcl_Interp *interp;
-     xmlNodePtr nodePtr;
-     TclXML_libxml2_Document **tDocPtrPtr;
+TclXML_libxml2_GetTclDocFromNode (Tcl_Interp *interp,
+                                  xmlNodePtr nodePtr,
+                                  TclXML_libxml2_Document **tDocPtrPtr)
 {
   ThreadSpecificData *tsdPtr = Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
   Tcl_HashEntry *entryPtr;
@@ -364,10 +357,9 @@ TclXML_libxml2_GetTclDocFromNode (interp, nodePtr, tDocPtrPtr)
  */
 
 int
-TclXML_libxml2_GetTclDocFromObj (interp, objPtr, tDocPtr)
-     Tcl_Interp *interp;
-     Tcl_Obj *objPtr;
-     TclXML_libxml2_Document **tDocPtr;
+TclXML_libxml2_GetTclDocFromObj (Tcl_Interp *interp,
+                                 Tcl_Obj *objPtr,
+                                 TclXML_libxml2_Document **tDocPtr)
 {
   if (objPtr->typePtr == &TclXMLlibxml2_DocObjType) {
     *tDocPtr = (TclXML_libxml2_Document *) objPtr->internalRep.twoPtrValue.ptr1;
@@ -397,10 +389,9 @@ TclXML_libxml2_GetTclDocFromObj (interp, objPtr, tDocPtr)
  */
 
 int
-TclXML_libxml2_GetTclDocFromDoc (interp, docPtr, tDocPtrPtr)
-     Tcl_Interp *interp;
-     xmlDocPtr docPtr;
-     TclXML_libxml2_Document **tDocPtrPtr;
+TclXML_libxml2_GetTclDocFromDoc (Tcl_Interp *interp,
+                                 xmlDocPtr docPtr,
+                                 TclXML_libxml2_Document **tDocPtrPtr)
 {
   ThreadSpecificData *tsdPtr = Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
   Tcl_HashEntry *entryPtr;
@@ -437,8 +428,7 @@ TclXML_libxml2_GetTclDocFromDoc (interp, docPtr, tDocPtrPtr)
  */
 
 void
-TclXML_libxml2_DestroyDocument (tDocPtr)
-     TclXML_libxml2_Document *tDocPtr;
+TclXML_libxml2_DestroyDocument (TclXML_libxml2_Document *tDocPtr)
 {
   ObjList *listPtr = (ObjList *) tDocPtr->objs;
   ObjList *next;
@@ -475,9 +465,8 @@ TclXML_libxml2_DestroyDocument (tDocPtr)
  */
 
 void
-TclXML_libxml2_DocKeep(objPtr, keep)
-     Tcl_Obj *objPtr;
-     TclXML_libxml2_DocumentHandling keep;
+TclXML_libxml2_DocKeep(Tcl_Obj *objPtr,
+                       TclXML_libxml2_DocumentHandling keep)
 {
   TclXML_libxml2_Document *tDocPtr;
 
@@ -502,8 +491,7 @@ TclXML_libxml2_DocKeep(objPtr, keep)
  */
 
 Tcl_Obj *
-TclXML_libxml2_GetBaseURIFromDoc(docPtr)
-     xmlDocPtr docPtr;
+TclXML_libxml2_GetBaseURIFromDoc(xmlDocPtr docPtr)
 {
   return Tcl_NewStringObj((char *) docPtr->URL, -1);
 }
@@ -525,13 +513,12 @@ TclXML_libxml2_GetBaseURIFromDoc(docPtr)
  */
 
 int
-TclXML_libxml2_SetBaseURI(interp, docPtr, uriObj)
-     Tcl_Interp *interp;
-     xmlDocPtr docPtr;
-     Tcl_Obj *uriObj;
+TclXML_libxml2_SetBaseURI(Tcl_Interp *interp,
+                          xmlDocPtr docPtr,
+                          Tcl_Obj *uriObj)
 {
   char *url;
-  int len;
+  Tcl_Size len;
 
   if (docPtr == NULL) {
     Tcl_SetResult(interp, "no document", NULL);
@@ -569,9 +556,8 @@ TclXML_libxml2_SetBaseURI(interp, docPtr, uriObj)
  */
 
 int
-TclXMLlibxml2_DocSetFromAny(interp, objPtr)
-     Tcl_Interp *interp;
-     Tcl_Obj *objPtr;
+TclXMLlibxml2_DocSetFromAny(Tcl_Interp *interp,
+                            Tcl_Obj *objPtr)
 {
   ThreadSpecificData *tsdPtr = Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
   Tcl_HashEntry *entryPtr;
@@ -641,8 +627,7 @@ TclXMLlibxml2_DocSetFromAny(interp, objPtr)
  */
 
 void
-TclXMLlibxml2_DocUpdate(objPtr)
-     Tcl_Obj *objPtr;
+TclXMLlibxml2_DocUpdate(Tcl_Obj *objPtr)
 {
   ThreadSpecificData *tsdPtr = Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
   Tcl_HashEntry *entryPtr;
@@ -676,9 +661,8 @@ TclXMLlibxml2_DocUpdate(objPtr)
  */
 
 void
-TclXMLlibxml2_DocDup(srcPtr, dstPtr)
-     Tcl_Obj *srcPtr;
-     Tcl_Obj *dstPtr;
+TclXMLlibxml2_DocDup(Tcl_Obj *srcPtr,
+                     Tcl_Obj *dstPtr)
 {
   TclXML_libxml2_Document *tDocPtr;
   ObjList *listPtr;
@@ -717,8 +701,7 @@ TclXMLlibxml2_DocDup(srcPtr, dstPtr)
  */
 
 void
-TclXMLlibxml2_DocFree(objPtr)
-     Tcl_Obj *objPtr;
+TclXMLlibxml2_DocFree(Tcl_Obj *objPtr)
 {
   TclXML_libxml2_Document *tDocPtr = (TclXML_libxml2_Document *) objPtr->internalRep.twoPtrValue.ptr1;
   ObjList *listPtr = tDocPtr->objs;
@@ -767,8 +750,7 @@ TclXMLlibxml2_DocFree(objPtr)
  */
 
 void
-DestroyTclDoc(tDocPtr)
-     TclXML_libxml2_Document *tDocPtr;
+DestroyTclDoc(TclXML_libxml2_Document *tDocPtr)
 {
   ThreadSpecificData *tsdPtr = Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
   Tcl_HashEntry *entryPtr;
@@ -819,8 +801,7 @@ DestroyTclDoc(tDocPtr)
  */
 
 static Tcl_Obj *
-ErrorDomainToString(domain)
-     int domain;
+ErrorDomainToString(int domain)
 {
   switch ((xmlErrorDomain) domain) {
   case XML_FROM_NONE:
@@ -873,8 +854,7 @@ ErrorDomainToString(domain)
 }
 
 static Tcl_Obj *
-ErrorLevelToString(level)
-     xmlErrorLevel level;
+ErrorLevelToString(xmlErrorLevel level)
 {
   switch (level) {
   case XML_ERR_WARNING:
@@ -890,8 +870,7 @@ ErrorLevelToString(level)
 }
 
 static Tcl_Obj *
-ErrorCodeToString(code)
-     int code;
+ErrorCodeToString(int code)
 {
   switch ((xmlParserErrors) code) {
   case XML_ERR_OK:
@@ -1852,9 +1831,9 @@ ErrorCodeToString(code)
 }
 
 void
-TclXML_libxml2_ErrorHandler (ctx, error)
-     void *ctx; /* ignore - depends on context */
-     xmlErrorPtr error;
+TclXML_libxml2_ErrorHandler (void *ctx,
+                             XMLERROR_QUAL xmlError *error
+)
 {
   ThreadSpecificData *tsdPtr = Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
   Tcl_Obj *objPtr;
@@ -1917,8 +1896,7 @@ TclXML_libxml2_ErrorHandler (ctx, error)
 }
 
 void
-TclXML_libxml2_ResetError(interp)
-    Tcl_Interp *interp;
+TclXML_libxml2_ResetError(Tcl_Interp *interp)
 {
   ThreadSpecificData *tsdPtr = Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
@@ -1929,8 +1907,7 @@ TclXML_libxml2_ResetError(interp)
 }
 
 Tcl_Obj *
-TclXML_libxml2_GetErrorObj(interp)
-    Tcl_Interp *interp;
+TclXML_libxml2_GetErrorObj(Tcl_Interp *interp)
 {
   ThreadSpecificData *tsdPtr = Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
@@ -1938,9 +1915,8 @@ TclXML_libxml2_GetErrorObj(interp)
 }
 
 void
-TclXML_libxml2_SetErrorNodeFunc(interp, proc)
-    Tcl_Interp *interp;
-    TclXML_ErrorNodeHandlerProc *proc;
+TclXML_libxml2_SetErrorNodeFunc(Tcl_Interp *interp,
+                                TclXML_ErrorNodeHandlerProc *proc)
 {
   ThreadSpecificData *tsdPtr = Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 

@@ -40,16 +40,15 @@ TclxmlStubs *tclxmlStubsPtr;
  *----------------------------------------------------------------------
  */
 
-CONST char *
-TclXML_InitStubs(interp, version, exact)
-    Tcl_Interp *interp;
-    CONST char *version;
-    int exact;
+const char *
+TclXML_InitStubs(Tcl_Interp *interp,
+                 const char *version,
+                 int exact)
 {
-    CONST char *result;
+    const char *result;
 
-    /* HACK: de-CONST 'version' if compiled against 8.3.
-     * The API has no CONST despite not modifying the argument
+    /* HACK: de-const 'version' if compiled against 8.3.
+     * The API has no const despite not modifying the argument
      * And a debug build with high warning-level on windows
      * will abort the compilation.
      */

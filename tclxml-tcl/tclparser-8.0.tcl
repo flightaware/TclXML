@@ -14,15 +14,14 @@
 # See the file "LICENSE" in this distribution for information on usage and
 # redistribution of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# $Id: tclparser-8.0.tcl,v 1.10.2.1 2005/12/28 06:49:51 balls Exp $
 
 package require -exact Tcl 8.0
 
-package require xmldefs 3.3
+package require xmldefs 3.3.1
 
 package require sgmlparser 1.0
 
-package provide xml::tclparser 3.3
+package provide xml::tclparser 3.3.1
 
 namespace eval xml {
 

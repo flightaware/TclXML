@@ -15,7 +15,12 @@
 #
 # $Id: sgml-8.1.tcl,v 1.7 2003/12/09 04:43:15 balls Exp $
 
-package require Tcl 8.1
+switch -glob -- [info tclversion] {
+    "8*" { set REQUIRED 8.1 }
+    "9*" { set REQUIRED 9.0 }
+}
+
+package require Tcl $REQUIRED
 
 package provide sgml 1.9
 

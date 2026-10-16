@@ -26,8 +26,19 @@
 #include <tcl.h>
 #endif /* TCLXML_BUILD_AS_FRAMEWORK */
 #include <libxml/tree.h>
+#include <tclxml/tclsize.h>
 
-typedef void (TclXML_libxml2Doc_FreeHookProc) _ANSI_ARGS_((ClientData clientData));
+// cribbed from FreeBSD patch for TclXML
+// Github Ubuntu-26.04 runner installs 21502
+#if LIBXML_VERSION >= 21200
+#define XMLERROR_QUAL const
+#endif
+
+#ifndef XMLERROR_QUAL
+#define XMLERROR_QUAL
+#endif
+
+typedef void (TclXML_libxml2Doc_FreeHookProc) (ClientData clientData);
 
 /*
  * Values that define how documents are handled:

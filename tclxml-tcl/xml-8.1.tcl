@@ -13,11 +13,15 @@
 # See the file "LICENSE" in this distribution for information on usage and
 # redistribution of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# $Id: xml-8.1.tcl,v 1.16.2.1 2005/12/28 06:49:51 balls Exp $
 
-package require Tcl 8.1
+switch -glob -- [info tclversion] {
+    "8*" { set REQUIRED 8.1 }
+    "9*" { set REQUIRED 9.0 }
+}
 
-package provide xmldefs 3.3
+package require Tcl $REQUIRED
+
+package provide xmldefs 3.3.1
 
 package require sgml 1.8
 

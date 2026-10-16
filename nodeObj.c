@@ -49,8 +49,7 @@ extern char dbgbuf[200];
  */
 
 int
-TclDOM_libxml2_NodeObjInit(interp)
-     Tcl_Interp *interp;
+TclDOM_libxml2_NodeObjInit(Tcl_Interp *interp)
 {
   Tcl_RegisterObjType(&NodeObjType);
 

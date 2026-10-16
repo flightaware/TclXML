@@ -13,9 +13,8 @@
 # See the file "LICENSE" in this distribution for information on usage and
 # redistribution of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# $Id: xmlswitch.tcl,v 1.6 2003/12/09 04:56:43 balls Exp $
 
-package provide xmlswitch 3.3
+package provide xmlswitch 3.3.1
 
 # We need the xml, dom and xpath packages
 

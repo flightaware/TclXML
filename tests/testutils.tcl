@@ -204,7 +204,7 @@ proc testPackage {package {version ""}} {
     }
     if {![catch "package present $package $version"]} { return }
     set rc [catch "package require $package $version" result]
-    if {$rc} { return -code $rc $result }
+    if {$rc} { return -code $rc "$result\nWhen calling package require $package $version" }
     set version $result
     set loadScript [package ifneeded $package $version]
     puts $::tcltest::outputChannel \
