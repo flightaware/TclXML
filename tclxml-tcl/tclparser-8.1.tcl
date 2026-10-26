@@ -20,7 +20,7 @@ package require Tcl 8.1
 
 package provide xml::tclparser 3.3
 
-package require xmldefs 3.3
+package require xmldefs 3.3.1
 
 package require sgmlparser 1.0
 
