@@ -22,7 +22,7 @@ package require xmldefs 3.3.1
 
 package require sgmlparser 1.0
 
-package provide xml::tclparser 3.3
+package provide xml::tclparser 3.3.1
 
 namespace eval xml {
 
