@@ -17,7 +17,7 @@
 
 package require Tcl 8.1
 
-package provide xmldefs 3.3
+package provide xmldefs 3.3.1
 
 package require sgml 1.8
 

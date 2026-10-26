@@ -14,7 +14,7 @@
 #
 # $Id: xml__tcl.tcl,v 1.15.2.1 2005/12/28 06:49:51 balls Exp $
 
-package provide xml::tcl 3.3
+package provide xml::tcl 3.3.1
 
 namespace eval xml {
     namespace export configure parser parserclass

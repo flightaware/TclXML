@@ -19,7 +19,7 @@ package require -exact Tcl 8.0
 
 package require sgml 1.8
 
-package provide xmldefs 3.3
+package provide xmldefs 3.3.1
 
 namespace eval xml {
 
