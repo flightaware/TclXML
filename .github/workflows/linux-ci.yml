@@ -34,4 +34,4 @@ jobs:
       run: sudo make install
 # TODO: multiple tests currently fail and/or hang.
     - name: test
-      run: make test
+      run: make TESTOPTS="-debug 1" test-tclxml test-tcldom
