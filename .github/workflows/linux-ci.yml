@@ -32,7 +32,6 @@ jobs:
       run: make
     - name: install
       run: sudo make install
-      
 # TODO: multiple tests currently fail and/or hang.
-#    - name: test
-#      run: make test
+    - name: test
+      run: make test
