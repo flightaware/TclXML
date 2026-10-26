@@ -56,6 +56,7 @@ proc xml::configure args {}
 proc xml::parserclass {method args} {
     variable classes
     variable default
+puts stderr [list DEBUG xml::parserclass $method {*}$args]
 
     switch -- $method {
 
