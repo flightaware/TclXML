@@ -157,7 +157,7 @@ namespace eval ::dom::nodeTest {
 	    ::dom::node configure $top -parentNode XXX
 	}
     } -cleanup $CLEANUP -result {attribute "-parentNode" is read-only}
-    test node-3.7.1 {configure -parentNode readonly} -constraints {dom_tcl||dom_libxml2} -setup $SETUP -body {
+    test node-3.7.2 {configure -parentNode readonly} -constraints {dom_tcl||dom_libxml2} -setup $SETUP -body {
 	expectError {
 	    $top configure -parentNode XXX
 	}
@@ -247,7 +247,7 @@ namespace eval ::dom::nodeTest {
 	    ::dom::node configure $top -childNodes XXX
 	}
     } -cleanup $CLEANUP -result {attribute "-childNodes" is read-only}
-    test node-4.9.1 {configure -childNodes readonly} -constraints {dom_tcl || dom_libxml2} -setup $SETUP -body {
+    test node-4.9.2 {configure -childNodes readonly} -constraints {dom_tcl || dom_libxml2} -setup $SETUP -body {
 	expectError {
 	    $top configure -childNodes XXX
 	}
@@ -308,7 +308,7 @@ namespace eval ::dom::nodeTest {
 	    ::dom::node configure $top -firstChild XXX
 	}
     } -cleanup $CLEANUP -result {attribute "-firstChild" is read-only}
-    test node-5.5.1 {configure -firstChild readonly} -constraints {dom_tcl} -setup $SETUP -body {
+    test node-5.5.2 {configure -firstChild readonly} -constraints {dom_tcl} -setup $SETUP -body {
 	expectError {
 	    $top configure -firstChild XXX
 	}
@@ -417,12 +417,12 @@ namespace eval ::dom::nodeTest {
 	}
     } -cleanup $CLEANUP -result {no modification allowed error: an attempt was made to modify an object\
 	where modifications are not allowed}
-    test node-8.5.1 {configure -nextSibling readonly} -constraints {dom_tcl} -setup $SETUP -body {
+    test node-2.5.1 {configure -nextSibling readonly} -constraints {dom_tcl} -setup $SETUP -body {
 	expectError {
 	    ::dom::node configure $top -nextSibling XXX
 	}
     } -cleanup $CLEANUP -result {attribute "-nextSibling" is read-only}
-    test node-8.5.1 {configure -nextSibling readonly} -constraints {dom_tcl} -setup $SETUP -body {
+    test node-8.5.2 {configure -nextSibling readonly} -constraints {dom_tcl} -setup $SETUP -body {
 	expectError {
 	    $top configure -nextSibling XXX
 	}
@@ -611,7 +611,7 @@ namespace eval ::dom::nodeTest {
 	    ::dom::node configure $top -attributes XXX
 	}
     } -cleanup $CLEANUP -result {attribute "-attributes" is read-only}
-    test node-9.13.1 {configure -attributes readonly} -constraints {dom_tcl} -setup $SETUP -body {
+    test node-9.13.2 {configure -attributes readonly} -constraints {dom_tcl} -setup $SETUP -body {
 	expectError {
 	    $top configure -attributes XXX
 	}

@@ -8,3 +8,6 @@ and a wrapper for the Gnome libxml2 C library.
 The TclXML package now incorporates the TclDOM and TclXSLT packages.
 TclDOM and TclXSLT were previously distributed as separate packages.
 The three packages may still be used as if they were standalone.
+
+Note: the latest Debian releases of libxslt has a huge patch that changes it from the
+gnome baseline, this code base has not been updated to that change.

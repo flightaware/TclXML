@@ -58,7 +58,7 @@ namespace eval ::dom::parseTest {
     } -cleanup {
 	dom::destroy $result
     } -result 1
-    test parse-1.1 {single element document} -constraints {dom_tcl} -body {
+    test parse-1.1.1 {single element document} -constraints {dom_tcl} -body {
 	set result [::dom::DOMImplementation parse {<?xml version="1.0"?>
 <!DOCTYPE Test>
 <Test></Test>}]
@@ -70,7 +70,7 @@ namespace eval ::dom::parseTest {
     } -cleanup {
 	dom::destroy $result
     } -result 1
-    test parse-1.1 {single element document} -constraints {dom_libxml2} -body {
+    test parse-1.1.2 {single element document} -constraints {dom_libxml2} -body {
 	set result [::dom::DOMImplementation parse {<?xml version="1.0"?>
 <!DOCTYPE Test>
 <Test></Test>}]
@@ -99,7 +99,7 @@ namespace eval ::dom::parseTest {
     } -cleanup {
 	dom::destroy $result
     } -result 1
-    test parse-1.2 {nested element document} -constraints {dom_tcl} -body {
+    test parse-1.2.1 {nested element document} -constraints {dom_tcl} -body {
 	set result [::dom::DOMImplementation parse {<?xml version="1.0"?>
 <!DOCTYPE Test>
 <Test><Nested><Deeper></Deeper></Nested><Nested></Nested></Test>}]
@@ -116,7 +116,7 @@ namespace eval ::dom::parseTest {
     } -cleanup {
 	dom::destroy $result
     } -result 1
-    test parse-1.2 {nested element document} -constraints {dom_libxml2} -body {
+    test parse-1.2.2 {nested element document} -constraints {dom_libxml2} -body {
 	set result [::dom::DOMImplementation parse {<?xml version="1.0"?>
 <!DOCTYPE Test>
 <Test><Nested><Deeper></Deeper></Nested><Nested></Nested></Test>}]
@@ -149,7 +149,7 @@ namespace eval ::dom::parseTest {
     } -cleanup {
 	dom::destroy $result
     } -result 1
-    test parse-1.3 {elements with attributes} -constraints {dom_tcl} -body {
+    test parse-1.3.1 {elements with attributes} -constraints {dom_tcl} -body {
 	set result [::dom::DOMImplementation parse {<?xml version="1.0"?>
 <!DOCTYPE Test>
 <Test><Nested depth="1"><Nested depth="2"></Nested></Nested></Test>}]
@@ -165,7 +165,7 @@ namespace eval ::dom::parseTest {
     } -cleanup {
 	dom::destroy $result
     } -result 1
-    test parse-1.3 {elements with attributes} -constraints {dom_libxml2} -body {
+    test parse-1.3.2 {elements with attributes} -constraints {dom_libxml2} -body {
 	set result [::dom::DOMImplementation parse {<?xml version="1.0"?>
 <!DOCTYPE Test>
 <Test><Nested depth="1"><Nested depth="2"></Nested></Nested></Test>}]
@@ -202,7 +202,7 @@ namespace eval ::dom::parseTest {
     } -cleanup {
 	dom::destroy $result
     } -result 1
-    test parse-1.4 {elements with text content} -constraints {dom_tcl} -body {
+    test parse-1.4.1 {elements with text content} -constraints {dom_tcl} -body {
 	set result [::dom::DOMImplementation parse {<?xml version="1.0"?>
 <!DOCTYPE Test>
 <Test><Nested><Deeper>Inside Deeper</Deeper></Nested><Nested>Second Nested</Nested></Test>}]
@@ -223,7 +223,7 @@ namespace eval ::dom::parseTest {
     } -cleanup {
 	dom::destroy $result
     } -result 1
-    test parse-1.4 {elements with text content} -constraints {dom_libxml2} -body {
+    test parse-1.4.2 {elements with text content} -constraints {dom_libxml2} -body {
 	set result [::dom::DOMImplementation parse {<?xml version="1.0"?>
 <!DOCTYPE Test>
 <Test><Nested><Deeper>Inside Deeper</Deeper></Nested><Nested>Second Nested</Nested></Test>}]
