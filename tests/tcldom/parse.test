@@ -529,22 +529,18 @@ Here is some text
     }
 
     test parse-5.0 {Processing instruction parsing} -setup $PIPARSE -body {
-puts stderr [list DEBUG parse-5.0 root $root children $children pinode $pinode]
 	dom::node cget $root -nodeName
     } -cleanup $CLEANUP -result {test}
 
     test parse-5.1 {PI present} -setup $PIPARSE -body {
-puts stderr [list DEBUG parse-5.1 root $root children $children pinode $pinode]
 	llength $children
     } -cleanup $CLEANUP -result 1
 
     test parse-5.2 {PI right type} -setup $PIPARSE -body {
-puts stderr [list DEBUG parse-5.2 root $root children $children pinode $pinode]
 	dom::node cget $pinode -nodeType
     } -cleanup $CLEANUP -result {processingInstruction}
 
     test parse-5.3 {PI node name} -setup $PIPARSE -body {
-puts stderr [list DEBUG parse-5.3 root $root children $children pinode $pinode]
 	dom::node cget $pinode -nodeName
     } -cleanup $CLEANUP -result {PITGT}
 

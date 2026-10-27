@@ -1084,7 +1084,7 @@ TclXMLCreateEntityParser(interp, external, parent)
   extClassInfo = (TclXML_ParserClassInfo *) external->parserClass;
 
   if (!extClassInfo->createEntity || !extClassInfo->createEntityCmd) {
-    Tcl_SetResult(interp, "cannot create entity parser (no ParserClass->createEntity or createEntityCmd)", NULL);
+    Tcl_SetResult(interp, "cannot create entity parser (no creator in parcer class)", NULL);
     return TCL_ERROR;
   }
 
@@ -1198,7 +1198,7 @@ TclXMLCreateEntityParser(interp, external, parent)
      * Directly invoke the create routine
      */
     if ((external->clientData = (*extClassInfo->createEntity)(interp, (ClientData) external)) == NULL) {
-      Tcl_AppendResult(interp, " (createEntity failed)", NULL);
+      Tcl_AppendResult(interp, " (create entity failed)", NULL);
       Tcl_Free((char*)external);
       return TCL_ERROR;
     }
@@ -1207,7 +1207,7 @@ TclXMLCreateEntityParser(interp, external, parent)
 
     result = Tcl_GlobalEvalObj(interp, extClassInfo->createEntityCmd);
     if (result != TCL_OK) {
-      Tcl_AppendResult(interp, " (Tcl_GlobalEvalObj failed)", NULL);
+      Tcl_AppendResult(interp, " (create entity command failed)", NULL);
       Tcl_Free((char*)external);
       return TCL_ERROR;
     } else {
@@ -1396,7 +1396,7 @@ TclXMLInstanceCmd (clientData, interp, objc, objv)
        */
       if (!(child = (TclXML_Info *) Tcl_Alloc(sizeof(TclXML_Info)))) {
         Tcl_Free((char*)child);
-        Tcl_SetResult(interp, "unable to create parser (unable to allocate sizeof(TclXML_Info))", NULL);
+        Tcl_SetResult(interp, "unable to allocate space for parser", NULL);
         return TCL_ERROR;
       }
 
@@ -1409,7 +1409,7 @@ TclXMLInstanceCmd (clientData, interp, objc, objv)
         xmlinfo) != TCL_OK) {
 	Tcl_DecrRefCount(childNamePtr);
         Tcl_Free((char*)child);
-        Tcl_AppendResult(interp, " (TclXMLCreateEntityParser returned not TCL_OK)", NULL);
+        //Tcl_AppendResult(interp, " (TclXMLCreateEntityParser returned not TCL_OK)", NULL);
         return TCL_ERROR;
       }
     
