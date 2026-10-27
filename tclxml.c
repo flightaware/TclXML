@@ -1084,7 +1084,7 @@ TclXMLCreateEntityParser(interp, external, parent)
   extClassInfo = (TclXML_ParserClassInfo *) external->parserClass;
 
   if (!extClassInfo->createEntity || !extClassInfo->createEntityCmd) {
-    Tcl_SetResult(interp, "cannot create entity parser (no creator in parcer class)", NULL);
+    Tcl_SetResult(interp, "cannot create entity parser (no creator in parser class)", NULL);
     return TCL_ERROR;
   }
 
