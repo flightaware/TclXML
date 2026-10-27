@@ -61,7 +61,7 @@ namespace eval ::dom::treewalkerTest {
 	list $result $handle
     } -cleanup $CLEANUP -result {0 node}
 
-    test treewalker-2.1 {treewalker cget -show} -constraints {dom_c} -setup {
+    test treewalker-2.1.1 {treewalker cget -show} -constraints {dom_c} -setup {
 	set doc [::dom::DOMImplementation parse {<?xml version="1.0"?><A></A>}]
 	set treewalker [dom::DocumentTraversal createTreeWalker $doc -show \
 		[list element textNode]]
@@ -70,7 +70,7 @@ namespace eval ::dom::treewalkerTest {
 	list $result $value
     } -cleanup $CLEANUP -result {0 {element textNode}}
 
-    test treewalker-2.2 {treewalker configure -show} -constraints {dom_c} -setup {
+    test treewalker-2.2.1 {treewalker configure -show} -constraints {dom_c} -setup {
 	set doc [::dom::DOMImplementation parse {<?xml version="1.0"?><A></A>}]
 	set treewalker [dom::DocumentTraversal createTreeWalker $doc -show \
 		[list element textNode]]
@@ -78,7 +78,7 @@ namespace eval ::dom::treewalkerTest {
 	::dom::treeWalker configure $treewalker -show
     } -cleanup $CLEANUP -result {element textNode}
 
-    test treewalker-2.3 {treewalker configure -show readonly} -constraints {dom_c} -setup {
+    test treewalker-2.3.1 {treewalker configure -show readonly} -constraints {dom_c} -setup {
 	set doc [::dom::DOMImplementation parse {<?xml version="1.0"?><A></A>}]
 	set treewalker [dom::DocumentTraversal createTreeWalker $doc -show \
 		[list element textNode]]
@@ -151,7 +151,7 @@ namespace eval ::dom::treewalkerTest {
 	string compare $doc $value
     } -cleanup $CLEANUP -result 0
 
-    test treewalker-2.10 {treewalker configure -currentNode} -constraints {dom_c} -setup {
+    test treewalker-2.10.1 {treewalker configure -currentNode} -constraints {dom_c} -setup {
 	set doc [::dom::DOMImplementation parse {<?xml version="1.0"?><A></A>}]
 	set treewalker [dom::DocumentTraversal createTreeWalker $doc]
     } -body {
@@ -160,7 +160,7 @@ namespace eval ::dom::treewalkerTest {
 	string compare $document $value
     } -cleanup $CLEANUP -result 0
 
-    test treewalker-2.10 {treewalker configure -currentNode writable} -constraints {dom_c} -setup {
+    test treewalker-2.10.2 {treewalker configure -currentNode writable} -constraints {dom_c} -setup {
 	set doc [::dom::DOMImplementation parse {<?xml version="1.0"?><A></A>}]
 	set treewalker [dom::DocumentTraversal createTreeWalker $doc]
 	set topNode [dom::document cget $document -documentElement]

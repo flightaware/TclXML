@@ -24,79 +24,79 @@
  */
 
 /* 0 */
-EXTERN int		Tclxml_libxml2_Init _ANSI_ARGS_((Tcl_Interp * interp));
+EXTERN int		Tclxml_libxml2_Init (Tcl_Interp * interp);
 /* Slot 1 is reserved */
 /* 2 */
-EXTERN int		TclXML_libxml2_InitDocObj _ANSI_ARGS_((
-				Tcl_Interp * interp));
+EXTERN int		TclXML_libxml2_InitDocObj (
+				Tcl_Interp * interp);
 /* 3 */
-EXTERN Tcl_Obj *	TclXML_libxml2_NewDocObj _ANSI_ARGS_((
-				Tcl_Interp * interp));
+EXTERN Tcl_Obj *	TclXML_libxml2_NewDocObj (
+				Tcl_Interp * interp);
 /* 4 */
-EXTERN Tcl_Obj *	TclXML_libxml2_CreateObjFromDoc _ANSI_ARGS_((
-				xmlDocPtr docPtr));
+EXTERN Tcl_Obj *	TclXML_libxml2_CreateObjFromDoc (
+				xmlDocPtr docPtr);
 /* 5 */
-EXTERN int		TclXML_libxml2_GetDocFromObj _ANSI_ARGS_((
+EXTERN int		TclXML_libxml2_GetDocFromObj (
 				Tcl_Interp * interp, Tcl_Obj * objPtr, 
-				xmlDocPtr * docPtr));
+				xmlDocPtr * docPtr);
 /* 6 */
-EXTERN int		TclXML_libxml2_GetTclDocFromObj _ANSI_ARGS_((
+EXTERN int		TclXML_libxml2_GetTclDocFromObj (
 				Tcl_Interp * interp, Tcl_Obj * objPtr, 
-				TclXML_libxml2_Document ** tDocPtrPtr));
+				TclXML_libxml2_Document ** tDocPtrPtr);
 /* 7 */
-EXTERN int		TclXML_libxml2_GetTclDocFromNode _ANSI_ARGS_((
+EXTERN int		TclXML_libxml2_GetTclDocFromNode (
 				Tcl_Interp * interp, xmlNodePtr nodePtr, 
-				TclXML_libxml2_Document ** tDocPtrPtr));
+				TclXML_libxml2_Document ** tDocPtrPtr);
 /* 8 */
-EXTERN void		TclXML_libxml2_DestroyDocument _ANSI_ARGS_((
-				TclXML_libxml2_Document * tDocPtr));
+EXTERN void		TclXML_libxml2_DestroyDocument (
+				TclXML_libxml2_Document * tDocPtr);
 /* 9 */
-EXTERN void		TclXML_libxml2_DocKeep _ANSI_ARGS_((Tcl_Obj * objPtr, 
-				TclXML_libxml2_DocumentHandling keep));
+EXTERN void		TclXML_libxml2_DocKeep (Tcl_Obj * objPtr, 
+				TclXML_libxml2_DocumentHandling keep);
 /* 10 */
-EXTERN void		TclXML_libxml2_ErrorHandler _ANSI_ARGS_((void * ctx, 
-				xmlErrorPtr error));
+EXTERN void		TclXML_libxml2_ErrorHandler (void * ctx, 
+				XMLERROR_QUAL xmlError *error);
 /* 11 */
-EXTERN void		TclXML_libxml2_ResetError _ANSI_ARGS_((
-				Tcl_Interp * interp));
+EXTERN void		TclXML_libxml2_ResetError (
+				Tcl_Interp * interp);
 /* 12 */
-EXTERN Tcl_Obj *	TclXML_libxml2_GetErrorObj _ANSI_ARGS_((
-				Tcl_Interp * interp));
+EXTERN Tcl_Obj *	TclXML_libxml2_GetErrorObj (
+				Tcl_Interp * interp);
 /* 13 */
-EXTERN void		TclXML_libxml2_SetErrorNodeFunc _ANSI_ARGS_((
+EXTERN void		TclXML_libxml2_SetErrorNodeFunc (
 				Tcl_Interp * interp, 
-				TclXML_ErrorNodeHandlerProc * proc));
+				TclXML_ErrorNodeHandlerProc * proc);
 /* 14 */
-EXTERN int		TclXML_libxml2_GetTclDocFromDoc _ANSI_ARGS_((
+EXTERN int		TclXML_libxml2_GetTclDocFromDoc (
 				Tcl_Interp * interp, xmlDocPtr docPtr, 
-				TclXML_libxml2_Document ** tDocPtrPtr));
+				TclXML_libxml2_Document ** tDocPtrPtr);
 /* 15 */
-EXTERN Tcl_Obj *	TclXML_libxml2_GetBaseURIFromDoc _ANSI_ARGS_((
-				xmlDocPtr docPtr));
+EXTERN Tcl_Obj *	TclXML_libxml2_GetBaseURIFromDoc (
+				xmlDocPtr docPtr);
 /* 16 */
-EXTERN int		TclXML_libxml2_SetBaseURI _ANSI_ARGS_((
+EXTERN int		TclXML_libxml2_SetBaseURI (
 							       Tcl_Interp * interp,
 							       xmlDocPtr docPtr,
-							       Tcl_Obj * uriObj));
+							       Tcl_Obj * uriObj);
 
 typedef struct Tclxml_libxml2Stubs {
     int magic;
     struct Tclxml_libxml2StubHooks *hooks;
 
-    int (*tclxml_libxml2_Init) _ANSI_ARGS_((Tcl_Interp * interp)); /* 0 */
+    int (*tclxml_libxml2_Init) (Tcl_Interp * interp); /* 0 */
     void *reserved1;
-    int (*tclXML_libxml2_InitDocObj) _ANSI_ARGS_((Tcl_Interp * interp)); /* 2 */
-    Tcl_Obj * (*tclXML_libxml2_NewDocObj) _ANSI_ARGS_((Tcl_Interp * interp)); /* 3 */
-    Tcl_Obj * (*tclXML_libxml2_CreateObjFromDoc) _ANSI_ARGS_((xmlDocPtr docPtr)); /* 4 */
-    int (*tclXML_libxml2_GetDocFromObj) _ANSI_ARGS_((Tcl_Interp * interp, Tcl_Obj * objPtr, xmlDocPtr * docPtr)); /* 5 */
-    int (*tclXML_libxml2_GetTclDocFromObj) _ANSI_ARGS_((Tcl_Interp * interp, Tcl_Obj * objPtr, TclXML_libxml2_Document ** tDocPtrPtr)); /* 6 */
-    int (*tclXML_libxml2_GetTclDocFromNode) _ANSI_ARGS_((Tcl_Interp * interp, xmlNodePtr nodePtr, TclXML_libxml2_Document ** tDocPtrPtr)); /* 7 */
-    void (*tclXML_libxml2_DestroyDocument) _ANSI_ARGS_((TclXML_libxml2_Document * tDocPtr)); /* 8 */
-    void (*tclXML_libxml2_DocKeep) _ANSI_ARGS_((Tcl_Obj * objPtr, TclXML_libxml2_DocumentHandling keep)); /* 9 */
-    void (*tclXML_libxml2_ErrorHandler) _ANSI_ARGS_((void * ctx, xmlErrorPtr error)); /* 10 */
-    void (*tclXML_libxml2_ResetError) _ANSI_ARGS_((Tcl_Interp * interp)); /* 11 */
-    Tcl_Obj * (*tclXML_libxml2_GetErrorObj) _ANSI_ARGS_((Tcl_Interp * interp)); /* 12 */
-    void (*tclXML_libxml2_SetErrorNodeFunc) _ANSI_ARGS_((Tcl_Interp * interp, TclXML_ErrorNodeHandlerProc * proc)); /* 13 */
+    int (*tclXML_libxml2_InitDocObj) (Tcl_Interp * interp); /* 2 */
+    Tcl_Obj * (*tclXML_libxml2_NewDocObj) (Tcl_Interp * interp); /* 3 */
+    Tcl_Obj * (*tclXML_libxml2_CreateObjFromDoc) (xmlDocPtr docPtr); /* 4 */
+    int (*tclXML_libxml2_GetDocFromObj) (Tcl_Interp * interp, Tcl_Obj * objPtr, xmlDocPtr * docPtr); /* 5 */
+    int (*tclXML_libxml2_GetTclDocFromObj) (Tcl_Interp * interp, Tcl_Obj * objPtr, TclXML_libxml2_Document ** tDocPtrPtr); /* 6 */
+    int (*tclXML_libxml2_GetTclDocFromNode) (Tcl_Interp * interp, xmlNodePtr nodePtr, TclXML_libxml2_Document ** tDocPtrPtr); /* 7 */
+    void (*tclXML_libxml2_DestroyDocument) (TclXML_libxml2_Document * tDocPtr); /* 8 */
+    void (*tclXML_libxml2_DocKeep) (Tcl_Obj * objPtr, TclXML_libxml2_DocumentHandling keep); /* 9 */
+    void (*tclXML_libxml2_ErrorHandler) (void * ctx, XMLERROR_QUAL xmlError *error); /* 10 */
+    void (*tclXML_libxml2_ResetError) (Tcl_Interp * interp); /* 11 */
+    Tcl_Obj * (*tclXML_libxml2_GetErrorObj) (Tcl_Interp * interp); /* 12 */
+    void (*tclXML_libxml2_SetErrorNodeFunc) (Tcl_Interp * interp, TclXML_ErrorNodeHandlerProc * proc); /* 13 */
 } Tclxml_libxml2Stubs;
 
 #ifdef __cplusplus

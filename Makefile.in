@@ -263,13 +263,13 @@ testshell	=	$(TCLSH_PROG) $(srcdir)/testshell
 test: test-tclxml test-tcldom test-tclxslt
 
 test-tclxml:
-	(cd $(srcdir)/tests/tclxml; $(TCLSH) all.tcl)
+	(cd $(srcdir)/tests/tclxml; $(TCLSH) all.tcl $(TESTOPTS))
 
 test-tcldom:
-	(cd $(srcdir)/tests/tcldom; $(TCLSH) all.tcl)
+	(cd $(srcdir)/tests/tcldom; $(TCLSH) all.tcl $(TESTOPTS))
 
 test-tclxslt:
-	(cd $(srcdir)/tests/tclxslt; $(TCLSH) all.tcl)
+	(cd $(srcdir)/tests/tclxslt; $(TCLSH) all.tcl $(TESTOPTS))
 
 shell: binaries libraries
 	@$(TCLSH) $(SCRIPT)

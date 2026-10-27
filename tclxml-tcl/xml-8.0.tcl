@@ -13,13 +13,12 @@
 # See the file "LICENSE" in this distribution for information on usage and
 # redistribution of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# $Id: xml-8.0.tcl,v 1.7.2.1 2005/12/28 06:49:51 balls Exp $
 
 package require -exact Tcl 8.0
 
 package require sgml 1.8
 
-package provide xmldefs 3.3
+package provide xmldefs 3.3.1
 
 namespace eval xml {
 

@@ -75,8 +75,8 @@ extern "C" {
  * linked into an application.
  */
 
-EXTERN CONST char *	Tcldom_libxml2_InitStubs _ANSI_ARGS_((Tcl_Interp *interp,
-			    CONST char *version, int exact));
+EXTERN const char *	Tcldom_libxml2_InitStubs (Tcl_Interp *interp,
+			    const char *version, int exact);
 
 #ifndef USE_TCLDOMXML_STUBS
 
@@ -182,7 +182,7 @@ typedef struct TclDOM_libxml2_Event {
   Tcl_Obj *view;
 } TclDOM_libxml2_Event;
 
-typedef void (TclDOM_libxml2_Node_FreeHookProc) _ANSI_ARGS_((ClientData clientData));
+typedef void (TclDOM_libxml2_Node_FreeHookProc) (ClientData clientData);
 
 struct _TclDOM_libxml2_Node {
   union {
@@ -205,14 +205,14 @@ struct _TclDOM_libxml2_Node {
  * Public API
  */
 
-Tcl_Obj * TclDOM_libxml2_CreateObjFromDoc _ANSI_ARGS_((Tcl_Interp *interp, xmlDocPtr docPtr));
-Tcl_Obj * TclDOM_libxml2_CreateObjFromNode _ANSI_ARGS_((Tcl_Interp *interp, xmlNodePtr nodePtr));
-int TclDOM_libxml2_GetNodeFromObj _ANSI_ARGS_((Tcl_Interp *interp, Tcl_Obj *objPtr, xmlNodePtr *nodePtrPtr));
-int TclDOM_libxml2_GetTclNodeFromObj _ANSI_ARGS_((Tcl_Interp *interp, Tcl_Obj *objPtr, TclDOM_libxml2_Node **tNodePtrPtr));
-int TclDOM_libxml2_GetEventFromObj _ANSI_ARGS_((Tcl_Interp *interp, Tcl_Obj *objPtr, TclDOM_libxml2_Event **eventPtrPtr));
-int TclDOM_libxml2_GetTclEventFromObj _ANSI_ARGS_((Tcl_Interp *interp, Tcl_Obj *objPtr, TclDOM_libxml2_Node **tNodePtrPtr));
+Tcl_Obj * TclDOM_libxml2_CreateObjFromDoc (Tcl_Interp *interp, xmlDocPtr docPtr);
+Tcl_Obj * TclDOM_libxml2_CreateObjFromNode (Tcl_Interp *interp, xmlNodePtr nodePtr);
+int TclDOM_libxml2_GetNodeFromObj (Tcl_Interp *interp, Tcl_Obj *objPtr, xmlNodePtr *nodePtrPtr);
+int TclDOM_libxml2_GetTclNodeFromObj (Tcl_Interp *interp, Tcl_Obj *objPtr, TclDOM_libxml2_Node **tNodePtrPtr);
+int TclDOM_libxml2_GetEventFromObj (Tcl_Interp *interp, Tcl_Obj *objPtr, TclDOM_libxml2_Event **eventPtrPtr);
+int TclDOM_libxml2_GetTclEventFromObj (Tcl_Interp *interp, Tcl_Obj *objPtr, TclDOM_libxml2_Node **tNodePtrPtr);
 
-int TclDOM_PostMutationEvent _ANSI_ARGS_((Tcl_Interp *interp,
+int TclDOM_PostMutationEvent (Tcl_Interp *interp,
 					  TclXML_libxml2_Document *tDocPtr,
 					  Tcl_Obj *nodeObjPtr,
 					  enum TclDOM_EventTypes type,
@@ -223,31 +223,31 @@ int TclDOM_PostMutationEvent _ANSI_ARGS_((Tcl_Interp *interp,
 					  Tcl_Obj *prevValuePtr,
 					  Tcl_Obj *newValuePtr,
 					  Tcl_Obj *attrNamePtr,
-					  Tcl_Obj *attrChangePtr));
-int TclDOM_AddEventListener _ANSI_ARGS_((Tcl_Interp *interp,
+					  Tcl_Obj *attrChangePtr);
+int TclDOM_AddEventListener (Tcl_Interp *interp,
 					 TclXML_libxml2_Document *tDocPtr,
 					 void *tokenPtr, /* xmlNodePtr or xmlDocPtr */
 					 enum TclDOM_EventTypes type,
 					 Tcl_Obj *typeObjPtr,
 					 Tcl_Obj *listenerPtr,
-					 int capturer));
-Tcl_Obj * TclDOM_GetEventListener _ANSI_ARGS_((Tcl_Interp *interp,
+					 int capturer);
+Tcl_Obj * TclDOM_GetEventListener (Tcl_Interp *interp,
 					       TclXML_libxml2_Document *tDocPtr,
 					       void *tokenPtr,
 					       enum TclDOM_EventTypes type,
 					       Tcl_Obj *typeObjPtr,
-					       int capturer));
-int TclDOM_RemoveEventListener _ANSI_ARGS_((Tcl_Interp *interp,
+					       int capturer);
+int TclDOM_RemoveEventListener (Tcl_Interp *interp,
 					    TclXML_libxml2_Document *tDocPtr,
 					    void *tokenPtr,
 					    enum TclDOM_EventTypes type,
 					    Tcl_Obj *typeObjPtr,
 					    Tcl_Obj *listenerPtr,
-					    int capturer));
-int TclDOM_DispatchEvent _ANSI_ARGS_((Tcl_Interp *interp,
+					    int capturer);
+int TclDOM_DispatchEvent (Tcl_Interp *interp,
 				      Tcl_Obj *nodeObjPtr,
 				      Tcl_Obj *eventObjPtr,
-				      TclDOM_libxml2_Event *eventPtr));
+				      TclDOM_libxml2_Event *eventPtr);
 
 /*
  * Accessor functions => Stubs

@@ -209,7 +209,7 @@ namespace eval ::xml::attributeTest {
 }
 	}
     } -cleanup $CLEANUP -result {*invalid attribute list around line 2*}
-    test attrList-4.1 {Unquoted attribute value} -constraints {xml_expat} -setup $SETUP -body {
+    test attrList-4.1.1 {Unquoted attribute value} -constraints {xml_expat} -setup $SETUP -body {
 	expectError {
 	    $parser parse {<?xml version="1.0"?>
 <!DOCTYPE Test>
@@ -217,7 +217,7 @@ namespace eval ::xml::attributeTest {
 }
 	}
     } -cleanup $CLEANUP -result {error "not well-formed" at line 3 character 11}
-    test attrList-4.1 {Unquoted attribute value} -constraints {xml_libxml2} -match glob -setup $SETUP -body {
+    test attrList-4.1.2 {Unquoted attribute value} -constraints {xml_libxml2} -match glob -setup $SETUP -body {
 	expectError {
 	    $parser parse {<?xml version="1.0"?>
 <!DOCTYPE Test>
