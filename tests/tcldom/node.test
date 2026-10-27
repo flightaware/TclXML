@@ -53,7 +53,7 @@ namespace eval ::dom::nodeTest {
 	}
     } -cleanup $CLEANUP -result {(no modification allowed error: an attempt was made to modify an object\
 	where modifications are not allowed)|(attribute "-nodeName" is read-only)}
-    test node-1.3 {configure -nodeName readonly} -constraints {!strictDOM} -setup $SETUP -body {
+    test node-1.3.1 {configure -nodeName readonly} -constraints {!strictDOM} -setup $SETUP -body {
 	::dom::node configure $top -nodeName XXX
 	ok
     } -cleanup $CLEANUP -result {}
@@ -84,7 +84,7 @@ namespace eval ::dom::nodeTest {
 	    dom::node cget blah
 	}
     } -cleanup $CLEANUP -result {wrong # args:*}
-    test node-2.3 {argument parsing} -constraints {dom_libxml2} -setup $SETUP -match glob -body {
+    test node-2.3.1 {argument parsing} -constraints {dom_libxml2} -setup $SETUP -match glob -body {
 	expectError {
 	    dom::node cget blah
 	}
@@ -107,7 +107,7 @@ namespace eval ::dom::nodeTest {
 	}
     } -cleanup $CLEANUP -result {(no modification allowed error: an attempt was made to modify an object\
 	where modifications are not allowed)|(attribute "-nodeType" is read-only)}
-    test node-2.6 {configure -nodeType readonly} -constraints {!strictDOM} -setup $SETUP -body {
+    test node-2.6.1 {configure -nodeType readonly} -constraints {!strictDOM} -setup $SETUP -body {
 	::dom::node configure $top -nodeName XXX
 	ok
     } -cleanup $CLEANUP -result {}
@@ -152,7 +152,7 @@ namespace eval ::dom::nodeTest {
 	}
     } -cleanup $CLEANUP -result {no modification allowed error: an attempt was made to modify an object\
 	where modifications are not allowed}
-    test node-3.7 {configure -parentNode readonly} -constraints {dom_tcl||dom_libxml2} -setup $SETUP -body {
+    test node-3.7.1 {configure -parentNode readonly} -constraints {dom_tcl||dom_libxml2} -setup $SETUP -body {
 	expectError {
 	    ::dom::node configure $top -parentNode XXX
 	}
@@ -242,7 +242,7 @@ namespace eval ::dom::nodeTest {
 	}
     } -cleanup $CLEANUP -result {no modification allowed error: an attempt was made to modify an object\
 	where modifications are not allowed}
-    test node-4.9 {configure -childNodes readonly} -constraints {dom_tcl || dom_libxml2} -setup $SETUP -body {
+    test node-4.9.1 {configure -childNodes readonly} -constraints {dom_tcl || dom_libxml2} -setup $SETUP -body {
 	expectError {
 	    ::dom::node configure $top -childNodes XXX
 	}
@@ -303,7 +303,7 @@ namespace eval ::dom::nodeTest {
 	}
     } -cleanup $CLEANUP -result {no modification allowed error: an attempt was made to modify an object\
 	where modifications are not allowed}
-    test node-5.5 {configure -firstChild readonly} -constraints {dom_tcl} -setup $SETUP -body {
+    test node-5.5.1 {configure -firstChild readonly} -constraints {dom_tcl} -setup $SETUP -body {
 	expectError {
 	    ::dom::node configure $top -firstChild XXX
 	}
@@ -317,7 +317,7 @@ namespace eval ::dom::nodeTest {
     test node-6.1 {cget -lastChild} -setup $SETUP -body {
 	compareNodes [::dom::node cget $top -lastChild] $child3
     } -cleanup $CLEANUP -result 1
-    test node-6.1 {cget -lastChild} -setup $SETUP -body {
+    test node-6.1.1 {cget -lastChild} -setup $SETUP -body {
 	compareNodes [$top cget -lastChild] $child3
     } -cleanup $CLEANUP -result 1
     test node-6.2 {cget -lastChild document} -setup $SETUP -body {
@@ -340,7 +340,7 @@ namespace eval ::dom::nodeTest {
 	}
     } -cleanup $CLEANUP -result {no modification allowed error: an attempt was made to modify an object\
 	where modifications are not allowed}
-    test node-6.5 {configure -lastChild readonly} -constraints {dom_tcl} -setup $SETUP -body {
+    test node-6.5.1 {configure -lastChild readonly} -constraints {dom_tcl} -setup $SETUP -body {
 	expectError {
 	    ::dom::node configure $top -lastChild XXX
 	}
@@ -355,7 +355,7 @@ namespace eval ::dom::nodeTest {
     test node-7.2 {cget -previousSibling last} -setup $SETUP -body {
 	compareNodes [::dom::node cget $child3 -previousSibling] $child2
     } -cleanup $CLEANUP -result 1
-    test node-7.2 {cget -previousSibling last} -setup $SETUP -body {
+    test node-7.2.1 {cget -previousSibling last} -setup $SETUP -body {
 	compareNodes [$child3 cget -previousSibling] $child2
     } -cleanup $CLEANUP -result 1
 
@@ -379,7 +379,7 @@ namespace eval ::dom::nodeTest {
 	}
     } -cleanup $CLEANUP -result {no modification allowed error: an attempt was made to modify an object\
 	where modifications are not allowed}
-    test node-7.5 {configure -previousSibling readonly} -constraints {dom_tcl || dom_libxml2} -setup $SETUP -body {
+    test node-7.5.1 {configure -previousSibling readonly} -constraints {dom_tcl || dom_libxml2} -setup $SETUP -body {
 	expectError {
 	    ::dom::node configure $top -previousSibling XXX
 	}
@@ -417,7 +417,7 @@ namespace eval ::dom::nodeTest {
 	}
     } -cleanup $CLEANUP -result {no modification allowed error: an attempt was made to modify an object\
 	where modifications are not allowed}
-    test node-8.5 {configure -nextSibling readonly} -constraints {dom_tcl} -setup $SETUP -body {
+    test node-8.5.1 {configure -nextSibling readonly} -constraints {dom_tcl} -setup $SETUP -body {
 	expectError {
 	    ::dom::node configure $top -nextSibling XXX
 	}
@@ -606,7 +606,7 @@ namespace eval ::dom::nodeTest {
 	}
     } -cleanup $CLEANUP -result {no modification allowed error: an attempt was made to modify an object\
 	where modifications are not allowed}
-    test node-9.13 {configure -attributes readonly} -constraints {dom_tcl} -setup $SETUP -body {
+    test node-9.13.1 {configure -attributes readonly} -constraints {dom_tcl} -setup $SETUP -body {
 	expectError {
 	    ::dom::node configure $top -attributes XXX
 	}
@@ -652,10 +652,10 @@ namespace eval ::dom::nodeTest {
 	}
     } -cleanup $CLEANUP -result {no modification allowed error: an attempt was made to modify an object\
 	where modifications are not allowed}
-    test node-10.5 {configure -nodeValue readonly for elements} -constraints {dom_tcl||dom_libxml2} -setup $SETUP -body {
+    test node-10.5.1 {configure -nodeValue readonly for elements} -constraints {dom_tcl||dom_libxml2} -setup $SETUP -body {
 	::dom::node configure $top -nodeValue XXX
     } -cleanup $CLEANUP -result {}
-    test node-10.5.1 {configure -nodeValue readonly for elements} -constraints {dom_tcl||dom_libxml2} -setup $SETUP -body {
+    test node-10.5.2 {configure -nodeValue readonly for elements} -constraints {dom_tcl||dom_libxml2} -setup $SETUP -body {
 	$top configure -nodeValue XXX
     } -cleanup $CLEANUP -result {}
 
@@ -1054,10 +1054,10 @@ namespace eval ::dom::nodeTest {
     test node-19.5.1 {isSameNode - different node} -constraints {dom_tcl || dom_libxml2} -setup $SETUP -body {
 	$top isSameNode $child1
     } -cleanup $CLEANUP -result 0
-    test node-19.4 {isSameNode - same doc} -constraints {dom_tcl || dom_libxml2} -setup $SETUP -body {
+    test node-19.4.2 {isSameNode - same doc} -constraints {dom_tcl || dom_libxml2} -setup $SETUP -body {
 	::dom::node isSameNode $doc $doc
     } -cleanup $CLEANUP -result 1
-    test node-19.5 {isSameNode - different doc} -constraints {dom_tcl || dom_libxml2} -setup $SETUP -body {
+    test node-19.5.2 {isSameNode - different doc} -constraints {dom_tcl || dom_libxml2} -setup $SETUP -body {
 	::dom::node isSameNode $doc $top
     } -cleanup $CLEANUP -result 0
 

@@ -60,7 +60,7 @@ namespace eval ::dom::elementTest {
     test element-3.1 {setAttribute} -constraints {dom_c} -setup $SETUP -body {
 	dom::element setAttribute $e1 class success
     } -cleanup $CLEANUP -result {}
-    test element-3.1 {setAttribute} -constraints {dom_tcl || dom_libxml2} -setup $SETUP -body {
+    test element-3.1.1 {setAttribute} -constraints {dom_tcl || dom_libxml2} -setup $SETUP -body {
 	dom::element setAttribute $e1 class success
     } -cleanup $CLEANUP -result success
     test element-3.2 {error: setAttribute, wrong number args} -setup $SETUP -match glob -body {

@@ -30,28 +30,28 @@ namespace eval ::dom::documentTest {
     test document-1.1 {cget -doctype} -setup $SETUP -constraints {dom_c} -body {
 	::dom::document cget $doc -doctype
     } -cleanup $CLEANUP -result {}
-    test document-1.1 {cget -doctype} -setup $SETUP -constraints {dom_tcl} -body {
+    test document-1.1.2 {cget -doctype} -setup $SETUP -constraints {dom_tcl} -body {
 	string equal [::dom::document cget $doc -doctype] {}
     } -cleanup $CLEANUP -result 0
-    test document-1.1.1 {cget -doctype} -setup $SETUP -constraints {dom_c} -body {
+    test document-1.1.3 {cget -doctype} -setup $SETUP -constraints {dom_c} -body {
 	$doc cget -doctype
     } -cleanup $CLEANUP -result {}
-    test document-1.1.1 {cget -doctype} -setup $SETUP -constraints {dom_tcl} -body {
+    test document-1.1.4 {cget -doctype} -setup $SETUP -constraints {dom_tcl} -body {
 	string equal [$doc cget -doctype] {}
     } -cleanup $CLEANUP -result 0
     test document-1.2 {cget -implementation} -setup $SETUP -constraints {dom_c} -body {
 	::dom::document cget $doc -implementation
     } -cleanup $CLEANUP -result {::dom::DOMImplementation}
-    test document-1.2 {cget -implementation} -setup $SETUP -constraints {dom_tcl} -body {
+    test document-1.2.1 {cget -implementation} -setup $SETUP -constraints {dom_tcl} -body {
 	::dom::document cget $doc -implementation
     } -cleanup $CLEANUP -result {::dom::tcl::DOMImplementation}
-    test document-1.2.1 {cget -implementation} -setup $SETUP -constraints {dom_tcl} -body {
+    test document-1.2.2 {cget -implementation} -setup $SETUP -constraints {dom_tcl} -body {
 	$doc cget -implementation
     } -cleanup $CLEANUP -result {::dom::tcl::DOMImplementation}
-    test document-1.2 {cget -implementation} -setup $SETUP -constraints {dom_libxml2} -body {
+    test document-1.2.3 {cget -implementation} -setup $SETUP -constraints {dom_libxml2} -body {
 	::dom::document cget $doc -implementation
     } -cleanup $CLEANUP -result {::dom::libxml2::DOMImplementation}
-    test document-1.2.1 {cget -implementation} -setup $SETUP -constraints {dom_libxml2} -body {
+    test document-1.2.4 {cget -implementation} -setup $SETUP -constraints {dom_libxml2} -body {
 	$doc cget -implementation
     } -cleanup $CLEANUP -result {::dom::libxml2::DOMImplementation}
     test document-1.3 {cget -documentElement} -body {
@@ -371,11 +371,11 @@ namespace eval ::dom::documentTest {
 	set cdata [::dom::document createCDATASection $top {CDATASection <Data>}]
 	::dom::node cget $cdata -nodeType
     } -cleanup $CLEANUP -result CDATASection
-    test document-7.2 {CDATASection node type} -constraints {dom_tcl || dom_libxml2} -setup $SETUP -body {
+    test document-7.2.1 {CDATASection node type} -constraints {dom_tcl || dom_libxml2} -setup $SETUP -body {
 	set cdata [::dom::document createCDATASection $top {CDATASection <Data>}]
 	::dom::node cget $cdata -nodeType
     } -cleanup $CLEANUP -result textNode
-    test document-7.2.1 {CDATASection node type} -constraints {dom_tcl || dom_libxml2} -setup $SETUP -body {
+    test document-7.2.2 {CDATASection node type} -constraints {dom_tcl || dom_libxml2} -setup $SETUP -body {
 	set cdata [::dom::document createCDATASection $top {CDATASection <Data>}]
 	$cdata cget -nodeType
     } -cleanup $CLEANUP -result textNode
@@ -383,11 +383,11 @@ namespace eval ::dom::documentTest {
 	set cdata [::dom::document createCDATASection $top {CDATASection <Data>}]
 	::dom::node cget $cdata -nodeName
     } -cleanup $CLEANUP -result {#cdata-section}
-    test document-7.3 {CDATASection node name} -constraints {dom_tcl || dom_libxml2} -setup $SETUP -body {
+    test document-7.3.1 {CDATASection node name} -constraints {dom_tcl || dom_libxml2} -setup $SETUP -body {
 	set cdata [::dom::document createCDATASection $top {CDATASection <Data>}]
 	::dom::node cget $cdata -nodeName
     } -cleanup $CLEANUP -result {#text}
-    test document-7.3.1 {CDATASection node name} -constraints {dom_tcl || dom_libxml2} -setup $SETUP -body {
+    test document-7.3.2 {CDATASection node name} -constraints {dom_tcl || dom_libxml2} -setup $SETUP -body {
 	set cdata [::dom::document createCDATASection $top {CDATASection <Data>}]
 	$cdata cget -nodeName
     } -cleanup $CLEANUP -result {#text}
